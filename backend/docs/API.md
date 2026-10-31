@@ -455,3 +455,119 @@ available_sections (leads/site_visits only). Lead and visit aggregates are joine
 independently to prevent multiplication when one agent has many of each.
 Unassigned leads can appear in a global overview but have no agent row, so agent
 sums need not equal global totals. Deleted records are not reconstructed.
+
+## Private property documents
+
+The document API is separate from public property photos. It accepts registry,
+agreement, floor-plan and ownership-proof files for properties in the caller's
+own/group/global scope, including unpublished or sold/rented properties.
+Run migrations before using it. New logins receive `documents:read` and
+`documents:write`; existing tokens retain their old abilities and require a new
+login. Existing custom roles must be granted the appropriate new ACL permissions.
+All-permission roles pass ACL checks but still obey token abilities and scope.
+
+| Method | Path (after `/api/v1`) | Required role permissions | Token ability |
+|---|---|---|---|
+| GET | `/admin/properties/{propertyId}/documents` | `properties`, `properties.documents` | `documents:read` |
+| POST | `/admin/properties/{propertyId}/documents` | `properties`, `properties.documents.create` | `documents:write` |
+| GET | `/admin/properties/{propertyId}/documents/{id}/download` | `properties`, `properties.documents` | `documents:read` |
+| DELETE | `/admin/properties/{propertyId}/documents/{id}` | `properties`, `properties.documents.delete` | `documents:write` |
+
+There are no public document routes or public/signed file URLs. Listing or editing
+a property alone does not grant document access. General property resources do
+not embed document metadata. Document ownership follows the **current property's
+assigned agent**, not the uploader. Each document ID must also belong to the
+property ID in the nested URL. Missing/out-of-scope properties, mismatched document
+IDs and deleted documents return 404. Authentication failures return 401; missing
+ACL/token ability or inactive users return 403.
+
+Upload one file per multipart POST with fields:
+
+| Field | Rules |
+|---|---|
+| title | Required string, maximum 150 characters |
+| category | Required: registry, agreement, floor_plan, ownership_proof, other |
+| description | Optional/null string, maximum 1,000 characters |
+| file | Required PDF, JPEG or PNG; maximum 10 MiB (10,240 KiB) |
+
+The file content MIME is inspected on the server and must match its filename
+extension (pdf, jpg/jpeg, png). The browser's Content-Type is not authoritative.
+Empty files, scripts/HTML, SVG, archives, Office formats, unsupported extensions
+and mismatched extensions/content return 422. Type validation does not parse or
+rewrite documents. There is a maximum of 50 active documents per property; the
+parent is locked during writes so uploads/deletion cannot bypass that limit.
+Extra server-owned fields such as path, uploaded_by, property_id, MIME, size and
+checksum are ignored. Uploading the same file again creates a separate document;
+there is no replacement/versioning endpoint.
+
+```sh
+curl -X POST "$BASE_URL/api/v1/admin/properties/12/documents" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Accept: application/json' \
+  -F 'title=Property registry' \
+  -F 'category=registry' \
+  -F 'description=Registered ownership record' \
+  -F 'file=@/path/to/registry.pdf'
+```
+
+A successful upload returns 201:
+
+```json
+{
+  "data": {
+    "id": 7,
+    "property_id": 12,
+    "title": "Property registry",
+    "category": "registry",
+    "description": "Registered ownership record",
+    "original_name": "registry.pdf",
+    "mime_type": "application/pdf",
+    "size_bytes": 32768,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "uploaded_by": 3,
+    "created_at": "2026-10-31T12:00:00+05:30",
+    "download_url": "/api/v1/admin/properties/12/documents/7/download"
+  }
+}
+```
+
+The checksum above illustrates the 64-character format; actual SHA-256 and byte
+size are calculated from the uploaded content. `original_name` is a sanitized,
+length-bounded download filename: directories, control/bidi characters and unsafe
+header characters are removed/replaced, and the extension is normalized. UUID
+storage names and disk paths are never exposed. The relative download_url requires
+the Authorization header on every request; it is not a public link.
+
+Listing accepts category, page and per_page (1–100, default 20), newest document
+ID first. It returns the same metadata in the standard data/links/meta pagination
+envelope. Downloads stream the stored bytes as an **attachment**, with the detected
+Content-Type, Content-Length, X-Content-Type-Options: nosniff and private/no-store
+cache control. All document responses disable caching. There is no inline viewer.
+A missing stored file returns JSON 404; storage write/read failures return 503
+before streaming. A transfer interrupted after streaming begins cannot be replaced
+with a JSON response. An already-open download may finish if deletion occurs
+concurrently.
+
+DELETE returns 204. The document becomes inaccessible when the transaction commits;
+repeat download/delete returns 404. Private bytes are removed after commit, then
+metadata is permanently purged. A database rollback keeps the existing document
+and bytes. Upload failures/transaction rollback attempt to remove new bytes.
+
+Deleting a property through the existing property API also deletes its documents,
+including when the caller has property-delete permission without separate
+document-delete permission. This follows permission to delete the entire parent.
+If private file deletion fails, the API deletion still succeeds and an inaccessible
+soft-deleted row retains the path for retry. If the parent was removed, that row
+has a null property_id. The `property-documents:cleanup` command retries tombstones,
+including already-missing files, and exits nonzero if any purge remains pending.
+It is registered hourly with Laravel's scheduler; a deployed application must run
+the standard `php artisan schedule:run` cron (or invoke cleanup directly).
+
+Files use the dedicated local `property_documents` disk, rooted at
+`storage/app/private/property-documents`, with private visibility and serving
+disabled. It is independent of the default/public disk and must remain outside
+public web roots/symlinks. Preserve this directory with the database when backing
+up or moving environments. Database schema rollback does not remove file bytes.
+The retry command handles recorded deletions. Failed rollback cleanup is logged;
+abrupt process termination can also leave unreferenced files for operator
+reconciliation.

@@ -42,11 +42,17 @@ Never run tests against production/development data. API tests cover auth,
 expiry/revocation, role/ability checks, record scopes, public privacy, property
 CRUD, files, filters, enquiry idempotency, rollback, lead assignment/stages,
 notes, dated follow-up tasks, site visit scheduling/status/audit integration,
-and scoped dashboard/agent reports.
+scoped dashboard/agent reports, and private document validation/access/lifecycle.
 Site visit tests include two concurrent PHP processes against MariaDB; PHP
 `proc_open` must be enabled. Apply migrations before using the new endpoints,
 and log in again to obtain the new visit/report token abilities. Reporting adds
-no new database tables.
+no new database tables. Private documents require the new property_documents
+migration and fresh login tokens with document abilities. Run migrations on
+existing installations; do not reseed them. The private file root is
+`storage/app/private/property-documents` (not the public storage link). Back it up
+with the database. Post-commit cleanup retries run hourly through Laravel
+scheduling; configure `php artisan schedule:run` each minute in deployment, or
+run `php artisan property-documents:cleanup` manually.
 
 Read [docs/API.md](docs/API.md) and [docs/openapi.json](docs/openapi.json) for the
 contract. Runtime processes do not survive snapshots. Code is now inside the
