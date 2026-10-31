@@ -6,6 +6,7 @@ use Webkul\Property\Http\Controllers\EnquiryApiController;
 use Webkul\Property\Http\Controllers\FollowUpApiController;
 use Webkul\Property\Http\Controllers\LeadApiController;
 use Webkul\Property\Http\Controllers\PropertyApiController;
+use Webkul\Property\Http\Controllers\SiteVisitApiController;
 use Webkul\Property\Http\Middleware\ApiAccess;
 
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:property-api-login')->name('auth.login');
@@ -37,6 +38,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('leads/{id}/follow-ups', [$followUp, 'store'])->whereNumber('id')->middleware(ApiAccess::class.':leads.edit,leads:write,leads.view')->name('leads.followups.store');
     Route::patch('leads/{id}/follow-ups/{activityId}', [$followUp, 'update'])->whereNumber(['id', 'activityId'])->middleware(ApiAccess::class.':leads.edit,leads:write,leads.view')->name('leads.followups.update');
     Route::delete('leads/{id}/follow-ups/{activityId}', [$followUp, 'destroy'])->whereNumber(['id', 'activityId'])->middleware(ApiAccess::class.':leads.edit,leads:write,leads.view')->name('leads.followups.destroy');
+});
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    $visits = SiteVisitApiController::class;
+    Route::get('site-visits', [$visits, 'index'])->middleware(ApiAccess::class.':visits,visits:read')->name('visits.index');
+    Route::get('site-visit-agents', [$visits, 'agents'])->middleware(ApiAccess::class.':visits.view,visits:write')->name('visits.agents');
+    Route::get('site-visits/{id}', [$visits, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':visits.view,visits:read')->name('visits.show');
+    Route::post('site-visits', [$visits, 'store'])->middleware(ApiAccess::class.':visits.create,visits:write,visits.view')->name('visits.store');
+    Route::patch('site-visits/{id}/schedule', [$visits, 'schedule'])->whereNumber('id')->middleware(ApiAccess::class.':visits.edit,visits:write,visits.view')->name('visits.schedule');
+    Route::patch('site-visits/{id}/assignment', [$visits, 'assign'])->whereNumber('id')->middleware(ApiAccess::class.':visits.assign,visits:write,visits.view')->name('visits.assign');
+    Route::patch('site-visits/{id}/status', [$visits, 'status'])->whereNumber('id')->middleware(ApiAccess::class.':visits.edit,visits:write,visits.view')->name('visits.status');
+    Route::patch('site-visits/{id}/feedback', [$visits, 'feedback'])->whereNumber('id')->middleware(ApiAccess::class.':visits.edit,visits:write,visits.view')->name('visits.feedback');
 });
 
 Route::fallback(fn () => response()->json(['message' => 'Not found.'], 404));
