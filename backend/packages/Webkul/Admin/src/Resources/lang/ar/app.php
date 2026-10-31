@@ -2,6 +2,10 @@
 
 return [
     'property-api' => [
+        'documents' => 'Private property documents',
+        'document-type' => 'The file extension must match its PDF, JPEG or PNG content.',
+        'document-limit' => 'A property may have at most 50 documents.',
+        'document-storage' => 'Document storage is temporarily unavailable.',
         'reports' => 'Property reports',
         'agent-reports' => 'Agent performance reports',
         'visit-customer-changed' => 'The lead contact changed. Create a new visit for the current customer.',

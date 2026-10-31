@@ -1,6 +1,9 @@
 <?php
 
 return [
+    ['key' => 'properties.documents', 'name' => 'admin::app.property-api.documents', 'route' => ['api.v1.admin.properties.documents.index', 'api.v1.admin.properties.documents.download'], 'sort' => 5],
+    ['key' => 'properties.documents.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.properties.documents.store', 'sort' => 1],
+    ['key' => 'properties.documents.delete', 'name' => 'admin::app.acl.delete', 'route' => 'api.v1.admin.properties.documents.destroy', 'sort' => 2],
     ['key' => 'property-reports', 'name' => 'admin::app.property-api.reports', 'route' => 'api.v1.admin.reports.overview', 'sort' => 7],
     ['key' => 'property-reports.agents', 'name' => 'admin::app.property-api.agent-reports', 'route' => 'api.v1.admin.reports.agents', 'sort' => 1],
     ['key' => 'visits', 'name' => 'admin::app.property-api.visits', 'route' => 'api.v1.admin.visits.index', 'sort' => 6],

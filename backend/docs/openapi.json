@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "SDA Property Backend API",
-    "version": "1.3.0",
-    "description": "Backend-only property, enquiry, lead, follow-up, site visit and scoped dashboard/agent reporting APIs. No frontend/Firebase/calendar integration."
+    "version": "1.4.0",
+    "description": "Backend-only property, private documents, enquiry, lead, follow-up, site visit and scoped reporting APIs."
   },
   "servers": [
     {
@@ -3636,6 +3636,482 @@
           }
         }
       }
+    },
+    "/admin/properties/{propertyId}/documents": {
+      "get": {
+        "summary": "List private property documents",
+        "operationId": "propertyDocumentsIndex",
+        "description": "Requires properties role permission, the document action permission and the corresponding documents:read/write token ability. All-permission roles still obey token abilities and current property own/group/global scope. Scope follows current property owner, not uploader. No public routes, storage paths or shared URLs. Fresh login required for new abilities. Requires properties.documents / documents:read. Newest ID first; no document metadata is embedded in general property resources.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "registry",
+                "agreement",
+                "floor_plan",
+                "ownership_proof",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "links",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PropertyDocument"
+                      }
+                    },
+                    "links": {
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing role/token access or inactive user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing/out-of-scope property, mismatched/deleted document or missing stored file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid metadata, MIME/extension/size, document limit or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload one private property document",
+        "operationId": "propertyDocumentsStore",
+        "description": "Requires properties role permission, the document action permission and the corresponding documents:read/write token ability. All-permission roles still obey token abilities and current property own/group/global scope. Scope follows current property owner, not uploader. No public routes, storage paths or shared URLs. Fresh login required for new abilities. Requires properties.documents.create / documents:write. Single multipart file. Server controls property, uploader, MIME, bytes, checksum and UUID path. Repeated POST creates a separate document. Database rollback attempts new-file removal.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Document stored privately",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyDocument"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing role/token access or inactive user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing/out-of-scope property, mismatched/deleted document or missing stored file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid metadata, MIME/extension/size, document limit or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Private storage unavailable before streaming",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyDocumentWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/properties/{propertyId}/documents/{id}/download": {
+      "get": {
+        "summary": "Download a private document attachment",
+        "operationId": "propertyDocumentsDownload",
+        "description": "Requires properties role permission, the document action permission and the corresponding documents:read/write token ability. All-permission roles still obey token abilities and current property own/group/global scope. Scope follows current property owner, not uploader. No public routes, storage paths or shared URLs. Fresh login required for new abilities. Requires properties.documents / documents:read. Document ID must belong to the URL property. Opens a private stream after authorization; already-open downloads may finish during deletion.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated attachment stream. Content type is the detected PDF/JPEG/PNG MIME. An interrupted stream cannot return a later JSON error.",
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "attachment with sanitized filename"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "nosniff"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "private, no-store"
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing role/token access or inactive user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing/out-of-scope property, mismatched/deleted document or missing stored file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Private storage unavailable before streaming",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/properties/{propertyId}/documents/{id}": {
+      "delete": {
+        "summary": "Delete a property document",
+        "operationId": "propertyDocumentsDestroy",
+        "description": "Requires properties role permission, the document action permission and the corresponding documents:read/write token ability. All-permission roles still obey token abilities and current property own/group/global scope. Scope follows current property owner, not uploader. No public routes, storage paths or shared URLs. Fresh login required for new abilities. Requires properties.documents.delete / documents:write. Parent property deletion also removes documents under property-delete permission. Cleanup command is scheduled hourly; deployment must run Laravel scheduler. Database rollback preserves existing bytes.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Document inaccessible after commit. Private file removed after commit; failed cleanup retains an inaccessible tombstone for property-documents:cleanup retries. Repeated deletion is 404."
+          },
+          "401": {
+            "description": "Missing, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing role/token access or inactive user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing/out-of-scope property, mismatched/deleted document or missing stored file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4884,6 +5360,118 @@
             }
           }
         ]
+      },
+      "PropertyDocument": {
+        "type": "object",
+        "required": [
+          "id",
+          "property_id",
+          "title",
+          "category",
+          "description",
+          "original_name",
+          "mime_type",
+          "size_bytes",
+          "sha256",
+          "uploaded_by",
+          "created_at",
+          "download_url"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "property_id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "registry",
+              "agreement",
+              "floor_plan",
+              "ownership_proof",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "original_name": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Sanitized download filename with normalized extension, not a storage path."
+          },
+          "mime_type": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png"
+            ]
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "uploaded_by": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "download_url": {
+            "type": "string",
+            "description": "Relative API download URL; requires Authorization header and current scope."
+          }
+        }
+      },
+      "PropertyDocumentWrite": {
+        "type": "object",
+        "required": [
+          "title",
+          "category",
+          "file"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "registry",
+              "agreement",
+              "floor_plan",
+              "ownership_proof",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Single PDF/JPEG/PNG, up to 10 MiB. Actual MIME must match pdf/jpg/jpeg/png extension. Maximum 50 active documents per property."
+          }
+        }
       }
     }
   }

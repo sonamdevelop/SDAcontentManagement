@@ -25,9 +25,13 @@ class PropertyRepository extends Repository
         return $this->publicQuery()->findOrFail($id);
     }
 
-    public function authorized(int $id)
+    public function authorized(int $id, bool $lock = false)
     {
-        $record = $this->findOrFail($id);
+        $query = $this->model->newQuery();
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+        $record = $query->findOrFail($id);
         $ids = bouncer()->getAuthorizedUserIds();
         abort_if($ids !== null && ! in_array($record->user_id, $ids), 404);
 
@@ -100,6 +104,7 @@ class PropertyRepository extends Repository
         DB::transaction(function () use ($property) {
             $property = $this->model->newQuery()->lockForUpdate()->findOrFail($property->id);
             $images = $property->images ?? [];
+            app(PropertyDocumentRepository::class)->removeForProperty($property->id);
             $this->delete($property->id);
             DB::afterCommit(fn () => Storage::disk('public')->delete($images));
         });
