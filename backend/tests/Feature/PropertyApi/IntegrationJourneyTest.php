@@ -1,0 +1,53 @@
+<?php
+
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Webkul\Property\Support\DocumentFilePolicy;
+
+uses(DatabaseTransactions::class);
+it('runs the browser-facing property enquiry follow-up visit document and deal journey', function () {
+    config(['property_api.cors.allowed_origins' => ['https://web.example.com']]);
+    Storage::fake(DocumentFilePolicy::DISK);
+    Storage::fake('public');
+    securityTestPipeline();
+    $actor = apiStaff([], all: true);
+    $origin = ['Origin' => 'https://web.example.com'];
+    $login = $this->postJson('/api/v1/auth/login', ['email' => $actor->email, 'password' => 'Password123!', 'device_name' => 'Integration journey'], $origin)->assertCreated();
+    $h = array_merge($origin, ['Authorization' => 'Bearer '.$login->json('data.access_token')]);
+    $pid = $this->postJson('/api/v1/admin/properties', apiPropertyPayload(['is_published' => true, 'accepts_enquiries' => true]), $h)->assertCreated()->json('data.id');
+    $this->getJson('/api/v1/properties/'.$pid, $origin)->assertOk()->assertJsonMissingPath('data.owner_phone');
+    $enquiry = apiEnquiry();
+    $this->postJson('/api/v1/properties/'.$pid.'/enquiries', $enquiry, $origin)->assertAccepted();
+    $this->postJson('/api/v1/properties/'.$pid.'/enquiries', $enquiry, $origin)->assertAccepted();
+    $enquiries = $this->getJson('/api/v1/admin/enquiries?property_id='.$pid, $h)->assertOk()->assertJsonCount(1, 'data');
+    $leadId = $enquiries->json('data.0.lead_id');
+    $this->getJson('/api/v1/admin/leads/'.$leadId, $h)->assertOk();
+    $this->postJson('/api/v1/admin/leads/'.$leadId.'/follow-ups', ['type' => 'note', 'comment' => 'Customer requested a visit'], $h)->assertCreated();
+    $taskId = $this->postJson('/api/v1/admin/leads/'.$leadId.'/follow-ups', ['type' => 'task', 'title' => 'Call buyer', 'due_at' => now()->addDay()->format('Y-m-d\TH:i:sP')], $h)->assertCreated()->json('data.id');
+    $this->patchJson('/api/v1/admin/leads/'.$leadId.'/follow-ups/'.$taskId, ['is_done' => true], $h)->assertOk();
+    $start = now()->addDays(2)->startOfHour();
+    $vid = $this->postJson('/api/v1/admin/site-visits', ['property_id' => $pid, 'lead_id' => $leadId, 'user_id' => $actor->id, 'starts_at' => $start->format('Y-m-d\TH:i:sP'), 'ends_at' => $start->copy()->addHour()->format('Y-m-d\TH:i:sP')], $h)->assertCreated()->json('data.id');
+    $this->patchJson('/api/v1/admin/site-visits/'.$vid.'/status', ['status' => 'cancelled', 'cancellation_reason' => 'Customer proceeding remotely'], $h)->assertOk();
+    $file = UploadedFile::fake()->createWithContent('registry.pdf', "%PDF-1.4\n%%EOF\n");
+    $bytes = file_get_contents($file->getRealPath());
+    $document = $this->post('/api/v1/admin/properties/'.$pid.'/documents', ['title' => 'Registry', 'category' => 'registry', 'file' => $file], $h)->assertCreated();
+    expect($this->get($document->json('data.download_url'), $h)->assertOk()->streamedContent())->toBe($bytes);
+    $payload = ['request_id' => (string) Str::uuid(), 'property_id' => $pid, 'lead_id' => $leadId, 'agreed_price' => '6500000.50', 'booking_amount' => '50000.25'];
+    $dealId = $this->postJson('/api/v1/admin/property-deals', $payload, $h)->assertCreated()->json('data.id');
+    $this->postJson('/api/v1/admin/property-deals', $payload, $h)->assertOk()->assertJsonPath('data.id', $dealId);
+    $this->getJson('/api/v1/properties/'.$pid, $origin)->assertNotFound();
+    $this->getJson('/api/v1/admin/reports/overview', $h)->assertOk()->assertJsonPath('data.properties.reserved', 1);
+    $this->patchJson('/api/v1/admin/property-deals/'.$dealId.'/cancel', ['cancellation_reason' => 'Revised terms'], $h)->assertOk();
+    $payload['request_id'] = (string) Str::uuid();
+    $dealId = $this->postJson('/api/v1/admin/property-deals', $payload, $h)->assertCreated()->json('data.id');
+    $this->patchJson('/api/v1/admin/property-deals/'.$dealId.'/confirm', [], $h)->assertOk()->assertJsonPath('data.status', 'confirmed');
+    $this->getJson('/api/v1/admin/properties/'.$pid, $h)->assertOk()->assertJsonPath('data.status', 'sold');
+    $this->getJson('/api/v1/admin/reports/overview', $h)->assertOk()->assertJsonPath('data.properties.sold', 1);
+    $this->deleteJson('/api/v1/admin/properties/'.$pid, [], $h)->assertNoContent();
+    $this->getJson('/api/v1/admin/property-deals/'.$dealId, $h)->assertOk()->assertJsonPath('data.property_id', null)->assertJsonCount(2, 'data.events');
+    expect(Storage::disk(DocumentFilePolicy::DISK)->allFiles())->toBe([]);
+    $this->postJson('/api/v1/auth/logout', [], $h)->assertNoContent();
+    $this->getJson('/api/v1/auth/me', $h)->assertUnauthorized();
+});

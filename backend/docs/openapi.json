@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "SDA Property Backend API",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "description": "Backend-only property inventory, private documents, exclusive property deal reservations, enquiries, leads, follow-ups, visits and scoped reports. Deal amounts are records, not payment collection."
   },
   "servers": [

@@ -5,6 +5,11 @@ API prefix: `/api/v1`. Send `Accept: application/json`. JSON bodies use
 an Origin/Referer header is present. Staff requests use Sanctum personal access
 tokens; web sessions are not accepted. No web/mobile frontend has been connected.
 
+For Postman imports, local/staging configuration and client wiring, see
+[INTEGRATION.md](INTEGRATION.md). Cross-origin browser access to `/api/v1` uses
+PROPERTY_API_ALLOWED_ORIGINS (exact comma-separated origins, empty by default);
+it does not enable cookie/session authentication.
+
 ## Endpoints
 
 | Method | Path (after `/api/v1`) | Access |

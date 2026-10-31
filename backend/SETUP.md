@@ -58,6 +58,11 @@ run `php artisan property-documents:cleanup` manually. Deal APIs require the new
 property_deals migration and fresh login deal abilities. Inventory now includes
 the reserved status, which the deal workflow controls.
 
+For browser/mobile preparation, use [docs/INTEGRATION.md](docs/INTEGRATION.md),
+its Postman collections and the partial examples under `environments/`. Set
+PROPERTY_API_ALLOWED_ORIGINS to exact frontend origins; it is empty by default.
+Verify generated examples with `python3 tools/build-postman.py --check`.
+
 Read [docs/API.md](docs/API.md) and [docs/openapi.json](docs/openapi.json) for the
 contract. Runtime processes do not survive snapshots. Code is now inside the
 SDA Git repository; keep a Git commit/remote backup or publish a verified

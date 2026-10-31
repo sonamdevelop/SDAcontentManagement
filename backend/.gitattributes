@@ -9,3 +9,6 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# PDF cross-reference tables contain significant fixed-width whitespace.
+/docs/postman/fixtures/*.pdf binary

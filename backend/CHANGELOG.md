@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added a Postman integration kit, local/staging configuration examples, browser-origin API CORS and a complete backend integration journey test.
+
 * [feature] Added scoped property deal reservations with exact decimal advances, idempotent booking requests, confirmation/cancellation history, double-booking guards and managed inventory status.
 
 * [feature] Added private property document upload, listing, authenticated downloads and deletion with file validation, scoped permissions and retriable cleanup after property deletion.
