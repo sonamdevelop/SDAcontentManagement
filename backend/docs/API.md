@@ -134,7 +134,7 @@ Unsupported template expressions are rejected before reaching CRM views.
 Use HTTPS in deployment, set APP_DEBUG=false and configure APP_URL, persistent
 storage, database credentials, rate-limit cache and CORS before connecting real
 clients. Replace local example admin/database credentials before deployment.
-Firebase data migration, customer account authentication and booking APIs remain
+Firebase data migration, customer account authentication and room/stay booking APIs remain
 outside this backend API scope.
 
 Machine-readable contract: [openapi.json](openapi.json).
@@ -235,3 +235,112 @@ activities. System/email records are excluded. Shared activities cannot be
 updated/deleted through these endpoints. Notes also require author visibility for
 mutation; tasks are managed by current lead visibility so reassigned work remains
 usable. These endpoints do not send external reminder emails/SMS/WhatsApp.
+
+## Site visits
+
+New login tokens include `visits:read` and `visits:write`; existing tokens keep
+their old abilities. Log in again to obtain visit abilities. No public site-visit
+endpoint is exposed. All routes below are under `/api/v1/admin`:
+
+| Method | Path | Role permission / token ability |
+|---|---|---|
+| GET | `/site-visits` | `visits` / `visits:read` |
+| GET | `/site-visits/{id}` | `visits.view` / `visits:read` |
+| POST | `/site-visits` | `visits.create` + `visits.view` / `visits:write` |
+| GET | `/site-visit-agents` | `visits.view` and either `visits.create` or `visits.assign` / `visits:write` |
+| PATCH | `/site-visits/{id}/schedule` | `visits.edit` + `visits.view` / `visits:write` |
+| PATCH | `/site-visits/{id}/assignment` | `visits.assign` + `visits.view` / `visits:write` |
+| PATCH | `/site-visits/{id}/status` | `visits.edit` + `visits.view` / `visits:write` |
+| PATCH | `/site-visits/{id}/feedback` | `visits.edit` + `visits.view` / `visits:write` |
+
+Create a visit:
+
+```json
+{
+  "property_id": 12,
+  "lead_id": 25,
+  "user_id": 7,
+  "starts_at": "2026-11-03T10:00:00+05:30",
+  "ends_at": "2026-11-03T11:00:00+05:30",
+  "notes": "Meet at reception"
+}
+```
+
+The scheduler additionally needs `properties` and `leads.view` permissions and
+must have visibility of both source records. Properties must be available (they
+need not be published). Leads must be open and linked to a customer contact.
+Customer name/email/phone and property title/city are derived by the server and
+snapshotted; caller-supplied customer, creator, status or audit fields are ignored.
+A lead may visit another available property; it is not restricted to the property
+from its original enquiry. Customer/lead/property identity cannot be changed on
+an existing visit. Create a new visit when the lead's customer has changed.
+
+Assigned agents must be active, have `visits.view` or an `all` role, and be within
+the scheduler's/assigner's current user scope. Visit list/detail visibility uses
+the assigned agent's ID and the existing individual/group/global rules. Assignment
+intentionally grants that agent access to the visit's customer snapshots; it does
+not transfer or grant independent access to the underlying lead/property. List
+summaries omit customer email/phone, private notes, feedback and event history;
+detail/mutation responses require `visits.view` and include those fields.
+
+Starts and ends require ISO 8601 seconds plus an explicit timezone. Start must be
+in the future, end after start, and duration at most eight hours. Adjacent slots
+are allowed. Overlap with any **scheduled site visit** for the same agent,
+property or customer is rejected with 422 (`errors.starts_at`), without exposing
+who booked it. Shared resources are locked, conflict queries use current locking
+reads and root transactions retry concurrency failures. A two-process MariaDB
+integration test verifies one booking commits and the conflicting request fails,
+even when both workers started with older database snapshots.
+
+This module checks its own site-visit schedule. It does not sync with native CRM
+activity appointments, external calendars, travel buffers or room/stay bookings.
+No external reminder messages are sent. Those integrations remain future work.
+
+Reschedule a scheduled visit using both timestamps plus a mandatory reason:
+
+```json
+{
+  "starts_at": "2026-11-03T12:00:00+05:30",
+  "ends_at": "2026-11-03T13:00:00+05:30",
+  "reason": "Customer requested a later slot"
+}
+```
+
+Reassignment uses `{"user_id": 8}` and checks availability for the new agent.
+Completed/cancelled/no-show visits cannot be rescheduled or reassigned. Repeating
+an identical schedule or agent assignment does not add another event/counter.
+A duplicate create for the same busy slot is rejected rather than creating a
+second visit; creation does not use the enquiry form's submission UUID.
+
+Status values and rules:
+
+- `scheduled` → `completed`: only at/after the start; non-empty feedback required.
+- `scheduled` → `no_show`: only at/after the start; feedback optional.
+- `scheduled` → `cancelled`: cancellation_reason required; allowed before start.
+- Terminal states cannot be reopened or changed to another terminal state.
+- Repeating the current status is idempotent: terminal timestamps, feedback and
+  cancellation reason are preserved; no new event is added.
+
+Examples:
+
+```json
+{"status": "completed", "feedback": "Buyer is interested; send a quotation."}
+```
+
+```json
+{"status": "cancelled", "cancellation_reason": "Customer unavailable"}
+```
+
+PATCH `/feedback` accepts `{"feedback": "Updated visit outcome"}` only after
+completion/no-show. Identical feedback retries do not add an event. There is no
+hard-delete API: keep history and cancel instead. Audit entries record actor,
+action, timestamps and schedule/agent/status changes; feedback revisions retain
+old/new feedback. Property/lead/contact deletion clears live foreign references
+but preserves the visit snapshots and history. Such visits can still be read and
+cancelled; source-dependent scheduling/assignment is blocked.
+
+List filters: `status`, `property_id`, `lead_id`, `user_id`, `from`, `to`, `page`,
+`per_page` (1–100, default 20). `from`/`to` bound the visit's start instant and
+require explicit timezones. Results sort by start time, then ID. Agent options are
+paginated IDs/names only. All validation failures return the standard 422 shape;
+unauthenticated 401, insufficient permission/ability 403, inaccessible IDs 404.

@@ -218,16 +218,16 @@ it('protects notes by author scope and keeps transferred tasks manageable by the
     $note = $this->postJson('/api/v1/admin/leads/'.$lead->id.'/follow-ups', ['type' => 'note', 'comment' => 'Manager note'], $h)->assertCreated()->json('data.id');
     $this->patchJson('/api/v1/admin/leads/'.$lead->id.'/follow-ups/'.$note, ['comment' => 'Changed by another author'], apiHeaders($owner))->assertNotFound();
     $task = $this->postJson('/api/v1/admin/leads/'.$lead->id.'/follow-ups', workflowTask(), apiHeaders($owner))->assertCreated()->json('data.id');
-    $this->patchJson('/api/v1/admin/leads/'.$lead->id.'/assignment',['user_id' => $target->id],$h)->assertOk();
-    $this->patchJson('/api/v1/admin/leads/'.$lead->id.'/follow-ups/'.$task,['is_done' => true],apiHeaders($target))->assertOk();
-    $this->getJson('/api/v1/admin/leads/'.$lead->id.'/follow-ups',apiHeaders($owner))->assertNotFound();
+    $this->patchJson('/api/v1/admin/leads/'.$lead->id.'/assignment', ['user_id' => $target->id], $h)->assertOk();
+    $this->patchJson('/api/v1/admin/leads/'.$lead->id.'/follow-ups/'.$task, ['is_done' => true], apiHeaders($target))->assertOk();
+    $this->getJson('/api/v1/admin/leads/'.$lead->id.'/follow-ups', apiHeaders($owner))->assertNotFound();
 });
 
-it('validates follow-up filter ranges and timezone requirements',function () {
+it('validates follow-up filter ranges and timezone requirements', function () {
     $actor = apiStaff(['leads.view']);
     $h = apiHeaders($actor);
-    $this->getJson('/api/v1/admin/follow-ups?due_after=2026-11-01%2010:00:00',$h)->assertUnprocessable();
-    $this->getJson('/api/v1/admin/follow-ups?due_after=2026-11-02T10:00:00Z&due_before=2026-11-01T10:00:00Z',$h)->assertUnprocessable();
-    $this->getJson('/api/v1/admin/follow-ups?status=unknown',$h)->assertUnprocessable();
-    $this->getJson('/api/v1/admin/follow-ups?per_page=1000',$h)->assertUnprocessable();
+    $this->getJson('/api/v1/admin/follow-ups?due_after=2026-11-01%2010:00:00', $h)->assertUnprocessable();
+    $this->getJson('/api/v1/admin/follow-ups?due_after=2026-11-02T10:00:00Z&due_before=2026-11-01T10:00:00Z', $h)->assertUnprocessable();
+    $this->getJson('/api/v1/admin/follow-ups?status=unknown', $h)->assertUnprocessable();
+    $this->getJson('/api/v1/admin/follow-ups?per_page=1000', $h)->assertUnprocessable();
 });

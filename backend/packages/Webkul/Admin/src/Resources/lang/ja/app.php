@@ -2,6 +2,22 @@
 
 return [
     'property-api' => [
+        'visit-customer-changed' => 'The lead contact changed. Create a new visit for the current customer.',
+        'visits' => 'Site visits',
+        'assign-visits' => 'Assign site visits',
+        'visit-source-missing' => 'The original property or lead is no longer available.',
+        'visit-property-unavailable' => 'This property is not available for a site visit.',
+        'visit-lead-closed' => 'Choose an open lead for a site visit.',
+        'visit-customer-missing' => 'Add a customer contact to the lead before scheduling a visit.',
+        'visit-agent' => 'Choose an active visit agent within your authorized scope.',
+        'visit-window' => 'Use a future start time and a visit duration of at most eight hours.',
+        'visit-conflict' => 'This time slot is unavailable for the agent, property or customer.',
+        'visit-scheduled-only' => 'Only scheduled visits can be rescheduled or reassigned.',
+        'visit-transition' => 'This status change is not allowed at the current visit time or state.',
+        'visit-feedback' => 'Feedback is required when completing a visit.',
+        'visit-cancel-reason' => 'A reason is required when cancelling a visit.',
+        'visit-feedback-state' => 'Feedback can be updated only after completion or no-show.',
+
         'assign-leads' => 'Assign leads',
         'invalid-assignee' => 'Choose an active lead agent within your authorized scope.',
         'invalid-stage' => 'Choose a stage from this lead\'s current pipeline.',
