@@ -42,3 +42,7 @@ __pycache__/
 !/docs/
 !/docs/API.md
 !/docs/openapi.json
+
+!/docs/INTEGRATION.md
+!/docs/postman/
+!/docs/postman/**

@@ -1,0 +1,1449 @@
+{
+  "info": {
+    "_postman_id": "c4b17b47-cdbf-4dc8-82e4-f9dc4830718b",
+    "name": "SDA — Complete integration workflow",
+    "description": "Run on a disposable local/test or staging dataset with an explicitly authorized staff account. Creates fictional records and deletes only the captured fixture property/document; CRM contact/lead/enquiry/visit/deal audit history remains by API design. Choose the supplied environment, fill staff credentials and set document_file to the sample PDF for full coverage. No frontend or payment gateway is involved. See ../INTEGRATION.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Complete workflow",
+      "item": [
+        {
+          "name": "01 Login and initialize isolated demo IDs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{staff_email}}\",\n  \"password\": \"{{staff_password}}\",\n  \"device_name\": \"Postman integration kit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('staff_email') || !pm.environment.get('staff_password')) throw new Error('Set staff_email and staff_password in the selected local/staging environment.');",
+                  "['access_token','property_id','lead_id','user_id','enquiry_id','visit_id','task_id','note_id','document_id','deal_id','cancelled_deal_id'].forEach(k => pm.environment.unset(k));",
+                  "const guid = () => pm.variables.replaceIn('{{$guid}}');",
+                  "pm.environment.set('run_id', guid());",
+                  "pm.environment.set('property_title', 'Integration fixture ' + pm.environment.get('run_id'));",
+                  "pm.environment.set('submission_id', guid());",
+                  "pm.environment.set('request_id', guid());",
+                  "pm.environment.set('second_request_id', guid());",
+                  "const iso = offset => new Date(Math.floor((Date.now() + offset) / 1000) * 1000).toISOString().replace('.000Z', 'Z');",
+                  "pm.environment.set('visit_start', iso(172800000));",
+                  "pm.environment.set('visit_end', iso(176400000));",
+                  "pm.environment.set('visit_start_later', iso(180000000));",
+                  "pm.environment.set('visit_end_later', iso(183600000));",
+                  "pm.environment.set('task_due', iso(86400000));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) pm.environment.set(\"access_token\", String(pm.response.json().data.access_token));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Browser preflight",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "authorization,content-type"
+              }
+            ],
+            "url": "{{base_url}}/admin/properties",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+                  "pm.test(\"Configured browser origin\", () => pm.expect(pm.response.headers.get(\"Access-Control-Allow-Origin\")).to.eql(pm.environment.get(\"frontend_origin\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Current staff profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) pm.environment.set(\"user_id\", String(pm.response.json().data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Create published fixture property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/properties",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{property_title}}\",\n  \"purpose\": \"sale\",\n  \"property_type\": \"house\",\n  \"price\": \"6500000.50\",\n  \"area\": \"1200\",\n  \"area_unit\": \"sqft\",\n  \"address\": \"Integration fixture address\",\n  \"city\": \"Dandeli\",\n  \"state\": \"Karnataka\",\n  \"owner_name\": \"Integration fixture owner\",\n  \"status\": \"available\",\n  \"is_published\": true,\n  \"accepts_enquiries\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) pm.environment.set(\"property_id\", String(pm.response.json().data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Public property privacy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/properties/{{property_id}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"No owner contact\", () => pm.expect(pm.response.json().data).not.to.have.property(\"owner_phone\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Public catalogue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/properties?per_page=5",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Public enquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/properties/{{property_id}}/enquiries",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"submission_id\": \"{{submission_id}}\",\n  \"name\": \"Integration Customer\",\n  \"email\": \"integration-{{run_id}}@example.com\",\n  \"phone\": \"+91 9000000000\",\n  \"message\": \"Integration fixture: arrange a visit.\",\n  \"consent\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Retry same enquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/properties/{{property_id}}/enquiries",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"submission_id\": \"{{submission_id}}\",\n  \"name\": \"Integration Customer\",\n  \"email\": \"integration-{{run_id}}@example.com\",\n  \"phone\": \"+91 9000000000\",\n  \"message\": \"Integration fixture: arrange a visit.\",\n  \"consent\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Resolve enquiry to lead",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/enquiries?property_id={{property_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Exactly one enquiry after retry', () => pm.expect(pm.response.json().data).to.have.length(1));",
+                  "if (pm.response.code === 200 && pm.response.json().data.length === 1) {",
+                  " pm.environment.set('lead_id', String(pm.response.json().data[0].lead_id));",
+                  " pm.environment.set('enquiry_id', String(pm.response.json().data[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Lead detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/leads/{{lead_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 Add lead note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/leads/{{lead_id}}/follow-ups",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"note\",\n  \"comment\": \"Integration fixture: customer prefers a visit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) pm.environment.set(\"note_id\", String(pm.response.json().data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 Add dated follow-up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/leads/{{lead_id}}/follow-ups",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"task\",\n  \"title\": \"Integration fixture call\",\n  \"due_at\": \"{{task_due}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) pm.environment.set(\"task_id\", String(pm.response.json().data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 Complete follow-up",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/leads/{{lead_id}}/follow-ups/{{task_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_done\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 Follow-up history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/leads/{{lead_id}}/follow-ups"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 Schedule site visit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/site-visits",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"property_id\": \"{{property_id}}\",\n  \"lead_id\": \"{{lead_id}}\",\n  \"user_id\": \"{{user_id}}\",\n  \"starts_at\": \"{{visit_start}}\",\n  \"ends_at\": \"{{visit_end}}\",\n  \"notes\": \"Integration fixture visit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) pm.environment.set(\"visit_id\", String(pm.response.json().data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 Reschedule site visit",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/site-visits/{{visit_id}}/schedule",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"starts_at\": \"{{visit_start_later}}\",\n  \"ends_at\": \"{{visit_end_later}}\",\n  \"reason\": \"Integration fixture reschedule\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 Cancel site visit",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/site-visits/{{visit_id}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"cancelled\",\n  \"cancellation_reason\": \"Integration fixture: proceeding remotely\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 Upload optional private document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/properties/{{property_id}}/documents",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Integration test registry",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "registry",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{document_file}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('document_file')) pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) pm.environment.set(\"document_id\", String(pm.response.json().data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19 List private document metadata",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/properties/{{property_id}}/documents"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20 Download optional attachment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/properties/{{property_id}}/documents/{{document_id}}/download"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('document_id')) pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private attachment\", () => pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\"attachment\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21 Overview before reservation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/reports/overview"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "22 Reserve property",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/property-deals",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{request_id}}\",\n  \"property_id\": \"{{property_id}}\",\n  \"lead_id\": \"{{lead_id}}\",\n  \"agreed_price\": \"6500000.50\",\n  \"booking_amount\": \"50000.25\",\n  \"payment_reference\": \"Integration fixture, no payment collected\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) pm.environment.set(\"deal_id\", String(pm.response.json().data.id));",
+                  "if (pm.response.code < 300) pm.environment.set(\"cancelled_deal_id\", String(pm.response.json().data.id));",
+                  "pm.test(\"Exact amount\", () => pm.expect(pm.response.json().data.booking_amount).to.eql(\"50000.25\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "23 Replay booking request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/property-deals",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{request_id}}\",\n  \"property_id\": \"{{property_id}}\",\n  \"lead_id\": \"{{lead_id}}\",\n  \"agreed_price\": \"6500000.50\",\n  \"booking_amount\": \"50000.25\",\n  \"payment_reference\": \"Integration fixture, no payment collected\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Same deal\", () => pm.expect(String(pm.response.json().data.id)).to.eql(pm.environment.get(\"deal_id\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "24 Reserved property hidden publicly",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/properties/{{property_id}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "25 Reserved inventory report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/reports/overview"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Reserved inventory present\", () => pm.expect(pm.response.json().data.properties.reserved).to.be.at.least(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "26 Cancel reservation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/property-deals/{{deal_id}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancellation_reason\": \"Integration fixture revised terms\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "27 Released property is public",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/properties/{{property_id}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "28 Reserve revised deal with a new key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/property-deals",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{second_request_id}}\",\n  \"property_id\": \"{{property_id}}\",\n  \"lead_id\": \"{{lead_id}}\",\n  \"agreed_price\": \"6500000.50\",\n  \"booking_amount\": \"50000.25\",\n  \"payment_reference\": \"Integration fixture, no payment collected\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) pm.environment.set(\"deal_id\", String(pm.response.json().data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29 Confirm sale",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/property-deals/{{deal_id}}/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Confirmed\", () => pm.expect(pm.response.json().data.status).to.eql(\"confirmed\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "30 Retry confirmation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/property-deals/{{deal_id}}/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"No duplicate audit event\", () => pm.expect(pm.response.json().data.events).to.have.length(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "31 Sold inventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/properties/{{property_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Sold\", () => pm.expect(pm.response.json().data.status).to.eql(\"sold\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "32 Private deal history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/property-deals/{{deal_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "33 Agent performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/reports/agents?user_id={{user_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "34 Delete optional document",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/properties/{{property_id}}/documents/{{document_id}}"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('document_id')) pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "35 Delete only the captured fixture property",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/properties/{{property_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "36 Retained confirmed deal history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/property-deals/{{deal_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Property reference cleared, history preserved\", () => pm.expect(pm.response.json().data.property_id).to.eql(null));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "37 Logout and clear token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+                  "if (pm.response.code === 204) { pm.variables.set('revoked_token', pm.environment.get('access_token')); pm.environment.unset('access_token'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "38 Verify revoked token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{revoked_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));",
+                  "pm.test('Revoked token was supplied', () => pm.expect(pm.variables.get('revoked_token')).to.be.a('string').and.not.empty); pm.variables.unset('revoked_token');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
