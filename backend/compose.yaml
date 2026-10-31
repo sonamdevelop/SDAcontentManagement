@@ -1,0 +1,36 @@
+name: sda-backend
+services:
+  db:
+    image: mariadb:11.8@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-krayin}
+      MARIADB_USER: ${DB_USERNAME:-krayin}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-local_dev_only}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-local_root_only}
+    volumes:
+      - ./.runtime/mariadb:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  app:
+    image: webdevops/php:8.3@sha256:480608abc850e09db93c27179694fbba83704be5d73be4017a285c384ad9e895
+    user: "1000:1000"
+    working_dir: /app
+    entrypoint: []
+    command: [php, artisan, serve, --host=0.0.0.0, --port=8000]
+    ports:
+      - 127.0.0.1:8081:8000
+    volumes:
+      - .:/app
+      - /etc/ssl/certs/ca-certificates.crt:/run/combined-ca.pem:ro
+      - ./docker/uploads.ini:/usr/local/etc/php/conf.d/zzz-property.ini:ro
+    environment:
+      COMPOSER_HOME: /app/.runtime/composer
+      COMPOSER_CAFILE: /run/combined-ca.pem
+      SSL_CERT_FILE: /run/combined-ca.pem
+      GIT_SSL_CAINFO: /run/combined-ca.pem
+    depends_on:
+      db:
+        condition: service_healthy
