@@ -40,7 +40,8 @@ CREATE DATABASE/GRANT command assumes the generated local defaults; adapt those
 selectors if you intentionally customize local database usernames/passwords.
 Never run tests against production/development data. API tests cover auth,
 expiry/revocation, role/ability checks, record scopes, public privacy, property
-CRUD, files, filters, enquiry idempotency, rollback and lead integration.
+CRUD, files, filters, enquiry idempotency, rollback, lead assignment/stages,
+notes and dated follow-up task integration.
 
 Read [docs/API.md](docs/API.md) and [docs/openapi.json](docs/openapi.json) for the
 contract. Runtime processes do not survive snapshots. Code is now inside the

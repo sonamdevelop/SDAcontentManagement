@@ -11,7 +11,7 @@ function apiStaff(array $permissions = [], string $visibility = 'own', bool $all
 
     return User::create(['name' => 'API Staff', 'email' => Str::uuid().'@example.com', 'password' => bcrypt('Password123!'), 'status' => 1, 'role_id' => $role->id, 'view_permission' => $visibility]);
 }
-function apiHeaders(User $user, array $abilities = ['properties:read', 'properties:write', 'enquiries:read']): array
+function apiHeaders(User $user, array $abilities = ['properties:read', 'properties:write', 'enquiries:read', 'leads:read', 'leads:write']): array
 {
     return ['Authorization' => 'Bearer '.$user->createToken('tests', $abilities, now()->addHour())->plainTextToken];
 }

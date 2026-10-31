@@ -134,7 +134,104 @@ Unsupported template expressions are rejected before reaching CRM views.
 Use HTTPS in deployment, set APP_DEBUG=false and configure APP_URL, persistent
 storage, database credentials, rate-limit cache and CORS before connecting real
 clients. Replace local example admin/database credentials before deployment.
-Firebase data migration, customer account authentication, booking APIs, and
-lead/follow-up management APIs are outside this v1 property API scope.
+Firebase data migration, customer account authentication and booking APIs remain
+outside this backend API scope.
 
 Machine-readable contract: [openapi.json](openapi.json).
+
+## Lead management and follow-ups
+
+New logins also receive `leads:read` and `leads:write` token abilities. Existing
+property-only tokens remain valid for their original endpoints; log in again to
+obtain lead abilities. Abilities never override current role permissions or record
+visibility. These endpoints require an active bearer token:
+
+| Method | Path (after `/api/v1/admin`) | Role permission / ability |
+|---|---|---|
+| GET | `/leads` | `leads` / `leads:read` |
+| GET | `/leads/{id}` | `leads.view` / `leads:read` |
+| GET | `/lead-pipelines` | `leads` / `leads:read` |
+| GET | `/lead-assignees` | `leads.assign` **and** `leads.view` / `leads:write` |
+| PATCH | `/leads/{id}/assignment` | `leads.assign` **and** `leads.view` / `leads:write` |
+| PATCH | `/leads/{id}/stage` | `leads.edit` **and** `leads.view` / `leads:write` |
+| GET | `/follow-ups` | `leads.view` / `leads:read` |
+| GET | `/leads/{id}/follow-ups` | `leads.view` / `leads:read` |
+| POST | `/leads/{id}/follow-ups` | `leads.edit` **and** `leads.view` / `leads:write` |
+| PATCH | `/leads/{id}/follow-ups/{activityId}` | `leads.edit` **and** `leads.view` / `leads:write` |
+| DELETE | `/leads/{id}/follow-ups/{activityId}` | `leads.edit` **and** `leads.view` / `leads:write` |
+
+The `all` role still bypasses action restrictions, while record scope always
+applies. A group user with no groups sees no records; empty scope never means
+unrestricted access. Inaccessible lead/activity IDs return 404. Lead summaries
+exclude private customer contact details, descriptions and lost reasons; those
+are available only through authorized detail/mutation responses.
+
+Lead filters: `q` (title search), `lead_pipeline_id`, `lead_pipeline_stage_id`,
+`user_id`, `property_id` (via enquiry linkage), `page`, `per_page` (1–100). Pipeline
+metadata returns names, IDs and stages; eligible assignees return paginated IDs
+and names only. Assignees must be active, able to view leads, and inside the
+caller's data scope (global/group/individual). Assignment cannot change the
+recipient's role or data scope. It does not transfer shared customer contacts,
+properties or enquiry-history ownership. Exclusive task ownership transfers with
+the lead so the receiving agent can manage the work.
+
+Assignment body:
+
+```json
+{"user_id": 7}
+```
+
+Stage update body:
+
+```json
+{"lead_pipeline_stage_id": 4, "lost_reason": "Budget does not match"}
+```
+
+A stage must belong to the lead's current pipeline; this API does not switch
+pipelines. A lost stage requires a reason. Won/lost close the lead; a repeated
+terminal update preserves its closure timestamp. Reopening clears closed_at and
+lost_reason. Existing expected-close dates, customer identity and product rows
+remain intact. Caller-supplied product arrays, pipeline IDs, contact IDs and other
+unrelated fields are ignored by these partial-update endpoints.
+
+Create a note:
+
+```json
+{"type": "note", "comment": "Buyer prefers a river-facing property."}
+```
+
+Create a follow-up task:
+
+```json
+{
+  "type": "task",
+  "title": "Call buyer",
+  "comment": "Discuss available properties",
+  "due_at": "2026-11-02T10:30:00+05:30"
+}
+```
+
+Task title and due_at are required; note comment is required. Notes are completed
+history entries, not pending tasks. Tasks default to pending; optional `is_done`
+allows historical completed tasks. PATCH accepts title, non-empty comment,
+due_at and is_done; type and lead linkage are immutable. Toggle task status using
+`{"is_done": true}` or `{"is_done": false}`. Pending tasks are overdue strictly
+after their due timestamp. Past due dates are allowed for historical/overdue work.
+
+Dates require seconds and an explicit timezone (`Z` or `+05:30`, for example).
+They are stored using the configured application timezone and returned as ISO
+8601 timestamps with offset. Notes/tasks reuse the CRM activities and
+lead_activities tables; no parallel task database or schema migration is needed.
+API comments are plain text, encoded safely for the existing CRM timeline and
+returned as plain text. Template expressions are rejected. Client-supplied
+participants, files, ownership and extra relation IDs are ignored. Task/calendar
+editing through a new frontend is not part of this backend phase.
+
+Follow-up filters: `type=note|task`, `status=pending|done`, `overdue=0|1`,
+`due_after`, `due_before`, `page`, `per_page` (1–100). Sorting is by earliest due
+first, notes without due dates last. Aggregate `/follow-ups` covers only visible
+leads. Activity lead_ids are restricted to visible leads, including shared
+activities. System/email records are excluded. Shared activities cannot be
+updated/deleted through these endpoints. Notes also require author visibility for
+mutation; tasks are managed by current lead visibility so reassigned work remains
+usable. These endpoints do not send external reminder emails/SMS/WhatsApp.

@@ -8,7 +8,7 @@ use Webkul\User\Contracts\User;
 
 class ApiAccess
 {
-    public function handle($request, \Closure $next, ?string $permission = null, ?string $ability = null)
+    public function handle($request, \Closure $next, ?string $permission = null, ?string $ability = null, ?string $readPermission = null)
     {
         $bearer = $request->bearerToken();
         $token = $bearer ? PersonalAccessToken::findToken($bearer) : null;
@@ -18,7 +18,9 @@ class ApiAccess
         abort_unless($user instanceof User, 401);
         abort_unless($user->status && $user->role, 403);
         abort_if($ability && ! $token->can($ability), 403);
-        abort_if($permission && $user->role->permission_type !== 'all' && ! in_array($permission, $user->role->permissions ?? [], true), 403);
+        foreach (array_filter([$permission, $readPermission]) as $requiredPermission) {
+            abort_if($user->role->permission_type !== 'all' && ! in_array($requiredPermission, $user->role->permissions ?? [], true), 403);
+        }
         $user->withAccessToken($token);
         Auth::guard('user')->setUser($user);
         $request->setUserResolver(fn () => $user);

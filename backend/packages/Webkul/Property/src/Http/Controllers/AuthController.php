@@ -15,7 +15,7 @@ class AuthController
         if (! $valid || ! $user?->status || ! $user?->role) {
             return response()->json(['message' => trans('admin::app.property-api.invalid-credentials')], 401);
         }
-        $token = $user->createToken($data['device_name'], ['properties:read', 'properties:write', 'enquiries:read'], now()->addDays(30));
+        $token = $user->createToken($data['device_name'], ['properties:read', 'properties:write', 'enquiries:read', 'leads:read', 'leads:write'], now()->addDays(30));
 
         return response()->json(['data' => ['access_token' => $token->plainTextToken, 'token_type' => 'Bearer', 'expires_at' => $token->accessToken->expires_at->toIso8601String()]], 201)->header('Cache-Control', 'no-store');
     }
