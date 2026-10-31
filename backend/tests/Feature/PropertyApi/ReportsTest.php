@@ -67,7 +67,7 @@ it('returns current status totals without exposing private record details', func
     reportVisit($actor, 'scheduled', '2026-11-10 11:00:00');
     reportVisit($actor, 'scheduled', '2026-11-10 12:00:00');
     $response = $this->getJson('/api/v1/admin/reports/overview', apiHeaders($actor))->assertOk()
-        ->assertJsonPath('data.properties', ['total' => 4, 'available' => 1, 'sold' => 1, 'rented' => 1, 'unavailable' => 1])
+        ->assertJsonPath('data.properties', ['total' => 4, 'available' => 1, 'reserved' => 0, 'sold' => 1, 'rented' => 1, 'unavailable' => 1])
         ->assertJsonPath('data.enquiries', ['total' => 2, 'linked_to_lead' => 1, 'without_lead' => 1])
         ->assertJsonPath('data.leads', ['total' => 4, 'open' => 1, 'won' => 1, 'lost' => 1, 'unclassified' => 1])
         ->assertJsonPath('data.follow_ups', ['total' => 4, 'pending' => 3, 'done' => 1, 'overdue' => 1, 'undated' => 1])

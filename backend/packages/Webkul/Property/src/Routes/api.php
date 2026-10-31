@@ -6,6 +6,7 @@ use Webkul\Property\Http\Controllers\EnquiryApiController;
 use Webkul\Property\Http\Controllers\FollowUpApiController;
 use Webkul\Property\Http\Controllers\LeadApiController;
 use Webkul\Property\Http\Controllers\PropertyApiController;
+use Webkul\Property\Http\Controllers\PropertyDealApiController;
 use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
@@ -62,6 +63,14 @@ Route::prefix('admin/properties/{propertyId}/documents')->whereNumber('propertyI
     Route::post('', [PropertyDocumentApiController::class, 'store'])->middleware(ApiAccess::class.':properties.documents.create,documents:write,properties')->name('store');
     Route::get('{id}/download', [PropertyDocumentApiController::class, 'download'])->whereNumber('id')->middleware(ApiAccess::class.':properties.documents,documents:read,properties')->name('download');
     Route::delete('{id}', [PropertyDocumentApiController::class, 'destroy'])->whereNumber('id')->middleware(ApiAccess::class.':properties.documents.delete,documents:write,properties')->name('destroy');
+});
+
+Route::prefix('admin/property-deals')->name('admin.deals.')->group(function () {
+    Route::get('', [PropertyDealApiController::class, 'index'])->middleware(ApiAccess::class.':deals,deals:read')->name('index');
+    Route::post('', [PropertyDealApiController::class, 'store'])->middleware(ApiAccess::class.':deals.create,deals:write,deals.view')->name('store');
+    Route::get('{id}', [PropertyDealApiController::class, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':deals.view,deals:read')->name('show');
+    Route::patch('{id}/confirm', [PropertyDealApiController::class, 'confirm'])->whereNumber('id')->middleware(ApiAccess::class.':deals.confirm,deals:write,deals.view')->name('confirm');
+    Route::patch('{id}/cancel', [PropertyDealApiController::class, 'cancel'])->whereNumber('id')->middleware(ApiAccess::class.':deals.cancel,deals:write,deals.view')->name('cancel');
 });
 
 Route::fallback(fn () => response()->json(['message' => 'Not found.'], 404));

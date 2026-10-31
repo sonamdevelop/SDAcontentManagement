@@ -2,6 +2,19 @@
 
 return [
     'property-api' => [
+        'deals' => 'Property deals and reservations',
+        'confirm-deal' => 'Confirm property deals',
+        'cancel-deal' => 'Cancel property reservations',
+        'deal-money' => 'Agreed price must be positive and booking advance must not exceed it.',
+        'deal-unavailable' => 'This property is unavailable or already committed to another deal.',
+        'deal-request-conflict' => 'This booking request conflicts with an existing request.',
+        'deal-transition' => 'Only a reserved deal can be confirmed or cancelled.',
+        'deal-source-changed' => 'The property or customer no longer matches this reservation.',
+        'deal-lead-closed' => 'An open lead is required for reservation and confirmation.',
+        'deal-customer-missing' => 'The lead must have a customer.',
+        'deal-cancel-reason' => 'A cancellation reason is required.',
+        'deal-delete-reserved' => 'Cancel the reservation before deleting this property.',
+        'deal-managed-property' => 'Property status, purpose and rental period are controlled by its active deal.',
         'documents' => 'Private property documents',
         'document-type' => 'The file extension must match its PDF, JPEG or PNG content.',
         'document-limit' => 'A property may have at most 50 documents.',

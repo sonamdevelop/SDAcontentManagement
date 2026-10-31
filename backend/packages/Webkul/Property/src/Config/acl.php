@@ -1,6 +1,11 @@
 <?php
 
 return [
+    ['key' => 'deals', 'name' => 'admin::app.property-api.deals', 'route' => 'api.v1.admin.deals.index', 'sort' => 8],
+    ['key' => 'deals.view', 'name' => 'admin::app.acl.view', 'route' => 'api.v1.admin.deals.show', 'sort' => 1],
+    ['key' => 'deals.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.deals.store', 'sort' => 2],
+    ['key' => 'deals.confirm', 'name' => 'admin::app.property-api.confirm-deal', 'route' => 'api.v1.admin.deals.confirm', 'sort' => 3],
+    ['key' => 'deals.cancel', 'name' => 'admin::app.property-api.cancel-deal', 'route' => 'api.v1.admin.deals.cancel', 'sort' => 4],
     ['key' => 'properties.documents', 'name' => 'admin::app.property-api.documents', 'route' => ['api.v1.admin.properties.documents.index', 'api.v1.admin.properties.documents.download'], 'sort' => 5],
     ['key' => 'properties.documents.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.properties.documents.store', 'sort' => 1],
     ['key' => 'properties.documents.delete', 'name' => 'admin::app.acl.delete', 'route' => 'api.v1.admin.properties.documents.destroy', 'sort' => 2],

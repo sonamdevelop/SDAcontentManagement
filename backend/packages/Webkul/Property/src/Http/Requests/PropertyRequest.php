@@ -24,7 +24,7 @@ class PropertyRequest extends FormRequest
             'bedrooms' => ['nullable', 'integer', 'between:0,100'], 'bathrooms' => ['nullable', 'integer', 'between:0,100'],
             'address' => ['required', 'string', 'max:500'], 'city' => ['required', 'string', 'max:100'], 'state' => ['required', 'string', 'max:100'],
             'postal_code' => ['nullable', 'string', 'max:20'], 'owner_name' => ['required', 'string', 'max:255'], 'owner_phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+() .-]+$/'],
-            'status' => ['required', Rule::in(['available', 'sold', 'rented', 'unavailable'])],
+            'status' => ['required', Rule::in(['available', 'reserved', 'sold', 'rented', 'unavailable'])],
             'accepts_enquiries' => ['sometimes', 'boolean'], 'is_published' => ['sometimes', 'boolean'],
             'photos' => ['nullable', 'array', 'max:10'], 'photos.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'remove_images' => ['nullable', 'array', 'max:10'], 'remove_images.*' => ['required', 'string', 'max:255'],

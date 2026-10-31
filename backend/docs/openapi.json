@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "SDA Property Backend API",
-    "version": "1.4.0",
-    "description": "Backend-only property, private documents, enquiry, lead, follow-up, site visit and scoped reporting APIs."
+    "version": "1.5.0",
+    "description": "Backend-only property inventory, private documents, exclusive property deal reservations, enquiries, leads, follow-ups, visits and scoped reports. Deal amounts are records, not payment collection."
   },
   "servers": [
     {
@@ -4112,6 +4112,638 @@
           }
         }
       }
+    },
+    "/admin/property-deals": {
+      "get": {
+        "summary": "List scoped property deal summaries",
+        "operationId": "propertyDealsIndex",
+        "description": "Requires deals / deals:read. Scope uses agent assigned at reservation. Lists omit customer identity/contacts, payment references, notes and events. from/to are inclusive ISO timestamps with seconds/timezone filtering created_at; to >= from. Newest ID first.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "reserved",
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sale",
+                "rent"
+              ]
+            }
+          },
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "lead_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "links",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PropertyDealSummary"
+                      }
+                    },
+                    "links": {
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Absent, invalid, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Inactive user or missing action/source ACL/token ability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields, unavailable property, invalid transition or changed/closed source",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Reserve one property for a lead customer",
+        "operationId": "propertyDealsStore",
+        "description": "Requires deals.create + deals.view / deals:write. Writes additionally require properties + properties.edit and properties:read + properties:write. Reserve/confirm also require leads.view + leads:read. Sources must be visible for actual changes; cancellation does not need lead access. All-permission roles still obey token and record scopes. Requires available inventory and an open lead with customer. Property/lead/customer/purpose/currency snapshots derived server-side; amount strings normalized exactly. Status becomes reserved and public catalogue/enquiries exclude the property. Parent locking/current reads and a unique active-property guard serialize bookings. Financial fields immutable; audit and inventory changes are atomic. No payment/refund processing. Existing matching request returns the same scoped deal without repeating mutations.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Reservation created",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyDeal"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Idempotent replay",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyDeal"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Absent, invalid, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Inactive user or missing action/source ACL/token ability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing or out-of-scope deal/property/lead",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Idempotency key conflicts with another payload or creator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields, unavailable property, invalid transition or changed/closed source",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyDealWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/property-deals/{id}": {
+      "get": {
+        "summary": "Show private deal detail and audit history",
+        "operationId": "propertyDealsShow",
+        "description": "Requires deals.view / deals:read. Snapshot and financial history survive source deletion; nullable source IDs then return null. No public or hard-delete route.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyDeal"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Absent, invalid, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Inactive user or missing action/source ACL/token ability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing or out-of-scope deal/property/lead",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/property-deals/{id}/confirm": {
+      "patch": {
+        "summary": "Confirm property deal",
+        "operationId": "propertyDealsConfirm",
+        "description": "Requires deals.confirm + deals.view / deals:write. Reserved becomes confirmed; property becomes sold (sale) or rented (rent). Revalidates current sources, hold, purpose/rental period and customer identity. Does not change CRM lead stage or transfer money. Writes additionally require properties + properties.edit and properties:read + properties:write. Reserve/confirm also require leads.view + leads:read. Sources must be visible for actual changes; cancellation does not need lead access. All-permission roles still obey token and record scopes. Repeating the same terminal action preserves timestamps, reasons and events. Confirmed/cancelled deals cannot reopen or change terminal state. Reserved property deletion is blocked; controlled status/purpose/rental period cannot be changed by ordinary property PUT.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyDeal"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Absent, invalid, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Inactive user or missing action/source ACL/token ability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing or out-of-scope deal/property/lead",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields, unavailable property, invalid transition or changed/closed source",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/property-deals/{id}/cancel": {
+      "patch": {
+        "summary": "Cancel property reservation",
+        "operationId": "propertyDealsCancel",
+        "description": "Requires deals.cancel + deals.view / deals:write. Reserved becomes cancelled and releases only its own hold to available, without overriding an externally changed status. Requires cancellation_reason. Recorded advance retained; no refund action. Closed/missing lead/customer does not prevent cancellation. Writes additionally require properties + properties.edit and properties:read + properties:write. Reserve/confirm also require leads.view + leads:read. Sources must be visible for actual changes; cancellation does not need lead access. All-permission roles still obey token and record scopes. Repeating the same terminal action preserves timestamps, reasons and events. Confirmed/cancelled deals cannot reopen or change terminal state. Reserved property deletion is blocked; controlled status/purpose/rental period cannot be changed by ordinary property PUT.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyDeal"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Absent, invalid, expired or revoked bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Inactive user or missing action/source ACL/token ability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing or out-of-scope deal/property/lead",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields, unavailable property, invalid transition or changed/closed source",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "cancellation_reason"
+                ],
+                "properties": {
+                  "cancellation_reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4216,6 +4848,7 @@
             "type": "string",
             "enum": [
               "available",
+              "reserved",
               "sold",
               "rented",
               "unavailable"
@@ -4356,6 +4989,7 @@
             "type": "string",
             "enum": [
               "available",
+              "reserved",
               "sold",
               "rented",
               "unavailable"
@@ -4405,7 +5039,8 @@
           "state",
           "owner_name",
           "status"
-        ]
+        ],
+        "description": " Reserved is managed by deal reservations. Active reserved/confirmed deals prevent ordinary PUT changing controlled status, purpose or rental period. Reserved cannot be set on property creation."
       },
       "EnquiryWrite": {
         "type": "object",
@@ -5019,6 +5654,7 @@
         "required": [
           "total",
           "available",
+          "reserved",
           "sold",
           "rented",
           "unavailable"
@@ -5043,9 +5679,13 @@
           "unavailable": {
             "type": "integer",
             "minimum": 0
+          },
+          "reserved": {
+            "type": "integer",
+            "minimum": 0
           }
         },
-        "description": "Current status of inventory created within the period, including unpublished properties."
+        "description": "Current status of inventory created within the period, including unpublished and deal-reserved properties."
       },
       "EnquiryReportCounts": {
         "type": "object",
@@ -5470,6 +6110,246 @@
             "type": "string",
             "format": "binary",
             "description": "Single PDF/JPEG/PNG, up to 10 MiB. Actual MIME must match pdf/jpg/jpeg/png extension. Maximum 50 active documents per property."
+          }
+        }
+      },
+      "PropertyDealSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "property_id",
+          "lead_id",
+          "user_id",
+          "property_title",
+          "property_city",
+          "purpose",
+          "rent_period",
+          "status",
+          "agreed_price",
+          "booking_amount",
+          "currency",
+          "created_at",
+          "confirmed_at",
+          "cancelled_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "property_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "lead_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "user_id": {
+            "type": "integer"
+          },
+          "property_title": {
+            "type": "string"
+          },
+          "property_city": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "sale",
+              "rent"
+            ]
+          },
+          "rent_period": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "daily",
+              "monthly",
+              "yearly"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "reserved",
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "agreed_price": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "6500000.50"
+          },
+          "booking_amount": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "6500000.50"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "confirmed_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "cancelled_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        }
+      },
+      "PropertyDealEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "actor_id",
+          "action",
+          "changes",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "actor_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "reserved",
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "changes": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PropertyDeal": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PropertyDealSummary"
+          },
+          {
+            "type": "object",
+            "required": [
+              "request_id",
+              "person_id",
+              "created_by",
+              "customer_name",
+              "customer_email",
+              "customer_phone",
+              "payment_reference",
+              "notes",
+              "cancellation_reason",
+              "events"
+            ],
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "person_id": {
+                "type": "integer",
+                "nullable": true
+              },
+              "created_by": {
+                "type": "integer",
+                "nullable": true
+              },
+              "customer_name": {
+                "type": "string"
+              },
+              "customer_email": {
+                "type": "string",
+                "nullable": true
+              },
+              "customer_phone": {
+                "type": "string",
+                "nullable": true
+              },
+              "payment_reference": {
+                "type": "string",
+                "nullable": true
+              },
+              "notes": {
+                "type": "string",
+                "nullable": true
+              },
+              "cancellation_reason": {
+                "type": "string",
+                "nullable": true
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PropertyDealEvent"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PropertyDealWrite": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "property_id",
+          "lead_id",
+          "agreed_price"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client-generated idempotency key. Same creator and equivalent payload replay existing deal with 200, including terminal deals. Different payload/creator is 409."
+          },
+          "property_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lead_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "agreed_price": {
+            "type": "string",
+            "pattern": "^\\d{1,13}(?:\\.\\d{1,2})?$",
+            "description": "Positive negotiated total commitment, maximum 9999999999999.99. Must be a decimal string; JSON numbers rejected."
+          },
+          "booking_amount": {
+            "type": "string",
+            "pattern": "^\\d{1,13}(?:\\.\\d{1,2})?$",
+            "default": "0.00",
+            "description": "Recorded advance included in agreed total, at most agreed_price. Not online payment or a separate security deposit."
+          },
+          "payment_reference": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 190
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 5000
           }
         }
       }

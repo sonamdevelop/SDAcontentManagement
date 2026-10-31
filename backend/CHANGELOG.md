@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added scoped property deal reservations with exact decimal advances, idempotent booking requests, confirmation/cancellation history, double-booking guards and managed inventory status.
+
 * [feature] Added private property document upload, listing, authenticated downloads and deletion with file validation, scoped permissions and retriable cleanup after property deletion.
 
 * [feature] Added scoped dashboard totals, pending/overdue follow-ups, upcoming visits and paginated agent performance reports with calendar-day filters and source-module permissions.
