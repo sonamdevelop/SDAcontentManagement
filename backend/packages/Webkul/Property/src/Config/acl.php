@@ -1,6 +1,8 @@
 <?php
 
 return [
+    ['key' => 'property-reports', 'name' => 'admin::app.property-api.reports', 'route' => 'api.v1.admin.reports.overview', 'sort' => 7],
+    ['key' => 'property-reports.agents', 'name' => 'admin::app.property-api.agent-reports', 'route' => 'api.v1.admin.reports.agents', 'sort' => 1],
     ['key' => 'visits', 'name' => 'admin::app.property-api.visits', 'route' => 'api.v1.admin.visits.index', 'sort' => 6],
     ['key' => 'visits.view', 'name' => 'admin::app.acl.view', 'route' => ['api.v1.admin.visits.show', 'api.v1.admin.visits.agents'], 'sort' => 1],
     ['key' => 'visits.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.visits.store', 'sort' => 2],

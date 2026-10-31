@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added scoped dashboard totals, pending/overdue follow-ups, upcoming visits and paginated agent performance reports with calendar-day filters and source-module permissions.
+
 * [feature] Added site visit scheduling, agent assignment, conflict checks, completion/cancellation/no-show statuses, feedback and auditable visit history through scoped backend APIs.
 
 * [feature] Added scoped lead browsing, safe agent assignment and pipeline transitions, plus lead notes and dated follow-up tasks through the backend API.
