@@ -41,7 +41,7 @@ class ReportService
         $data = array_fill_keys(['properties', 'enquiries', 'leads', 'follow_ups', 'site_visits'], null);
         if (in_array('properties', $sections, true)) {
             $query = $period->apply($this->scoped($this->properties, 'properties', $filters), 'properties.created_at');
-            $data['properties'] = $this->counts($query, $this->statuses('status', ['available', 'sold', 'rented', 'unavailable']));
+            $data['properties'] = $this->counts($query, $this->statuses('status', ['available', 'reserved', 'sold', 'rented', 'unavailable']));
         }
         if (in_array('enquiries', $sections, true)) {
             $query = $period->apply($this->scoped($this->enquiries, 'property_enquiries', $filters), 'property_enquiries.created_at');

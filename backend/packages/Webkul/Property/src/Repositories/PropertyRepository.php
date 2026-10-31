@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Property\Contracts\Property;
+use Webkul\Property\Support\DealState;
 
 class PropertyRepository extends Repository
 {
@@ -69,6 +70,7 @@ class PropertyRepository extends Repository
                 if ($property) {
                     $property = $this->model->newQuery()->lockForUpdate()->findOrFail($property->id);
                 }
+                $this->guardDealChanges($data, $property);
                 $existing = $property?->images ?? [];
                 if (array_diff($remove, $existing)) {
                     throw ValidationException::withMessages(['remove_images' => trans('admin::app.property-api.invalid-image')]);
@@ -103,10 +105,27 @@ class PropertyRepository extends Repository
     {
         DB::transaction(function () use ($property) {
             $property = $this->model->newQuery()->lockForUpdate()->findOrFail($property->id);
+            $active = app(PropertyDealRepository::class)->activeForProperty($property->id);
+            if ($active?->status === 'reserved') {
+                throw ValidationException::withMessages(['property_id' => trans('admin::app.property-api.deal-delete-reserved')]);
+            }
             $images = $property->images ?? [];
             app(PropertyDocumentRepository::class)->removeForProperty($property->id);
             $this->delete($property->id);
             DB::afterCommit(fn () => Storage::disk('public')->delete($images));
         });
+    }
+
+    protected function guardDealChanges(array $data, $property): void
+    {
+        $active = $property ? app(PropertyDealRepository::class)->activeForProperty($property->id) : null;
+        if ($active) {
+            if ($data['status'] !== DealState::propertyStatus($active->status, $active->purpose) || $data['purpose'] !== $active->purpose
+                || ($active->purpose === 'rent' && ($data['rent_period'] ?? null) !== $active->rent_period)) {
+                throw ValidationException::withMessages(['status' => trans('admin::app.property-api.deal-managed-property')]);
+            }
+        } elseif ($data['status'] === 'reserved') {
+            throw ValidationException::withMessages(['status' => trans('admin::app.property-api.deal-managed-property')]);
+        }
     }
 }

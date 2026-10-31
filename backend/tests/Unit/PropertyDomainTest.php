@@ -6,7 +6,7 @@ use Webkul\Property\Support\PropertyStatus;
 it('enforces listing-purpose availability rules', function ($purpose, $status, $allowed) {
     expect(PropertyStatus::allows($purpose, $status))->toBe($allowed);
 })->with([
-    ['sale', 'available', true], ['sale', 'sold', true], ['sale', 'rented', false], ['sale', 'unavailable', true],
+    ['sale', 'available', true], ['sale', 'reserved', true], ['rent', 'reserved', true], ['sale', 'sold', true], ['sale', 'rented', false], ['sale', 'unavailable', true],
     ['rent', 'available', true], ['rent', 'rented', true], ['rent', 'sold', false], ['rent', 'unavailable', true], ['unknown', 'available', false], ['sale', 'unknown', false],
 ]);
 it('normalizes enquiry details without changing message content', function () {

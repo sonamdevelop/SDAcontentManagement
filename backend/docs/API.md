@@ -61,7 +61,8 @@ Example property body (POST, or complete PUT):
 
 Supported types: apartment, house, villa, plot, commercial. Purpose: sale/rent.
 Rent requires `rent_period` daily/monthly/yearly; sale clears it. Area units:
-sqft/sqm/acre. Status: available/sold/rented/unavailable; sold applies only to sale,
+sqft/sqm/acre. Status: available/reserved/sold/rented/unavailable; reserved is controlled by deals.
+Sold applies only to sale,
 rented only to rent. Description and postal_code are optional. Price is nonnegative
 with at most two decimals; area must be positive. Decimal values return as strings
 and use the configured application currency. Creator/agent IDs are assigned by
@@ -396,7 +397,7 @@ Illustrative response for a user without enquiry access:
 ```json
 {
   "data": {
-    "properties": {"total": 8, "available": 5, "sold": 1, "rented": 1, "unavailable": 1},
+    "properties": {"total": 8, "available": 5, "reserved": 0, "sold": 1, "rented": 1, "unavailable": 1},
     "enquiries": null,
     "leads": {"total": 5, "open": 3, "won": 1, "lost": 1, "unclassified": 0},
     "follow_ups": {"total": 6, "pending": 4, "done": 2, "overdue": 1, "undated": 0},
@@ -571,3 +572,150 @@ up or moving environments. Database schema rollback does not remove file bytes.
 The retry command handles recorded deletions. Failed rollback cleanup is logged;
 abrupt process termination can also leave unreferenced files for operator
 reconciliation.
+
+## Property deal reservations and confirmation
+
+This is an exclusive sale/rent property workflow. A reservation holds one property
+for a lead's customer. Booking amounts are recorded advances, not online payment
+collection or proof of payment. Cancelling does not initiate a refund. Confirming
+a rental marks the whole property rented; dated room/stay bookings and subsequent
+rental renewals remain separate workflows.
+
+Run the new deal-table migration. New login tokens include `deals:read` and
+`deals:write`; existing tokens must be renewed by logging in again. Custom roles
+need explicit new deal permissions. Source property/lead permissions and token
+abilities are independently checked for writes.
+
+| Method | Path (after `/api/v1`) | Deal permission | Token ability |
+|---|---|---|---|
+| GET | `/admin/property-deals` | `deals` | `deals:read` |
+| GET | `/admin/property-deals/{id}` | `deals.view` | `deals:read` |
+| POST | `/admin/property-deals` | `deals.create` + `deals.view` | `deals:write` |
+| PATCH | `/admin/property-deals/{id}/confirm` | `deals.confirm` + `deals.view` | `deals:write` |
+| PATCH | `/admin/property-deals/{id}/cancel` | `deals.cancel` + `deals.view` | `deals:write` |
+
+All write routes additionally require `properties` and `properties.edit`, plus
+`properties:read` and `properties:write` token abilities. Reserve/confirm also
+require `leads.view` and `leads:read`. Cancellation can release a hold after the
+lead/customer is closed or deleted and does not require lead access. An actual
+property change requires current property visibility; confirmation additionally
+requires current lead visibility. Read routes use the deal's own scope and do not
+require current source records or source-module rights.
+
+Deal user_id is assigned server-side from the property's agent when reserved.
+Own/group/global scopes apply to that assigned agent, including for all-permission
+roles; an empty group sees no deals. The creator is separately recorded. Property
+or lead reassignment does not transfer the deal, and this phase has no deal agent
+reassignment endpoint. A manager with the appropriate global/group scope can
+handle a deal when its agent no longer has access to the source property/lead.
+
+Reserve with an available property and an open lead that has a customer:
+
+```json
+{
+  "request_id": "0d59a581-8794-4980-a88c-5bdd03ef6cee",
+  "property_id": 12,
+  "lead_id": 9,
+  "agreed_price": "6500000.50",
+  "booking_amount": "50000.25",
+  "payment_reference": "Offline receipt reference",
+  "notes": "Customer agreed terms"
+}
+```
+
+- request_id is a required client-generated UUID. Retry an uncertain POST using
+  the same key and payload. A new reservation returns 201; an equivalent retry
+  by the same creator returns the existing deal with 200, without new events.
+  Equivalent decimal strings are normalized, UUID case is ignored, and omitted
+  booking_amount is equivalent to 0.00. Retrying after confirmation/cancellation
+  returns the existing terminal deal without holding the property again. Reusing
+  the key with a different payload or creator returns 409; current deal scope
+  must still allow a replay. A new reservation after cancellation needs a new key.
+- agreed_price and booking_amount must be **decimal strings**, with up to 13
+  integer digits and two fractional digits, maximum 9999999999999.99. Scientific
+  notation, negatives, JSON numbers and additional decimal places are rejected.
+  agreed_price must be positive. booking_amount defaults to 0.00 and must not
+  exceed agreed_price. Comparison/storage uses exact cents, never float arithmetic.
+- agreed_price is the negotiated total commitment for this deal (including for
+  rental deals), not an automatic copy/multiplication of the listing's rental
+  price. booking_amount is an advance included in that total, not a separate
+  security-deposit field. Monetary fields are immutable in this phase; correct
+  a reserved deal by cancelling it and creating a new booking request.
+- payment_reference is optional/null, maximum 190 characters; notes is
+  optional/null, maximum 5,000. These are internal records, not verified receipts.
+- Customer, property, purpose, rental period, currency, agent, creator, state and
+  timestamps are derived by the server. Extra client fields cannot override them.
+  Property publication is not required. The lead may have enquired about another
+  property. Reservation and confirmation require the lead to remain open (neither
+  a closed_at timestamp nor won/lost stage) and the customer identity to match.
+
+The response contains a data object with ID, property_id, lead_id, user_id,
+property title/city, purpose, rent_period, status, agreed_price, booking_amount,
+currency and created/confirmed/cancelled timestamps. Detail responses also include
+request_id, person_id, created_by, customer name/email/phone snapshots,
+payment_reference, notes, cancellation_reason and chronological events. Monetary
+values always return as two-decimal strings. Source IDs can become null after
+source deletion, while snapshots and financial/event history remain readable.
+Internal payload hashes and unique property guards are never returned.
+
+State transitions are transactional:
+
+| Action | Deal state | Property status |
+|---|---|---|
+| Reserve | reserved | available → reserved |
+| Confirm sale | reserved → confirmed | reserved → sold |
+| Confirm rental | reserved → confirmed | reserved → rented |
+| Cancel reservation | reserved → cancelled | reserved → available |
+
+Confirm with PATCH and an empty body. Cancel with:
+
+```json
+{"cancellation_reason": "Customer withdrew"}
+```
+
+The reason is required, maximum 1,000 characters. Confirmed/cancelled deals cannot
+be reopened or changed to the other terminal state. Repeating the same terminal
+action is a no-op: original timestamp, reason and event count remain unchanged
+(the cancel request still requires a valid reason). Source ACL/abilities are
+rechecked even on retries; a no-op does not require a still-existing source record.
+Confirmation validates the property purpose/rental period, reserved state, hold
+ownership and customer identity again. Cancellation never overwrites an unrelated
+externally changed property status. It retains the recorded booking amount and
+payment reference; neither money movement nor refund accounting is performed.
+
+Property locks serialize reservations, edits, deletion and transitions; current
+locking reads and a nullable unique active_property_id guard prevent a second
+reserved/confirmed deal for the same property. Cancelled deals release the guard.
+Property/deal changes and the audit event commit or roll back together. Events
+record the acting user, action, property/state changes, and original advance/
+agreed price when reserved. Real two-process integration tests verify competing
+reservations and identical concurrent retries against MariaDB.
+
+Reserved properties disappear from the public catalogue and public enquiry flow;
+existing publication/enquiry flags are preserved, so cancellation makes the
+property public again only when the normal visibility rules allow it. Existing
+scheduled visits remain unchanged; new scheduling/rescheduling requires an
+available property as before. Confirmation changes property status only: it does
+not mark the CRM lead won, change lead products, send notifications or take money.
+Use the existing lead-stage API separately after confirmation if appropriate.
+
+`reserved` is a new inventory status, included in admin property filters and
+`data.properties.reserved` in dashboard reports. It cannot be manually created.
+While a reserved/confirmed deal controls a property, ordinary property PUT cannot
+change its controlled status, purpose or rental period. Other listing edits remain
+allowed when the full PUT includes the controlled values. A reserved property
+cannot be deleted: cancel its hold first. Confirmed/cancelled property deletion
+retains financial history through nullable source references. Confirmed deals
+remain final in this phase; there is no reversal, rental-ending or expiry API.
+Rolling back the schema does not undo inventory status changes; preserve deal
+history and reconcile active reservations before any operator-led rollback.
+
+Deal lists support status (reserved/confirmed/cancelled), purpose, property_id,
+lead_id, user_id, from/to (inclusive ISO timestamps with seconds and timezone,
+filtering created_at), page and per_page (1–100, default 20). Results use
+newest-ID-first data/links/meta pagination. Lists omit customer contact/identity,
+request ID, notes, payment references, cancellation reasons and audit details;
+those require deals.view. Successful deal responses send Cache-Control: no-store. There
+is no public or hard-delete deal endpoint. Invalid money/transitions/source state
+return 422, missing/out-of-scope records return 404, missing ACL/abilities return
+403 and absent/expired/revoked authentication returns 401.
