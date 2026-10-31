@@ -2,6 +2,10 @@
 
 return [
     'property-api' => [
+        'assign-leads' => 'Assign leads',
+        'invalid-assignee' => 'Choose an active lead agent within your authorized scope.',
+        'invalid-stage' => 'Choose a stage from this lead\'s current pipeline.',
+        'lost-reason' => 'A reason is required when marking a lead as lost.',
         'properties' => 'Properties',
         'create' => 'Add property',
         'edit' => 'Edit property',

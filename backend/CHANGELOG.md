@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added scoped lead browsing, safe agent assignment and pipeline transitions, plus lead notes and dated follow-up tasks through the backend API.
+
 * [feature] Added versioned property and enquiry APIs with expiring staff tokens, scoped permissions, explicit publication, photo validation and automatic CRM lead creation.
 
 * [fixed] Fixed a web form submission creating a duplicate contact when the address differed only in case.
