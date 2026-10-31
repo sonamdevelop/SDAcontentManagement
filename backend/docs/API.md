@@ -344,3 +344,114 @@ List filters: `status`, `property_id`, `lead_id`, `user_id`, `from`, `to`, `page
 require explicit timezones. Results sort by start time, then ID. Agent options are
 paginated IDs/names only. All validation failures return the standard 422 shape;
 unauthenticated 401, insufficient permission/ability 403, inaccessible IDs 404.
+
+## Dashboard and agent performance reports
+
+These read-only APIs aggregate the existing backend records. No frontend is
+included. New logins receive `reports:read`; older tokens retain their existing
+abilities and must be replaced by logging in again. No new migrations are needed
+for reporting (the existing property and site visit migrations must be applied).
+
+| Method | Path (after `/api/v1`) | Required access |
+|---|---|---|
+| GET | `/admin/reports/overview` | `property-reports` + `reports:read` |
+| GET | `/admin/reports/agents` | `property-reports` + `property-reports.agents` + `reports:read` |
+
+Report access does not grant access to a source module. Each section additionally
+requires both the source role permission and source token ability below. A role
+with permission type `all` passes ACL checks but still obeys token abilities and
+own/group/global data visibility.
+
+| Section | Source role permission | Source token ability | Filtered date |
+|---|---|---|---|
+| properties | `properties` | `properties:read` | property created_at |
+| enquiries | `properties.enquiries` | `enquiries:read` | enquiry created_at |
+| leads | `leads` | `leads:read` | lead created_at |
+| follow_ups | `leads.view` | `leads:read` | task schedule_to (due date) |
+| site_visits | `visits` | `visits:read` | visit starts_at |
+
+Both endpoints accept `from` and `to` as **calendar dates** (`YYYY-MM-DD`), unlike
+the timestamp filters on the visit/follow-up listing APIs. Dates use the configured
+application timezone (`Asia/Kolkata` locally). Either bound may be omitted; no
+bounds means all dates. Days are inclusive: `to=2026-11-10` includes everything
+before the following local midnight. When both bounds exist, to must be at or
+after from. Supported date years are 1000–9998. Invalid filters return 422.
+
+Optional `user_id` narrows the caller's existing scope. It cannot widen it.
+Out-of-scope and nonexistent user IDs both produce zero totals/empty agent lists;
+there is no staff lookup through this filter. Properties, enquiries, leads and
+visits use their own current user_id. Follow-ups use linked leads' current owners,
+not the activity author. Reassignment therefore affects reports immediately.
+
+Example request:
+
+```http
+GET /api/v1/admin/reports/overview?from=2026-11-01&to=2026-11-30
+Authorization: Bearer <access_token>
+Accept: application/json
+```
+
+Illustrative response for a user without enquiry access:
+
+```json
+{
+  "data": {
+    "properties": {"total": 8, "available": 5, "sold": 1, "rented": 1, "unavailable": 1},
+    "enquiries": null,
+    "leads": {"total": 5, "open": 3, "won": 1, "lost": 1, "unclassified": 0},
+    "follow_ups": {"total": 6, "pending": 4, "done": 2, "overdue": 1, "undated": 0},
+    "site_visits": {"total": 4, "scheduled": 2, "completed": 1, "cancelled": 1, "no_show": 0, "upcoming": 1}
+  },
+  "meta": {
+    "period": {"from": "2026-11-01", "to": "2026-11-30", "timezone": "Asia/Kolkata"},
+    "user_id": null,
+    "as_of": "2026-11-10T12:00:00+05:30",
+    "available_sections": ["properties", "leads", "follow_ups", "site_visits"]
+  }
+}
+```
+
+Unavailable sections are `null`, never zero, and omitted from available_sections.
+Permitted sections with no matching records contain integer zero counts. Overview
+still returns 200 when every section is unavailable. Responses contain no record
+IDs, property titles, customer contacts, private notes, feedback or addresses.
+Both endpoints send `Cache-Control: no-store`.
+
+Metric definitions:
+
+- Property totals include unpublished inventory and all statuses; they describe
+  staff inventory, not just the public catalogue.
+- Enquiries have no separate workflow status today. `linked_to_lead` and
+  `without_lead` reflect whether lead_id is currently present. An enquiry whose
+  lead/property was deleted still counts under its original owning user.
+- Lead buckets use the current pipeline stage code: won, lost, other codes as
+  open, and missing/null stages as unclassified. Legacy boolean status is not
+  used. Lead totals include all CRM leads in scope, not only property enquiries.
+- Follow-ups count task activities linked to at least one visible lead. Notes,
+  meetings and activities without visible lead links are excluded. A shared task
+  counts once, even if several visible leads link to it. Pending/done follow
+  is_done; overdue is the pending subset whose non-null due date is strictly
+  before as_of. Undated tasks are included only when no date bounds are set;
+  they can be pending/done but never overdue.
+- Visit buckets use current status. Upcoming is the scheduled subset whose start
+  is at or after as_of. Past scheduled visits remain scheduled but are not
+  upcoming. Date bounds apply to the scheduled start, not creation/outcome time.
+- `as_of` is captured once per response for the overdue/upcoming comparison.
+  Statuses and ownership are current when queried. Date filters select cohorts;
+  they do **not** reconstruct historical status, count status changes during a
+  period, measure revenue, or attribute past results to former agents.
+
+Agent reports return the same lead and visit buckets per current agent, with
+`user_id`, `name`, `active`, `leads` and `site_visits`. A source metric without
+access is null. At least one of leads/site_visits must be accessible, otherwise
+403. Only agents with at least one matching accessible lead or visit are listed;
+inactive agents with matching history remain included. Staff without matching
+records are omitted. No customer information or staff email is returned.
+
+`/admin/reports/agents?from=2026-11-01&to=2026-11-30&per_page=20&page=1`
+uses standard `data`, `links`, `meta` pagination (per_page 1–100, default 20),
+ordered by user ID. Meta also includes period, user_id, as_of and
+available_sections (leads/site_visits only). Lead and visit aggregates are joined
+independently to prevent multiplication when one agent has many of each.
+Unassigned leads can appear in a global overview but have no agent row, so agent
+sums need not equal global totals. Deleted records are not reconstructed.

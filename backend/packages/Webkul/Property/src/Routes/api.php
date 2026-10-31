@@ -6,6 +6,7 @@ use Webkul\Property\Http\Controllers\EnquiryApiController;
 use Webkul\Property\Http\Controllers\FollowUpApiController;
 use Webkul\Property\Http\Controllers\LeadApiController;
 use Webkul\Property\Http\Controllers\PropertyApiController;
+use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
 use Webkul\Property\Http\Middleware\ApiAccess;
 
@@ -51,5 +52,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::patch('site-visits/{id}/status', [$visits, 'status'])->whereNumber('id')->middleware(ApiAccess::class.':visits.edit,visits:write,visits.view')->name('visits.status');
     Route::patch('site-visits/{id}/feedback', [$visits, 'feedback'])->whereNumber('id')->middleware(ApiAccess::class.':visits.edit,visits:write,visits.view')->name('visits.feedback');
 });
+
+Route::get('admin/reports/overview', [ReportApiController::class, 'overview'])->middleware(ApiAccess::class.':property-reports,reports:read')->name('admin.reports.overview');
+Route::get('admin/reports/agents', [ReportApiController::class, 'agents'])->middleware(ApiAccess::class.':property-reports.agents,reports:read,property-reports')->name('admin.reports.agents');
 
 Route::fallback(fn () => response()->json(['message' => 'Not found.'], 404));

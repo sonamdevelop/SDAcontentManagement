@@ -2,6 +2,8 @@
 
 return [
     'property-api' => [
+        'reports' => 'Property reports',
+        'agent-reports' => 'Agent performance reports',
         'visit-customer-changed' => 'The lead contact changed. Create a new visit for the current customer.',
         'visits' => 'Site visits',
         'assign-visits' => 'Assign site visits',

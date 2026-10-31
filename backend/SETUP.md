@@ -41,10 +41,12 @@ selectors if you intentionally customize local database usernames/passwords.
 Never run tests against production/development data. API tests cover auth,
 expiry/revocation, role/ability checks, record scopes, public privacy, property
 CRUD, files, filters, enquiry idempotency, rollback, lead assignment/stages,
-notes, dated follow-up tasks, and site visit scheduling/status/audit integration.
+notes, dated follow-up tasks, site visit scheduling/status/audit integration,
+and scoped dashboard/agent reports.
 Site visit tests include two concurrent PHP processes against MariaDB; PHP
 `proc_open` must be enabled. Apply migrations before using the new endpoints,
-and log in again to obtain the new visit token abilities.
+and log in again to obtain the new visit/report token abilities. Reporting adds
+no new database tables.
 
 Read [docs/API.md](docs/API.md) and [docs/openapi.json](docs/openapi.json) for the
 contract. Runtime processes do not survive snapshots. Code is now inside the
