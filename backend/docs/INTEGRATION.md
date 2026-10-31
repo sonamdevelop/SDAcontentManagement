@@ -1,8 +1,10 @@
 # Web and mobile API integration kit
 
-The backend is ready for client integration testing. This kit supplies requests,
+The public property website now lives in [web/](../../web/README.md) and connects
+to catalogue, detail and enquiry APIs. Staff/mobile integration remains separate.
+The backend is ready for further client integration testing. This kit supplies requests,
 configuration examples and a repeatable journey. It does not deploy a staging
-server or connect the existing web/mobile/Firebase applications.
+server or migrate the existing Firebase/mobile accounts.
 
 ## Start locally
 
@@ -199,9 +201,9 @@ connecting private mobile operations, decide how those accounts map to the staff
 API or implement the required separate customer authentication workflow. No
 customer signup or Firebase-token exchange endpoint currently exists.
 
-First connect public web catalogue/enquiry pages and the staff web login/editor,
-then the remaining staff workflows. Mobile wiring follows once its auth/account
-mapping is defined. Automated tests cover the backend contracts; actual browser,
+Public web catalogue/detail/enquiry pages are implemented in `web/`. Next connect
+the staff web login/editor and the remaining staff workflows. Mobile wiring
+follows once its auth/account mapping is defined. Automated tests cover the backend contracts; actual browser,
 frontend component and mobile device acceptance tests belong to that next phase.
 
 See [API.md](API.md) and [openapi.json](openapi.json) for complete request schemas,

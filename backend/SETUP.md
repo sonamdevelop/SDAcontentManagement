@@ -4,8 +4,9 @@ Source: Krayin CRM (MIT), upstream commit
 `5eecae04634a6790bf2fe68904ee3e973cb24e7b`. This backend was reconstructed after
 an environment failure; the unavailable prior workspace was not restored byte
 for byte. Property/enquiry domain behavior is implemented in the extension package
-`packages/Webkul/Property`. Existing upstream CRM frontend assets are retained;
-no custom web/mobile frontend is implemented or connected in this phase.
+`packages/Webkul/Property`. Existing upstream CRM frontend assets are retained. The separate public property
+website in `../web/` now connects to the public APIs; see its README. Staff/admin
+UI and mobile/Firebase migration remain separate work.
 
 Requirements: Linux with Docker Compose, Python 3, and enough disk for PHP/MariaDB
 images. From this `backend/` directory:
