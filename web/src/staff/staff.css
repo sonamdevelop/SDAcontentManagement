@@ -216,3 +216,31 @@
     padding: 24px;
   }
 }
+.staff-lead-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+  margin: 24px 0;
+}
+.staff-lead-actions fieldset,
+.staff-activity-form fieldset {
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 16px;
+}
+.staff-lead-actions button,
+.staff-activity-form button {
+  margin-top: 12px;
+}
+.staff-activities {
+  margin-top: 32px;
+}
+.staff-activity-form {
+  margin: 20px 0;
+  max-width: 760px;
+}
+.staff-related-lead {
+  display: inline-block;
+  margin-right: 16px;
+}

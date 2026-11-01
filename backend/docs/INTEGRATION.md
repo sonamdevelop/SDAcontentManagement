@@ -202,10 +202,12 @@ API or implement the required separate customer authentication workflow. No
 customer signup or Firebase-token exchange endpoint currently exists.
 
 Public catalogue/detail/enquiry pages and the staff login, property editor,
-photos/publication, overview and read-only enquiry/lead lists are implemented in
+photos/publication, overview, enquiry/lead lists and lead detail/assignment/stage/notes/tasks are implemented in
 `web/`. Frontend unit/integration and desktop/mobile browser checks cover these
 flows, including real Laravel HTTP verification in an isolated test database.
-Visits, document/deal management and lead editing remain future UI work.
+Visits and document/deal management remain future UI work. Lead stages can change
+within the current pipeline; cross-pipeline moves and email/push follow-up
+notifications are not part of the frontend.
 Mobile wiring and device acceptance checks follow after its auth/account mapping
 is defined.
 
