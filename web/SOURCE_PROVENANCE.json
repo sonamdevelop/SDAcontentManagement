@@ -1,0 +1,28 @@
+{
+  "policy": "Reference repositories are read-only; all modifications live in SDAcontentManagement. Only the listed assets were copied. No database dumps, credentials, uploaded customer files, Firebase configuration or Git metadata were imported.",
+  "website": {
+    "repository": "sonamdevelop/stayindandeliwithdashboard",
+    "commit": "f46b60981f63bc0e1375303d35d22b30d0360dd4",
+    "copied_assets": [
+      {
+        "source_path": "public/assets/img/logo/logo.png",
+        "sda_path": "web/public/brand/stay-logo.png",
+        "sha256": "0bbe1ddfcf3c826d0dab5b9d79a4214a1519709267c591d9b64e2615371993f5"
+      },
+      {
+        "source_path": "public/assets/img/dandelipic/ef6716c1cf76aed48e287719eeed0334.webp",
+        "sda_path": "web/public/brand/stay-interior.webp",
+        "sha256": "d9772e823d3a6fe58947dcc01fcf7c1459a0e400c0d3620637f0ee3b80587b1c"
+      }
+    ],
+    "design_references": [
+      "resources/views/home2.blade.php (green/bronze palette, hero layout)",
+      "resources/views/partials/header.blade.php (brand/navigation)"
+    ]
+  },
+  "admin_reference": {
+    "repository": "sonamdevelop/buy-rent-sell-admin",
+    "commit": "1827aaac9a74194eaab26d111bdad9d34c99984f",
+    "role": "Read-only React/Firebase admin panel reference; mobile code and admin auth are not imported in this public frontend phase."
+  }
+}
