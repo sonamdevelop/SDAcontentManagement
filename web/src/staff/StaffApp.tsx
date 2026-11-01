@@ -30,6 +30,7 @@ import { Auth, useAuth } from './session';
 import { LeadPage, FollowUpQueue } from './LeadWorkspace';
 import { formatLeadValue } from './leads';
 import { VisitList, VisitCreate, VisitDetail } from './VisitWorkspace';
+import { DocumentPage } from './DocumentWorkspace';
 import './staff.css';
 const STORAGE = 'sda.staff.token';
 function savedToken() {
@@ -123,6 +124,7 @@ export function StaffApp() {
           <Route path="login" element={<Navigate to="/staff" replace />} />
           <Route path="properties" element={<PropertyList />} />
           <Route path="properties/new" element={<PropertyEditor />} />
+          <Route path="properties/:id/documents" element={<DocumentPage />} />
           <Route path="properties/:id/edit" element={<PropertyEditor key={location.pathname} />} />
           <Route path="enquiries" element={<Records kind="enquiries" />} />
           <Route path="leads" element={<Records kind="leads" />} />
@@ -466,6 +468,12 @@ function PropertyList() {
                 </p>
                 {can(profile, 'properties.edit') && (
                   <Link to={`/staff/properties/${p.id}/edit`}>Edit property</Link>
+                )}
+                {(can(profile, 'properties.documents') ||
+                  can(profile, 'properties.documents.create')) && (
+                  <p>
+                    <Link to={`/staff/properties/${p.id}/documents`}>Private documents</Link>
+                  </p>
                 )}
               </article>
             ))}

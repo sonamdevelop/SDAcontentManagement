@@ -206,8 +206,9 @@ photos/publication, overview, enquiry/lead lists and lead detail/assignment/stag
 `web/`. Frontend unit/integration and desktop/mobile browser checks cover these
 flows, including real Laravel HTTP verification in an isolated test database.
 Site visit scheduling, filtered lists, rescheduling/assignment, outcomes, feedback
-and audit history are also connected in the staff frontend. Document/deal
-management remains future UI work. Lead stages can change
+and audit history are also connected in the staff frontend. Property document
+upload, authenticated download, filters and confirmed deletion are connected too.
+Deal management remains future UI work. Lead stages can change
 within the current pipeline; cross-pipeline moves and email/push follow-up
 notifications are not part of the frontend.
 Mobile wiring and device acceptance checks follow after its auth/account mapping

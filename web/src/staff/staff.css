@@ -284,3 +284,18 @@
 .staff-lead-actions .staff-form-grid {
   grid-template-columns: 1fr;
 }
+.staff-document-upload {
+  margin: 24px 0;
+  max-width: 760px;
+}
+.staff-document-records {
+  margin-top: 20px;
+}
+.staff-document-confirm {
+  padding: 16px;
+  border: 1px solid #a02124;
+  border-radius: 6px;
+}
+.staff-document-confirm button {
+  margin: 8px 12px 0 0;
+}
