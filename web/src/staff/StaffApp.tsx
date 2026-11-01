@@ -1,13 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   Link,
   Navigate,
@@ -35,6 +26,9 @@ import {
   StaffApi,
   StaffError,
 } from './api';
+import { Auth, useAuth } from './session';
+import { LeadPage, FollowUpQueue } from './LeadWorkspace';
+import { formatLeadValue } from './leads';
 import './staff.css';
 const STORAGE = 'sda.staff.token';
 function savedToken() {
@@ -51,12 +45,6 @@ function storeToken(token: string) {
   } catch {
     /* Memory-only session when storage is unavailable. */
   }
-}
-const Auth = createContext<{ api: StaffApi; profile: Profile; clear: () => void } | null>(null);
-function useAuth() {
-  const value = useContext(Auth);
-  if (!value) throw new Error('Staff session required');
-  return value;
 }
 function ErrorMessage({ error }: { error: unknown }) {
   return (
@@ -137,6 +125,8 @@ export function StaffApp() {
           <Route path="properties/:id/edit" element={<PropertyEditor key={location.pathname} />} />
           <Route path="enquiries" element={<Records kind="enquiries" />} />
           <Route path="leads" element={<Records kind="leads" />} />
+          <Route path="leads/:id" element={<LeadPage />} />
+          <Route path="follow-ups" element={<FollowUpQueue />} />
           <Route
             path="*"
             element={
@@ -261,6 +251,7 @@ function Shell() {
           {can(profile, 'properties.create') && (
             <NavLink to="/staff/properties/new">Add property</NavLink>
           )}
+          {can(profile, 'leads.view') && <NavLink to="/staff/follow-ups">Follow-ups</NavLink>}
           <Link to="/properties">Public website ↗</Link>
         </nav>
         <main>
@@ -486,6 +477,7 @@ function PropertyList() {
   );
 }
 function Records({ kind }: { kind: 'enquiries' | 'leads' }) {
+  const { profile } = useAuth();
   const { result, allowed, params, setParams } = useList<Enquiry | Lead>(
     kind,
     kind === 'enquiries' ? 'properties.enquiries' : 'leads',
@@ -516,14 +508,28 @@ function Records({ kind }: { kind: 'enquiries' | 'leads' }) {
                     </p>
                     <p className="staff-message">{row.message}</p>
                     <p>
-                      {row.lead_id ? `Linked lead #${row.lead_id}` : 'No linked lead'} ·{' '}
-                      {row.created_at}
+                      {row.lead_id ? (
+                        can(profile, 'leads.view') ? (
+                          <Link to={`/staff/leads/${row.lead_id}`}>Open lead #{row.lead_id}</Link>
+                        ) : (
+                          `Linked lead #${row.lead_id}`
+                        )
+                      ) : (
+                        'No linked lead'
+                      )}{' '}
+                      · {row.created_at}
                     </p>
                   </>
                 ) : (
                   <>
-                    <h2>{row.title}</h2>
-                    <p>{formatPrice(row.lead_value, row.currency)}</p>
+                    <h2>
+                      {can(profile, 'leads.view') ? (
+                        <Link to={`/staff/leads/${row.id}`}>{row.title}</Link>
+                      ) : (
+                        row.title
+                      )}
+                    </h2>
+                    <p>{formatLeadValue(row.lead_value, row.currency)}</p>
                     <p>
                       {row.stage?.name || 'No stage'} · {row.agent?.name || 'Unassigned'}
                     </p>

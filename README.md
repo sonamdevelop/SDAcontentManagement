@@ -16,7 +16,7 @@ Admin repositories are read-only references; all changes are made in SDA.
 
 
 Staff workspace: the SDA React frontend now includes `/staff` for Laravel login,
-property creation/editing, photos and publication, overview counts and read-only
-enquiry/lead lists. See [web setup and permissions](web/README.md#staff-workspace).
+property creation/editing, photos and publication, overview counts, enquiry/lead lists, lead detail/assignment/stage changes and
+notes with dated follow-up tasks. See [web setup and permissions](web/README.md#staff-workspace).
 Both reference repositories remain read-only. This does not deploy changes to
 stayindandeli.in or migrate the Firebase app.

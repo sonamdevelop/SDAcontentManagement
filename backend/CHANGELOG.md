@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added staff lead details, scoped agent assignment, current-pipeline stage changes, plain-text notes and dated follow-up tasks with rescheduling, completion and an overdue queue; display CRM values with exact four-decimal support.
+
 * [feature] Added the SDA staff web workspace with Laravel token login/logout, scoped property editing and photos, publication controls, overview counts and read-only enquiry/lead lists.
 
 * [feature] Added a responsive public property website in the SDA repository with catalogue filters, public photos/details and consented enquiries, using read-only reference branding.

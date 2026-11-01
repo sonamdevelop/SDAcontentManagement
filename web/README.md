@@ -138,7 +138,13 @@ Available screens:
   exact decimal values, sale/rent fields, publication and enquiry switches.
 - Photos: multipart uploads and removal of server-returned property paths.
   Full edits use POST with `_method=PUT`, allowing PHP to read uploaded files.
-- Enquiries and leads: read-only, server-scoped paginated lists.
+- Enquiries and leads: server-scoped paginated lists with permission-gated links
+  to lead details and private contact information.
+- Lead workflow: paginated eligible agent choices, stage changes inside the
+  current pipeline, a required reason for lost leads, plain-text notes and
+  dated follow-up tasks with rescheduling and pending/done actions.
+- Follow-up queue: `/staff/follow-ups` with activity type, status, overdue filters
+  and pagination.
 
 Actions use exact permissions from `/auth/me`. Permissions are rechecked on tab
 focus; Laravel remains authoritative for every request and token ability.
@@ -167,3 +173,28 @@ overview, property creation with exact decimal price and a photo, multipart
 edit/publication, public private-field boundaries, photo removal, enquiry/lead
 lists, mobile layout and server-side token revocation. Synthetic staff/property
 fixtures and the temporary test services were removed after verification.
+
+### Lead permissions and follow-ups
+
+`leads.view` is required for a lead detail and its notes/tasks. Assignment also
+requires `leads.assign`; the agent picker is paginated and only shows eligible
+staff inside the backend visibility scope. Stage changes and activity writes
+require `leads.edit`. Stage options additionally require `leads`, matching the
+pipeline metadata API. The UI shows stages only from the lead's current pipeline;
+cross-pipeline moves are not supported by the API. Laravel enforces both role
+permissions and token abilities on every action.
+
+Due times use the browser's displayed local timezone and are sent as explicit
+ISO instants with seconds. The queue uses backend overdue status. Notes render as
+plain text, including strings containing HTML. Existing task/note edit failures
+retain the draft; the server may reject shared or inaccessible activities even
+when a lead itself is visible. Follow-ups are in-app dated tasks, without email,
+push or background notifications. Activity deletion is not included in this UI.
+
+CRM values have up to four decimal places and are formatted without float
+conversion, separately from two-decimal property prices. A real browser check
+against isolated `krayin_test` verified scoped detail/contact access, an
+out-of-scope 404, agent assignment, lost stage with reason, note creation/edit,
+task creation/rescheduling/completion, mobile layout, overdue filters and logout.
+The synthetic actors, leads, activities, pipeline and temporary test services
+were removed afterward. No schema or backend API changes are required.
