@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added staff private property document upload, category filters, authenticated attachment downloads and confirmed deletion, with separate permissions and no public photo/token URL fallback.
+
 * [feature] Added staff site visit scheduling with scoped source/agent choices, timezone-aware filters and rescheduling, conflict errors, completion/cancellation/no-show, feedback and audit history.
 
 * [feature] Added staff lead details, scoped agent assignment, current-pipeline stage changes, plain-text notes and dated follow-up tasks with rescheduling, completion and an overdue queue; display CRM values with exact four-decimal support.

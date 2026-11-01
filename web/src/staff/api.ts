@@ -79,12 +79,13 @@ export class StaffApi {
     private token = '',
     private unauthorized: () => void = () => {},
   ) {}
-  async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  private async checked(path: string, options: RequestInit = {}): Promise<Response> {
     const response = await fetch(
       new PublicPropertyApi(import.meta.env.VITE_PROPERTY_API_URL || '/api/v1').baseUrl + path,
       {
         ...options,
         credentials: 'omit',
+        cache: 'no-store',
         redirect: 'error',
         headers: {
           Accept: 'application/json',
@@ -96,9 +97,8 @@ export class StaffApi {
       },
     );
     if (response.status === 401) this.unauthorized();
-    if (response.status === 204) return undefined as T;
-    const body = await response.json().catch(() => null);
     if (!response.ok) {
+      const body = await response.json().catch(() => null);
       const fields: Record<string, string[]> = {};
       if (body?.errors && typeof body.errors === 'object')
         for (const [key, value] of Object.entries(body.errors))
@@ -106,8 +106,32 @@ export class StaffApi {
             fields[key] = value;
       throw new StaffError(response.status, fields);
     }
+    return response;
+  }
+  async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const response = await this.checked(path, options);
+    if (response.status === 204) return undefined as T;
+    const body = await response.json().catch(() => null);
     if (!body) throw new StaffError(502);
     return body as T;
+  }
+  async documentFile(propertyId: number, documentId: number, signal?: AbortSignal): Promise<Blob> {
+    if (![propertyId, documentId].every((id) => Number.isSafeInteger(id) && id > 0))
+      throw new StaffError(404);
+    // Construct the path from IDs. Never send a token to a resource-provided download URL.
+    const response = await this.checked(
+      `/admin/properties/${propertyId}/documents/${documentId}/download`,
+      { signal },
+    );
+    const mime = response.headers.get('Content-Type')?.split(';')[0].toLowerCase();
+    if (
+      !['application/pdf', 'image/jpeg', 'image/png'].includes(mime || '') ||
+      Number(response.headers.get('Content-Length')) > 10485760
+    )
+      throw new StaffError(502);
+    const blob = await response.blob();
+    if (blob.size > 10485760) throw new StaffError(502);
+    return blob;
   }
   async me(signal?: AbortSignal) {
     const { data } = await this.request<{ data: Profile }>('/auth/me', { signal });

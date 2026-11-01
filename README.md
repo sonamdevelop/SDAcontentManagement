@@ -17,6 +17,14 @@ Admin repositories are read-only references; all changes are made in SDA.
 
 Staff workspace: the SDA React frontend now includes `/staff` for Laravel login,
 property creation/editing, photos and publication, overview counts, enquiry/lead lists, lead detail/assignment/stage changes and
-notes with dated follow-up tasks, plus site visit scheduling, outcomes and history. See [web setup and permissions](web/README.md#staff-workspace).
+notes with dated follow-up tasks, plus site visit scheduling, outcomes/history and private property documents. See [web setup and permissions](web/README.md#staff-workspace).
 Both reference repositories remain read-only. This does not deploy changes to
 stayindandeli.in or migrate the Firebase app.
+
+
+Current staff workflow status: property/enquiry management, leads/follow-ups,
+site visits and private documents have web screens. **Property deal management**
+(reservation, advances, confirmation/cancellation and history) is the remaining
+major staff UI module in the current plan. Room/stay booking integration and
+mobile/Firebase account/data migration are separate later phases; production
+rollout still needs deployment and acceptance checks.

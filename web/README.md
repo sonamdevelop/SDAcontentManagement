@@ -164,7 +164,7 @@ browser. User IDs come from the authenticated backend account.
 
 Staff changes need no new migration. Use the existing API deployment, CORS
 allowlist and `/storage` routing described above. SPA fallback must cover
-`/staff/*`. Documents, deals, booking management and mobile migration
+`/staff/*`. Deals, booking management and mobile migration
 remain future UI phases; their existing backend APIs are unchanged.
 
 Validation for this phase includes unit/integration tests, desktop/mobile browser
@@ -239,3 +239,39 @@ an out-of-scope 404, rescheduling, agent changes, cancellation/history,
 completion/no-show, feedback updates, filters, mobile layout and logout.
 The synthetic property, leads, visits, agents and temporary services were removed
 after verification.
+
+### Private property documents
+
+Open **Properties → Private documents**, or
+`/staff/properties/{id}/documents`. Documents use the dedicated private API and
+storage disk, separate from public photos. The page offers category filtering,
+pagination, upload metadata, authenticated downloads and confirmed deletion.
+PDF, JPEG and PNG files can be up to 10 MB each, with a backend-enforced limit of
+50 files per property. The client checks size/type hints; Laravel validates the
+actual content and extension. Upload failures retain the fields and selected file.
+There is no automatic retry of upload POSTs, metadata editing or inline preview.
+
+Permissions and token abilities:
+
+- Parent `properties` access and its read ability are needed for the staff
+  property context.
+- `properties.documents` plus `documents:read` permits list/download.
+- `properties.documents.create` plus `documents:write` permits upload. Upload-only
+  staff see a success message without private list/download access.
+- `properties.documents.delete` plus `documents:write` permits deletion after an
+  explicit confirmation. The UI also needs list access to choose a document.
+
+Downloads fetch a constructed API path with the staff Authorization header, never
+put tokens in URLs or follow metadata-provided download URLs. After type/size
+checks, the browser receives an attachment through a short-lived Blob URL.
+Object URLs and in-flight downloads are cleaned up on navigation/logout. Private
+staff requests bypass the browser cache; the API also serves document responses
+with no-store headers. A download already saved by the user remains on that device.
+
+A real browser check against isolated `krayin_test` verified invalid PDF rejection,
+retained draft, valid multipart upload, metadata checksum, byte-exact authenticated
+download, anonymous 401, out-of-scope 404, category filtering, mobile layout,
+confirmed deletion followed by download 404, and logout token revocation. All
+synthetic actors, properties, files and temporary services were removed afterward.
+No schema/backend API changes are needed for this phase; existing private storage
+and scheduled cleanup configuration still apply.
