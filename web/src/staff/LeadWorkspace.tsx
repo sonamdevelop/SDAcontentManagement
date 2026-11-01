@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useResource } from '../api/useResource';
-import { can, StaffError, type Page } from './api';
+import { can } from './api';
+import { Failure, Pagination, useMutation } from './StaffUi';
 import {
   formatLeadValue,
   dueTimestamp,
@@ -14,82 +15,6 @@ import { useAuth } from './session';
 function useLeadApi() {
   const { api } = useAuth();
   return useMemo(() => new LeadApi(api), [api]);
-}
-function Failure({ error }: { error: unknown }) {
-  return (
-    <div role="alert">
-      <p>
-        {error instanceof StaffError
-          ? error.message
-          : error instanceof TypeError
-            ? 'Could not confirm the save. Refresh the activity list before retrying.'
-            : error instanceof Error
-              ? error.message
-              : 'Could not confirm the save. Refresh the activity list before retrying.'}
-      </p>
-      {error instanceof StaffError &&
-        Object.entries(error.fields).map(([name, messages]) => (
-          <p key={name}>
-            {name}: {messages.join(' ')}
-          </p>
-        ))}
-    </div>
-  );
-}
-function Pagination({
-  meta,
-  onPage,
-}: {
-  meta: Page<unknown>['meta'];
-  onPage: (page: number) => void;
-}) {
-  return (
-    <div className="staff-paging">
-      <button disabled={meta.current_page <= 1} onClick={() => onPage(meta.current_page - 1)}>
-        Previous
-      </button>
-      <span>
-        Page {meta.current_page} of {meta.last_page} · {meta.total} records
-      </span>
-      <button
-        disabled={meta.current_page >= meta.last_page}
-        onClick={() => onPage(meta.current_page + 1)}
-      >
-        Next
-      </button>
-    </div>
-  );
-}
-// A mutation must not update a different lead after navigation, or submit twice.
-function useMutation() {
-  const active = useRef(true),
-    pending = useRef(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<unknown>();
-  const [success, setSuccess] = useState('');
-  useEffect(() => {
-    active.current = true;
-    return () => {
-      active.current = false;
-    };
-  }, []);
-  async function run(work: () => Promise<void>, message: string) {
-    if (pending.current) return;
-    pending.current = true;
-    setBusy(true);
-    setError(undefined);
-    setSuccess('');
-    try {
-      await work();
-      if (active.current) setSuccess(message);
-    } catch (e) {
-      if (active.current) setError(e);
-    } finally {
-      pending.current = false;
-      if (active.current) setBusy(false);
-    }
-  }
-  return { busy, error, success, run, isActive: () => active.current };
 }
 export function LeadPage() {
   const { id = '' } = useParams();
@@ -124,6 +49,11 @@ function LeadContent({ initial }: { initial: LeadDetail }) {
   return (
     <>
       <h1>{lead.title}</h1>
+      {can(profile, 'visits') && (
+        <p>
+          <Link to={`/staff/site-visits?lead_id=${lead.id}`}>View site visits for this lead</Link>
+        </p>
+      )}
       <section className="staff-panel">
         <h2>Lead details</h2>
         <p>

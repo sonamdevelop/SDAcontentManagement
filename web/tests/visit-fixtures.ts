@@ -1,0 +1,30 @@
+import type { Visit } from '../src/staff/visits';
+export const visit: Visit = {
+  id: 31,
+  property_id: 7,
+  property_title: 'River view apartment',
+  property_city: 'Dandeli',
+  lead_id: 12,
+  customer_name: 'Buyer',
+  customer_email: 'buyer@example.test',
+  customer_phone: '9000011111',
+  user_id: 1,
+  status: 'scheduled',
+  starts_at: '2026-01-01T10:30:00Z',
+  ends_at: '2026-01-01T11:30:00Z',
+  reschedule_count: 0,
+  created_at: '2025-12-01T10:30:00Z',
+  notes: 'Arrange a viewing',
+  feedback: null,
+  cancellation_reason: null,
+  reschedule_reason: null,
+  events: [
+    {
+      id: 1,
+      actor_id: 1,
+      action: 'scheduled',
+      changes: { starts_at: '2026-01-01T10:30:00Z', user_id: 1 },
+      created_at: '2025-12-01T10:30:00Z',
+    },
+  ],
+};

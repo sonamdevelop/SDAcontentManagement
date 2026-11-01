@@ -10,13 +10,13 @@ website lives in [`web/`](web/) and connects to its public APIs.
 - [Read-only source provenance](web/SOURCE_PROVENANCE.json)
 
 The website supports property browsing/filtering, public details/photos and
-consented enquiries. Staff/admin UI, Firebase data/account migration and mobile
-integration remain separate work. The original Stay in Dandeli and Buy Rent Sell
+consented enquiries. Staff workflows include property/lead management and site
+visits. Firebase data/account migration and mobile integration remain separate work. The original Stay in Dandeli and Buy Rent Sell
 Admin repositories are read-only references; all changes are made in SDA.
 
 
 Staff workspace: the SDA React frontend now includes `/staff` for Laravel login,
 property creation/editing, photos and publication, overview counts, enquiry/lead lists, lead detail/assignment/stage changes and
-notes with dated follow-up tasks. See [web setup and permissions](web/README.md#staff-workspace).
+notes with dated follow-up tasks, plus site visit scheduling, outcomes and history. See [web setup and permissions](web/README.md#staff-workspace).
 Both reference repositories remain read-only. This does not deploy changes to
 stayindandeli.in or migrate the Firebase app.

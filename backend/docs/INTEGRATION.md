@@ -205,7 +205,9 @@ Public catalogue/detail/enquiry pages and the staff login, property editor,
 photos/publication, overview, enquiry/lead lists and lead detail/assignment/stage/notes/tasks are implemented in
 `web/`. Frontend unit/integration and desktop/mobile browser checks cover these
 flows, including real Laravel HTTP verification in an isolated test database.
-Visits and document/deal management remain future UI work. Lead stages can change
+Site visit scheduling, filtered lists, rescheduling/assignment, outcomes, feedback
+and audit history are also connected in the staff frontend. Document/deal
+management remains future UI work. Lead stages can change
 within the current pipeline; cross-pipeline moves and email/push follow-up
 notifications are not part of the frontend.
 Mobile wiring and device acceptance checks follow after its auth/account mapping
