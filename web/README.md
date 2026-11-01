@@ -51,13 +51,13 @@ or rebuild Laravel's configuration cache. Use HTTPS for deployed sites.
 There are no fabricated listings in the running website. Actual Laravel records
 must be published, available and assigned to an active agent. The property must
 also accept enquiries for the form to appear. Empty databases show an empty state.
-Create/publish records through the existing backend APIs/Postman kit first.
+Create/publish records through the staff workspace or backend API/Postman kit.
 Existing Firebase listings and room bookings are not automatically migrated.
 
 The existing stay/booking website remains reachable through **Explore stays**.
-Its Laravel 11 room/booking backend was not copied into the Laravel 12 CRM. This
-phase is the public property website; staff dashboard, Firebase account/data
-migration, customer authentication and mobile wiring are later work.
+Its Laravel 11 room/booking backend was not copied into the Laravel 12 CRM. The
+SDA staff workspace covers property/lead management and site visits. Firebase
+account/data migration, customer authentication and mobile wiring are later work.
 
 ## Source provenance and import boundary
 
@@ -73,7 +73,7 @@ were imported; runtime code is self-contained in `web/`.
 No source `.git` directories, environment files, SQL dumps, database contents,
 uploaded customer documents or Firebase credentials were imported. The old
 admin's localStorage `isAdmin` flag is not a Laravel authentication mechanism;
-future staff UI must use actual Laravel authentication and server-side ACL/scope.
+the staff UI uses Laravel authentication and server-side ACL/scope.
 No commits or pushes are made to either reference repository.
 
 ## Tests and build
@@ -164,7 +164,7 @@ browser. User IDs come from the authenticated backend account.
 
 Staff changes need no new migration. Use the existing API deployment, CORS
 allowlist and `/storage` routing described above. SPA fallback must cover
-`/staff/*`. Visits, documents, deals, booking management and mobile migration
+`/staff/*`. Documents, deals, booking management and mobile migration
 remain future UI phases; their existing backend APIs are unchanged.
 
 Validation for this phase includes unit/integration tests, desktop/mobile browser
@@ -198,3 +198,44 @@ out-of-scope 404, agent assignment, lost stage with reason, note creation/edit,
 task creation/rescheduling/completion, mobile layout, overdue filters and logout.
 The synthetic actors, leads, activities, pipeline and temporary test services
 were removed afterward. No schema or backend API changes are required.
+
+### Site visits
+
+Open `/staff/site-visits` for a server-scoped list with status and start-time
+range filters, pagination and detail/history links. The lead detail page links
+to visits filtered to that lead. `/staff/site-visits/new` has paginated,
+searchable property/lead choices and eligible agent choices. Only available
+properties are offered; Laravel checks open leads with contacts and rejects
+conflicting property, customer or agent slots. A failed save retains the draft.
+
+Scheduling and rescheduling require a future start, positive duration up to eight
+hours and explicit ISO timestamps. The browser displays its timezone and converts
+local inputs to instants. Rescheduling requires a reason. Scheduled visits support
+agent changes and cancellation with a reason. Completion requires feedback;
+completed/no-show actions become selectable after the start time. Completed and
+no-show visits allow feedback updates. Terminal visits cannot be reopened or
+rescheduled through this UI. Visit history renders the API's events and changes
+as plain text; saved property/customer names are snapshots. Agent/actor IDs are
+shown where the existing API does not provide display names.
+
+Permissions match the existing API:
+
+- `visits` with `visits:read` for the list, `visits.view` for detail/history.
+- `visits.create` plus `visits.view` with `visits:write` to schedule. The source
+  pickers additionally require `properties`, `leads`, `leads.view` and the
+  corresponding read abilities; this UI does not accept arbitrary source IDs.
+- `visits.assign` plus `visits.view` to change agents.
+- `visits.edit` plus `visits.view` to reschedule or change outcomes/feedback.
+
+Agent choices require the write ability and create or assignment permission.
+The backend still enforces visibility independently of role and token abilities,
+including on source/agent choices and each mutation. No new migration is needed.
+This phase does not add calendar sync or email/push notifications.
+
+Unit/integration and desktop/mobile browser tests cover the visit workflows.
+A real Laravel browser check against isolated `krayin_test` also verified India
+timezone preservation, scheduling, overlap rejection with retained source choices,
+an out-of-scope 404, rescheduling, agent changes, cancellation/history,
+completion/no-show, feedback updates, filters, mobile layout and logout.
+The synthetic property, leads, visits, agents and temporary services were removed
+after verification.

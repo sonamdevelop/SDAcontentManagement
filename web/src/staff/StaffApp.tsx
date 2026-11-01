@@ -29,6 +29,7 @@ import {
 import { Auth, useAuth } from './session';
 import { LeadPage, FollowUpQueue } from './LeadWorkspace';
 import { formatLeadValue } from './leads';
+import { VisitList, VisitCreate, VisitDetail } from './VisitWorkspace';
 import './staff.css';
 const STORAGE = 'sda.staff.token';
 function savedToken() {
@@ -127,6 +128,9 @@ export function StaffApp() {
           <Route path="leads" element={<Records kind="leads" />} />
           <Route path="leads/:id" element={<LeadPage />} />
           <Route path="follow-ups" element={<FollowUpQueue />} />
+          <Route path="site-visits" element={<VisitList />} />
+          <Route path="site-visits/new" element={<VisitCreate />} />
+          <Route path="site-visits/:id" element={<VisitDetail />} />
           <Route
             path="*"
             element={
@@ -252,6 +256,10 @@ function Shell() {
             <NavLink to="/staff/properties/new">Add property</NavLink>
           )}
           {can(profile, 'leads.view') && <NavLink to="/staff/follow-ups">Follow-ups</NavLink>}
+          {can(profile, 'visits') && <NavLink to="/staff/site-visits">Site visits</NavLink>}
+          {can(profile, 'visits.view') && can(profile, 'visits.create') && (
+            <NavLink to="/staff/site-visits/new">Schedule visit</NavLink>
+          )}
           <Link to="/properties">Public website ↗</Link>
         </nav>
         <main>
