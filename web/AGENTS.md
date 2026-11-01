@@ -8,4 +8,5 @@
   `npm run build` and relevant `npm run test:browser` checks; keep fixture data in tests.
 - Preserve exact money display, URL filters, consent, private-field boundaries and
   enquiry UUID reuse for uncertain retries. Never add a private/admin fallback.
-- Stay/room bookings, staff authentication and mobile migration are separate phases.
+- Staff screens use the separate bearer-token client; public requests must never carry staff tokens.
+- Stay/room bookings and mobile migration remain separate phases.

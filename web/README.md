@@ -117,3 +117,53 @@ A generic static-host fallback is `try_files $uri $uri/ /index.html`; apply it t
 the frontend location after API/storage routing, not over backend URLs. Vite's dev
 server is local tooling, not a production web server. This change does not deploy
 or modify the existing stayindandeli.in website.
+
+## Staff workspace
+
+Open `/staff` or use **Staff** in the public navigation. Sign in using a Laravel
+staff account. The React workspace uses `/auth/login`, `/auth/me` and
+`/auth/logout`; it does not use Firebase accounts or the CRM browser session.
+Tokens live in tab-scoped sessionStorage (memory only when storage is blocked),
+never localStorage. Signing out revokes the current token on Laravel. A failed
+logout is shown as an error so the user can retry. Expired/rejected tokens clear
+the session. Closing a tab is not server-side revocation; use Sign out on shared
+computers. Deploy with HTTPS and restrict frontend script access as for any
+bearer-token application.
+
+Available screens:
+
+- Overview: API counts, date filters, update timestamp and explicit unavailable
+  sections when source permissions are missing.
+- Properties: server-scoped paginated search/status filters; create/edit with
+  exact decimal values, sale/rent fields, publication and enquiry switches.
+- Photos: multipart uploads and removal of server-returned property paths.
+  Full edits use POST with `_method=PUT`, allowing PHP to read uploaded files.
+- Enquiries and leads: read-only, server-scoped paginated lists.
+
+Actions use exact permissions from `/auth/me`. Permissions are rechecked on tab
+focus; Laravel remains authoritative for every request and token ability.
+A reader needs `properties`; creation requires `properties.create`; editing
+requires `properties` plus `properties.edit`. Enquiries require
+`properties.enquiries`, leads require `leads`, and overview requires
+`property-reports`. Tokens must also contain each corresponding API ability.
+An all-permissions role bypasses action ACL only; backend visibility scope still
+applies. Private contact/address data stays inside staff screens. Deal-controlled
+reserved inventory remains governed by backend validation. There is no inventory
+delete action in this phase.
+
+New properties start unpublished with enquiries disabled. Save displays server
+validation messages and retains the draft on failure. A successful save returns
+to the property list. Staff property creation does not assign ownership from the
+browser. User IDs come from the authenticated backend account.
+
+Staff changes need no new migration. Use the existing API deployment, CORS
+allowlist and `/storage` routing described above. SPA fallback must cover
+`/staff/*`. Visits, documents, deals, booking management and mobile migration
+remain future UI phases; their existing backend APIs are unchanged.
+
+Validation for this phase includes unit/integration tests, desktop/mobile browser
+checks, and a real browser against an isolated Laravel test database: login,
+overview, property creation with exact decimal price and a photo, multipart
+edit/publication, public private-field boundaries, photo removal, enquiry/lead
+lists, mobile layout and server-side token revocation. Synthetic staff/property
+fixtures and the temporary test services were removed after verification.

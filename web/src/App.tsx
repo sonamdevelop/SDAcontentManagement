@@ -1,10 +1,12 @@
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import { StaffApp } from './staff/StaffApp';
 import { Layout } from './components/Layout';
 import { CatalogPage } from './pages/CatalogPage';
 import { DetailPage } from './pages/DetailPage';
 export function App() {
   return (
     <Routes>
+      <Route path="staff/*" element={<StaffApp />} />
       <Route element={<Layout />}>
         <Route index element={<Navigate to="/properties" replace />} />
         <Route path="properties" element={<CatalogPage />} />

@@ -13,3 +13,10 @@ The website supports property browsing/filtering, public details/photos and
 consented enquiries. Staff/admin UI, Firebase data/account migration and mobile
 integration remain separate work. The original Stay in Dandeli and Buy Rent Sell
 Admin repositories are read-only references; all changes are made in SDA.
+
+
+Staff workspace: the SDA React frontend now includes `/staff` for Laravel login,
+property creation/editing, photos and publication, overview counts and read-only
+enquiry/lead lists. See [web setup and permissions](web/README.md#staff-workspace).
+Both reference repositories remain read-only. This does not deploy changes to
+stayindandeli.in or migrate the Firebase app.

@@ -201,10 +201,13 @@ connecting private mobile operations, decide how those accounts map to the staff
 API or implement the required separate customer authentication workflow. No
 customer signup or Firebase-token exchange endpoint currently exists.
 
-Public web catalogue/detail/enquiry pages are implemented in `web/`. Next connect
-the staff web login/editor and the remaining staff workflows. Mobile wiring
-follows once its auth/account mapping is defined. Automated tests cover the backend contracts; actual browser,
-frontend component and mobile device acceptance tests belong to that next phase.
+Public catalogue/detail/enquiry pages and the staff login, property editor,
+photos/publication, overview and read-only enquiry/lead lists are implemented in
+`web/`. Frontend unit/integration and desktop/mobile browser checks cover these
+flows, including real Laravel HTTP verification in an isolated test database.
+Visits, document/deal management and lead editing remain future UI work.
+Mobile wiring and device acceptance checks follow after its auth/account mapping
+is defined.
 
 See [API.md](API.md) and [openapi.json](openapi.json) for complete request schemas,
 permissions, validation and current feature limitations.
