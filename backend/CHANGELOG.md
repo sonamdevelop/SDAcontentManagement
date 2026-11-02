@@ -4,6 +4,10 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added a real-browser staff/public acceptance journey on a unique isolated database, with synthetic database and public/private upload backup recovery verification and a staging handoff guide.
+
+* [feature] Added staff property deal reservation screens with exact recorded advances, idempotent uncertain retries, scoped filters, reviewed confirmation/cancellation and audit history, covered by unit/integration and desktop/mobile browser tests.
+
 * [feature] Added staff private property document upload, category filters, authenticated attachment downloads and confirmed deletion, with separate permissions and no public photo/token URL fallback.
 
 * [feature] Added staff site visit scheduling with scoped source/agent choices, timezone-aware filters and rescheduling, conflict errors, completion/cancellation/no-show, feedback and audit history.

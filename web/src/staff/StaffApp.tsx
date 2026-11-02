@@ -1,3 +1,5 @@
+import { DealList, DealCreate, DealDetail } from './DealWorkspace';
+import { dealWriteAllowed } from './deals';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   Link,
@@ -130,6 +132,9 @@ export function StaffApp() {
           <Route path="leads" element={<Records kind="leads" />} />
           <Route path="leads/:id" element={<LeadPage />} />
           <Route path="follow-ups" element={<FollowUpQueue />} />
+          <Route path="property-deals" element={<DealList />} />
+          <Route path="property-deals/new" element={<DealCreate />} />
+          <Route path="property-deals/:id" element={<DealDetail />} />
           <Route path="site-visits" element={<VisitList />} />
           <Route path="site-visits/new" element={<VisitCreate />} />
           <Route path="site-visits/:id" element={<VisitDetail />} />
@@ -261,6 +266,10 @@ function Shell() {
           {can(profile, 'visits') && <NavLink to="/staff/site-visits">Site visits</NavLink>}
           {can(profile, 'visits.view') && can(profile, 'visits.create') && (
             <NavLink to="/staff/site-visits/new">Schedule visit</NavLink>
+          )}
+          {can(profile, 'deals') && <NavLink to="/staff/property-deals">Property deals</NavLink>}
+          {dealWriteAllowed(profile, 'create') && (
+            <NavLink to="/staff/property-deals/new">Reserve property</NavLink>
           )}
           <Link to="/properties">Public website ↗</Link>
         </nav>
@@ -468,6 +477,11 @@ function PropertyList() {
                 </p>
                 {can(profile, 'properties.edit') && (
                   <Link to={`/staff/properties/${p.id}/edit`}>Edit property</Link>
+                )}
+                {can(profile, 'deals') && (
+                  <p>
+                    <Link to={`/staff/property-deals?property_id=${p.id}`}>Property deals</Link>
+                  </p>
                 )}
                 {(can(profile, 'properties.documents') ||
                   can(profile, 'properties.documents.create')) && (

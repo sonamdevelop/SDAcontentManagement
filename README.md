@@ -23,8 +23,6 @@ stayindandeli.in or migrate the Firebase app.
 
 
 Current staff workflow status: property/enquiry management, leads/follow-ups,
-site visits and private documents have web screens. **Property deal management**
-(reservation, advances, confirmation/cancellation and history) is the remaining
-major staff UI module in the current plan. Room/stay booking integration and
+site visits and private documents have web screens. **Property deal management** now includes staff reservation, recorded advance, confirmation/cancellation and history screens. Room/stay booking integration and
 mobile/Firebase account/data migration are separate later phases; production
 rollout still needs deployment and acceptance checks.
