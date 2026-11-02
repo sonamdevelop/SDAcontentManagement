@@ -1,6 +1,23 @@
 <?php
 
 return [
+    'stay-api' => [
+        'stays' => 'Stays and room types',
+        'bookings' => 'Stay bookings',
+        'cancel' => 'Cancel booking',
+        'dates' => 'Choose valid dates for a stay of 1 to 365 nights.',
+        'past' => 'Check-in cannot be before today in the stay timezone.',
+        'inactive' => 'This stay or room type is inactive.',
+        'capacity' => 'Guest count exceeds capacity for the requested rooms.',
+        'rate-changed' => 'The nightly rate changed. Refresh availability before booking.',
+        'amount-limit' => 'The booking total exceeds the supported amount.',
+        'advance' => 'Advance cannot exceed the booking total.',
+        'unavailable' => 'Not enough rooms remain for every night. Refresh availability.',
+        'started' => 'Bookings cannot be cancelled on or after their check-in date.',
+        'timezone' => 'Timezone cannot change after room types have been created.',
+        'positive' => 'Nightly rate must be positive.',
+        'inventory' => 'Inventory/capacity cannot change while current or future bookings exist.',
+    ],
     'property-api' => [
         'deals' => 'Property deals and reservations',
         'confirm-deal' => 'Confirm property deals',

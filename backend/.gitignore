@@ -46,3 +46,5 @@ __pycache__/
 !/docs/INTEGRATION.md
 !/docs/postman/
 !/docs/postman/**
+
+!/docs/STAYS.md

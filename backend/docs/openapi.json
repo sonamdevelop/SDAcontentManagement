@@ -3,7 +3,7 @@
   "info": {
     "title": "SDA Property Backend API",
     "version": "1.5.1",
-    "description": "Backend-only property inventory, private documents, exclusive property deal reservations, enquiries, leads, follow-ups, visits and scoped reports. Deal amounts are records, not payment collection."
+    "description": "Backend-only property inventory, private documents, exclusive property deal reservations, enquiries, leads, follow-ups, visits and scoped reports. Deal amounts are records, not payment collection. Staff stay/room inventory, calendar-date availability and offline stay bookings are documented in STAYS.md."
   },
   "servers": [
     {
@@ -4744,6 +4744,825 @@
           }
         }
       }
+    },
+    "/admin/stays": {
+      "get": {
+        "summary": "List scoped stays and room types",
+        "operationId": "staysIndex",
+        "description": "Requires stays / stays:read. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Stay"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "links"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a stay",
+        "operationId": "staysStore",
+        "description": "Requires stays + stays.manage / stays:write. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StaySetup"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stays/{id}": {
+      "put": {
+        "summary": "Update stay setup",
+        "operationId": "staysUpdate",
+        "description": "Requires stays + stays.manage / stays:write. Timezone cannot change after rooms exist. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StaySetup"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stays/{stayId}/rooms": {
+      "post": {
+        "summary": "Create room type inventory",
+        "operationId": "stayRoomsStore",
+        "description": "Requires stays + stays.manage / stays:write. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayRoom"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "stayId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayRoomWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stays/{stayId}/rooms/{id}": {
+      "put": {
+        "summary": "Update room type setup",
+        "operationId": "stayRoomsUpdate",
+        "description": "Requires stays + stays.manage / stays:write. Inventory/capacity are locked while active current/future bookings exist. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayRoom"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "stayId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayRoomWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stay-rooms/{id}/availability": {
+      "get": {
+        "summary": "Get minimum available rooms across a date range",
+        "operationId": "stayRoomsAvailability",
+        "description": "Requires stays / stays:read. Advisory availability using peak nightly occupancy, exclusive checkout, local stay timezone, 1–365 nights. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayAvailability"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "check_in",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "check_out",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/stay-bookings": {
+      "get": {
+        "summary": "List scoped stay booking summaries",
+        "operationId": "stayBookingsIndex",
+        "description": "Requires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StayBookingSummary"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "links"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "room_type_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a confirmed stay booking",
+        "operationId": "stayBookingsStore",
+        "description": "Requires stay-bookings.create + stay-bookings.view + stays / bookings:write + stays:read. UUID retries return the same record, including after cancellation. Flat nightly totals and offline advances are immutable records; no payment is collected. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayBooking"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayBooking"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayBookingWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stay-bookings/{id}": {
+      "get": {
+        "summary": "Read stay booking and history",
+        "operationId": "stayBookingsShow",
+        "description": "Requires stay-bookings.view / bookings:read. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayBooking"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/admin/stay-bookings/{id}/cancel": {
+      "patch": {
+        "summary": "Cancel a stay booking before local check-in date",
+        "operationId": "stayBookingsCancel",
+        "description": "Requires stay-bookings.cancel + stay-bookings.view / bookings:write. Repeated cancellation preserves original reason/history. No refund is initiated. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayBooking"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cancellation_reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "cancellation_reason"
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6352,6 +7171,609 @@
             "maxLength": 5000
           }
         }
+      },
+      "StayWrite": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "city",
+          "timezone",
+          "active"
+        ]
+      },
+      "StayRoomWrite": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "inventory": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}(?:\\.\\d{1,2})?$",
+            "example": "1000.25"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "inventory",
+          "capacity",
+          "nightly_rate",
+          "active"
+        ]
+      },
+      "StayRoom": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "inventory": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}(?:\\.\\d{1,2})?$",
+            "example": "1000.25"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "stay_id",
+          "name",
+          "inventory",
+          "capacity",
+          "nightly_rate",
+          "active"
+        ]
+      },
+      "Stay": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "user_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StayRoom"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "name",
+          "city",
+          "timezone",
+          "active",
+          "rooms"
+        ]
+      },
+      "StayBookingWrite": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "guest_name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "guest_email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "guest_phone": {
+            "type": "string",
+            "maxLength": 30,
+            "nullable": true
+          },
+          "expected_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}(?:\\.\\d{1,2})?$",
+            "example": "1000.25"
+          },
+          "advance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}(?:\\.\\d{1,2})?$",
+            "example": "1000.25"
+          },
+          "payment_reference": {
+            "type": "string",
+            "maxLength": 190,
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "request_id",
+          "room_type_id",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "guest_name",
+          "expected_rate"
+        ]
+      },
+      "StayBookingSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "user_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "advance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "balance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelled_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "room_type_id",
+          "user_id",
+          "stay_name",
+          "room_name",
+          "timezone",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "nightly_rate",
+          "total",
+          "advance",
+          "balance",
+          "currency",
+          "status",
+          "created_at",
+          "updated_at",
+          "cancelled_at"
+        ]
+      },
+      "StayBooking": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "user_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "advance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "balance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelled_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_by": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guest_name": {
+            "type": "string"
+          },
+          "guest_email": {
+            "type": "string",
+            "nullable": true
+          },
+          "guest_phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "payment_reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancellation_reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "booking_id": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "actor_id": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "created",
+                    "cancelled"
+                  ]
+                },
+                "changes": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "booking_id",
+                "actor_id",
+                "action",
+                "changes",
+                "created_at",
+                "updated_at"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "room_type_id",
+          "user_id",
+          "stay_name",
+          "room_name",
+          "timezone",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "nightly_rate",
+          "total",
+          "advance",
+          "balance",
+          "currency",
+          "status",
+          "created_at",
+          "updated_at",
+          "cancelled_at",
+          "request_id",
+          "created_by",
+          "guest_name",
+          "guest_email",
+          "guest_phone",
+          "payment_reference",
+          "notes",
+          "cancellation_reason",
+          "events"
+        ]
+      },
+      "StayAvailability": {
+        "type": "object",
+        "properties": {
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "nights": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "available_rooms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "room_type_id",
+          "check_in",
+          "check_out",
+          "nights",
+          "timezone",
+          "nightly_rate",
+          "currency",
+          "capacity",
+          "available_rooms"
+        ]
+      },
+      "StaySetup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "user_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "name",
+          "city",
+          "timezone",
+          "active"
+        ]
       }
     }
   }

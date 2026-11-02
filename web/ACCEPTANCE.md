@@ -22,7 +22,7 @@ before serving and uses the seeded local-only account in this new synthetic DB.
 It removes only its own temporary API container on exit. Synthetic databases and
 backup artifacts under ignored`backend/.runtime/acceptance/` are retained.
 
-The real browser uses no mocked APIs. It logs in, publishes a property/photo,
+The real browser uses no mocked APIs. A second journey sets up a stay/room type, checks availability, books with exact totals and an advance, checks exhausted inventory, then cancels and verifies released availability. It logs in, publishes a property/photo,
 checks public address privacy, submits an anonymous enquiry, opens the linked
 lead, adds/completes follow-up work, schedules/cancels a visit, reserves with an
 exact advance, cancels/re-reserves/confirms a deal and signs out. It checks that

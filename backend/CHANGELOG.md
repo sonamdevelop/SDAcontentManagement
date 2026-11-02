@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added scoped stay/room inventory management, calendar-date availability and staff bookings with exact nightly totals, offline advance/balance records, idempotent retries, concurrency protection and cancellation history.
+
 * [feature] Added a real-browser staff/public acceptance journey on a unique isolated database, with synthetic database and public/private upload backup recovery verification and a staging handoff guide.
 
 * [feature] Added staff property deal reservation screens with exact recorded advances, idempotent uncertain retries, scoped filters, reviewed confirmation/cancellation and audit history, covered by unit/integration and desktop/mobile browser tests.

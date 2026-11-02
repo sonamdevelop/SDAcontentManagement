@@ -70,3 +70,7 @@ contract. Runtime processes do not survive snapshots. Code is now inside the
 SDA Git repository; keep a Git commit/remote backup or publish a verified
 workspace snapshot before replacing environments. A local setup does not prove
 fresh-task snapshot restoration, and nothing is deployed publicly.
+
+## Staff stays and room bookings
+
+Apply the additive stay-booking migration with ordinary `php artisan migrate` (the setup helper runs it). Log in again for stay/booking token abilities. See [stay booking API and rules](docs/STAYS.md). `tools/test-api.sh` includes stay/date/inventory/money checks and two-process concurrency tests on the isolated database. The real browser acceptance runner includes stay setup/booking/cancellation and backs up/restores the stay tables.

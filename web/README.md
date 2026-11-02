@@ -290,3 +290,7 @@ Permissions mirror the API: `deals` lists, `deals.view` reads detail/history, an
 Deal coverage includes exact high-value money, malformed data, UUID reuse on uncertain saves, rejected drafts, permission restrictions, URL filtering/pagination, terminal states, safe audit rendering and desktop/mobile reservation/confirmation/cancellation. Browser tests use controlled API fixtures; run the backend's isolated `tools/test-api.sh` for real MariaDB API integration and concurrent reservation checks.
 
 For the real Laravel/MariaDB browser journey and staging requirements, see [acceptance and staging handoff](ACCEPTANCE.md).
+
+### Staff stay bookings
+
+**Stays and rooms** manages stays, timezone, room-type inventory/capacity and flat nightly rates. **Stay bookings** supports date-based availability, staff booking creation, offline advance/balance records, cancellation before check-in and history. See [stay booking rules and API](../backend/docs/STAYS.md). This does not migrate the original stay website or add public booking/payment collection.

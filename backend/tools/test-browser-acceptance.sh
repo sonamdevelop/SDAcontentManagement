@@ -36,7 +36,7 @@ docker compose exec -T db mariadb-dump -uroot -p"${DB_ROOT_PASSWORD:-local_root_
 gzip -t "$backup"
 docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}" -e "CREATE DATABASE $restore;"
 gzip -dc "$backup" | docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}" "$restore"
-for table in properties property_deals property_deal_events leads persons property_documents; do
+for table in properties property_deals property_deal_events leads persons property_documents stays stay_room_types stay_bookings stay_booking_events; do
   original="$(docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}" -N -e "SELECT COUNT(*) FROM $SDA_ACCEPTANCE_DATABASE.$table")"
   restored="$(docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}" -N -e "SELECT COUNT(*) FROM $restore.$table")"
   test "$original" = "$restored"

@@ -1,6 +1,12 @@
 <?php
 
 return [
+    ['key' => 'stays', 'name' => 'admin::app.stay-api.stays', 'route' => 'api.v1.admin.stays.index', 'sort' => 8],
+    ['key' => 'stays.manage', 'name' => 'admin::app.acl.edit', 'route' => ['api.v1.admin.stays.store', 'api.v1.admin.stays.update', 'api.v1.admin.rooms.store', 'api.v1.admin.rooms.update'], 'sort' => 1],
+    ['key' => 'stay-bookings', 'name' => 'admin::app.stay-api.bookings', 'route' => 'api.v1.admin.bookings.index', 'sort' => 9],
+    ['key' => 'stay-bookings.view', 'name' => 'admin::app.acl.view', 'route' => 'api.v1.admin.bookings.show', 'sort' => 1],
+    ['key' => 'stay-bookings.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.bookings.store', 'sort' => 2],
+    ['key' => 'stay-bookings.cancel', 'name' => 'admin::app.stay-api.cancel', 'route' => 'api.v1.admin.bookings.cancel', 'sort' => 3],
     ['key' => 'deals', 'name' => 'admin::app.property-api.deals', 'route' => 'api.v1.admin.deals.index', 'sort' => 8],
     ['key' => 'deals.view', 'name' => 'admin::app.acl.view', 'route' => 'api.v1.admin.deals.show', 'sort' => 1],
     ['key' => 'deals.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.deals.store', 'sort' => 2],

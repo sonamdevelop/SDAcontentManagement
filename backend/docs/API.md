@@ -724,3 +724,7 @@ those require deals.view. Successful deal responses send Cache-Control: no-store
 is no public or hard-delete deal endpoint. Invalid money/transitions/source state
 return 422, missing/out-of-scope records return 404, missing ACL/abilities return
 403 and absent/expired/revoked authentication returns 401.
+
+## Staff stay and room bookings
+
+See [stay booking API and staff workflow](STAYS.md) for inventory setup, date-based availability, exact offline advances, idempotent creation, cancellation, permissions and history. These routes are independent of exclusive property deals.

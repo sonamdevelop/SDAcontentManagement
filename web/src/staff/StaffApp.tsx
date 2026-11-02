@@ -1,3 +1,4 @@
+import { StayList, BookingList, BookingCreate, BookingDetail } from './StayWorkspace';
 import { DealList, DealCreate, DealDetail } from './DealWorkspace';
 import { dealWriteAllowed } from './deals';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
@@ -132,6 +133,10 @@ export function StaffApp() {
           <Route path="leads" element={<Records kind="leads" />} />
           <Route path="leads/:id" element={<LeadPage />} />
           <Route path="follow-ups" element={<FollowUpQueue />} />
+          <Route path="stays" element={<StayList />} />
+          <Route path="stay-bookings" element={<BookingList />} />
+          <Route path="stay-bookings/new" element={<BookingCreate />} />
+          <Route path="stay-bookings/:id" element={<BookingDetail />} />
           <Route path="property-deals" element={<DealList />} />
           <Route path="property-deals/new" element={<DealCreate />} />
           <Route path="property-deals/:id" element={<DealDetail />} />
@@ -271,6 +276,13 @@ function Shell() {
           {dealWriteAllowed(profile, 'create') && (
             <NavLink to="/staff/property-deals/new">Reserve property</NavLink>
           )}
+          {can(profile, 'stays') && <NavLink to="/staff/stays">Stays and rooms</NavLink>}
+          {can(profile, 'stay-bookings') && (
+            <NavLink to="/staff/stay-bookings">Stay bookings</NavLink>
+          )}
+          {['stays', 'stay-bookings.create', 'stay-bookings.view'].every((p) =>
+            can(profile, p),
+          ) && <NavLink to="/staff/stay-bookings/new">New stay booking</NavLink>}
           <Link to="/properties">Public website ↗</Link>
         </nav>
         <main>
