@@ -19,6 +19,11 @@ export type Stay = {
   rooms: Room[];
 };
 export type Booking = {
+  received_total?: string;
+  refunded_total?: string;
+  net_paid?: string;
+  amount_due?: string;
+  refund_due?: string;
   checked_in_at?: string | null;
   checked_out_at?: string | null;
   attendance_status?: 'not_arrived' | 'checked_in' | 'checked_out';
@@ -126,7 +131,27 @@ export function isBooking(v: unknown): v is Booking {
     )
       return false;
     const cents = (key: string) => BigInt(String(v[key]).replace('.', ''));
-    return cents('total') > 0n && cents('advance') + cents('balance') === cents('total');
+    if (cents('total') <= 0n) return false;
+    if (v.net_paid !== undefined) {
+      if (
+        !['received_total', 'refunded_total', 'net_paid', 'amount_due', 'refund_due'].every((k) =>
+          amount(v[k]),
+        )
+      )
+        return false;
+      const due = v.status === 'cancelled' ? 0n : cents('total'),
+        net = cents('received_total') - cents('refunded_total');
+      return (
+        cents('advance') <= cents('total') &&
+        net >= 0n &&
+        net <= cents('total') &&
+        net === cents('net_paid') &&
+        cents('amount_due') === due &&
+        cents('balance') === (due > net ? due - net : 0n) &&
+        cents('refund_due') === (net > due ? net - due : 0n)
+      );
+    }
+    return cents('advance') + cents('balance') === cents('total');
   } catch {
     return false;
   }

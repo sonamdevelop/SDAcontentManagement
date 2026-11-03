@@ -1985,6 +1985,161 @@
               }
             }
           ]
+        },
+        {
+          "name": "GET /admin/stay-bookings/{id}/payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/payments",
+            "description": "List private offline ledger and exact financial totals\n\nRequires stay-bookings.view + stay-bookings.payments and bookings:read. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stay-bookings/{id}/payments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/payments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{ledger_request_id}}\",\n  \"amount\": \"100.01\",\n  \"method\": \"cash\",\n  \"reference\": \"Offline receipt\",\n  \"reason\": \"Already received offline\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Record additional offline payment\n\nRequires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.create + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stay-bookings/{id}/refunds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/refunds",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{ledger_request_id}}\",\n  \"amount\": \"25.25\",\n  \"method\": \"cash\",\n  \"reason\": \"Already refunded offline\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Record offline refund with a reason\n\nRequires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.refund + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stay-bookings/{id}/payments/{entryId}/reverse",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/payments/{{payment_entry_id}}/reverse",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{ledger_request_id}}\",\n  \"reason\": \"Incorrect financial entry\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Append reversal of an incorrect original entry\n\nRequires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.reverse + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

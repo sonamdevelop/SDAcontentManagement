@@ -11,6 +11,7 @@ use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
 use Webkul\Property\Http\Controllers\StayApiController;
+use Webkul\Property\Http\Controllers\StayPaymentController;
 use Webkul\Property\Http\Middleware\ApiAccess;
 
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:property-api-login')->name('auth.login');
@@ -88,6 +89,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::patch('stay-bookings/{id}/check-in', [$stays, 'checkIn'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.check-in,bookings:write,stay-bookings.view')->name('bookings.check-in');
     Route::patch('stay-bookings/{id}/check-out', [$stays, 'checkOut'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.check-out,bookings:write,stay-bookings.view')->name('bookings.check-out');
     Route::patch('stay-bookings/{id}/cancel', [$stays, 'cancel'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.cancel,bookings:write,stay-bookings.view')->name('bookings.cancel');
+});
+
+Route::prefix('admin/stay-bookings/{id}')->whereNumber('id')->name('admin.booking-payments.')->group(function () {
+    $payments = StayPaymentController::class;
+    Route::get('payments', [$payments, 'index'])->middleware(ApiAccess::class.':stay-bookings.payments,bookings:read,stay-bookings.view')->name('index');
+    foreach (['payments' => ['payment', 'create'], 'refunds' => ['refund', 'refund']] as $path => [$method,$permission]) {
+        Route::post($path, [$payments, $method])->middleware([ApiAccess::class.':stay-bookings.payments.'.$permission.',bookings:write,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name($method);
+    }
+    Route::post('payments/{entryId}/reverse', [$payments, 'reverse'])->whereNumber('entryId')->middleware([ApiAccess::class.':stay-bookings.payments.reverse,bookings:write,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name('reverse');
 });
 
 Route::fallback(fn () => response()->json(['message' => 'Not found.'], 404));

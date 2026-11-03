@@ -74,14 +74,13 @@ must match the current nightly rate; a changed rate returns 422 and requires a
 fresh availability quote. Total = rate × rooms × nights, calculated in integer
 cents without floats, maximum 9999999999999.99. Money inputs must be decimal
 strings, not JSON numbers, negatives or scientific notation. Advance defaults to
-zero and cannot exceed total. Balance is total less recorded advance. The app's
+zero and cannot exceed total. Current balance follows the [offline ledger rules](PAYMENTS.md); the original advance remains a historical snapshot. The app's
 configured currency (local setup INR) is snapshotted server-side. Prices in this
 phase are a flat per-room nightly total; extra beds, tax breakdowns, seasonal rates,
 packages and discounts are not modelled.
 
 Bookings are confirmed immediately and hold inventory. There is no temporary
-hold/expiry, room-number assignment, editing, extra payment,
-refund accounting or online collection in this phase. The guest is a booking
+hold/expiry, room-number assignment, booking edits or online collection in this phase. The guest is a booking
 snapshot rather than a migrated customer login or CRM lead. Owner, creator,
 status, rates, total and balance cannot be overridden by client fields.
 
@@ -153,3 +152,7 @@ Playwright browser suite. `tools/test-browser-acceptance.sh` also exercises real
 stay/room setup, exact booking, exhausted availability and cancellation/release
 against its separate new synthetic database, then includes stay tables in the
 backup/restore checks. No normal development database is refreshed or reset.
+
+## Offline payment ledger
+
+Additional payments, refunds and reasoned reversals now use a separate immutable ledger. See [payment ledger rules, permissions and API](PAYMENTS.md). Cancellation has zero amount due and a derived refund-due balance; it never creates a refund automatically.

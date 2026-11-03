@@ -3,9 +3,8 @@
 namespace Webkul\Property\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use Webkul\Property\Support\DealMoney;
+use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Support\StayAttendance;
-use Webkul\Property\Support\StayDates;
 
 class StayBookingResource extends JsonResource
 {
@@ -22,7 +21,9 @@ class StayBookingResource extends JsonResource
             $data[$field] = $this->resource->getAttribute($field)?->toIso8601String();
         }
         $data['attendance_status'] = StayAttendance::status($this->checked_in_at !== null, $this->checked_out_at !== null);
-        $data['balance'] = StayDates::amount(DealMoney::cents($this->total) - DealMoney::cents($this->advance));
+        $summary = $this->resource->getAttribute('ledger_snapshot') ?? app(StayPaymentRepository::class)->summary($this->resource);
+        unset($data['ledger_snapshot']);
+        $data = array_merge($data, $summary);
         if (! $this->relationLoaded('events')) {
             foreach (['request_id', 'guest_name', 'guest_email', 'guest_phone', 'payment_reference', 'notes', 'cancellation_reason', 'created_by'] as $key) {
                 unset($data[$key]);

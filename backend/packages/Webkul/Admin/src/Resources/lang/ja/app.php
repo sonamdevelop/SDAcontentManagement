@@ -2,6 +2,16 @@
 
 return [
     'stay-api' => [
+        'ledger' => 'Payment ledger',
+        'ledger-payment' => 'Record offline payment',
+        'ledger-refund' => 'Record offline refund',
+        'ledger-reverse' => 'Reverse incorrect entry',
+        'ledger-positive' => 'Enter a positive payment or refund amount.',
+        'ledger-payment-limit' => 'Payment exceeds the outstanding balance or the booking is cancelled.',
+        'ledger-refund-limit' => 'Refund exceeds the net recorded payment.',
+        'ledger-reversed' => 'This entry is already reversed or is itself a reversal.',
+        'ledger-invariant' => 'Correction would produce invalid totals. Reverse dependent refunds first, or choose an amount within the supported range.',
+
         'check-in' => 'Record check-in',
         'check-out' => 'Record check-out',
         'attendance-state' => 'Only confirmed bookings support arrival/departure recording.',

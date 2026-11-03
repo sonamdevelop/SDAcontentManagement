@@ -296,3 +296,7 @@ For the real Laravel/MariaDB browser journey and staging requirements, see [acce
 **Stays and rooms** manages stays, timezone, room-type inventory/capacity and flat nightly rates. **Stay bookings** supports date-based availability, staff booking creation, offline advance/balance records, cancellation before check-in and history. See [stay booking rules and API](../backend/docs/STAYS.md). This does not migrate the original stay website or add public booking/payment collection.
 
 Stay booking details now include reviewed **Record check-in/check-out** actions and local-time attendance history. List filters include not arrived, checked in and checked out. Early checkout preserves scheduled inventory and charges; it does not collect/refund money. See [attendance rules](../backend/docs/STAYS.md#guest-check-in-and-check-out).
+
+### Stay payment ledger
+
+Stay booking details now include offline payments/refunds, explicit review, exact net paid/outstanding/refund totals, immutable history and reasoned reversals. Original advance snapshots remain unchanged. See [payment rules and permissions](../backend/docs/PAYMENTS.md). This records offline events and never transfers money.

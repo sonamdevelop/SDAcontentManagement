@@ -48,3 +48,5 @@ __pycache__/
 !/docs/postman/**
 
 !/docs/STAYS.md
+
+!/docs/PAYMENTS.md

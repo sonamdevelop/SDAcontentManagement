@@ -1,3 +1,4 @@
+import { PaymentPanel } from './PaymentWorkspace';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useResource } from '../api/useResource';
@@ -279,6 +280,13 @@ function BookingSummary({ booking: b }: { booking: Booking }) {
       <p>
         Total: {formatPrice(b.total, b.currency)} · Recorded advance:{' '}
         {formatPrice(b.advance, b.currency)} · Balance: {formatPrice(b.balance, b.currency)}
+        {b.net_paid !== undefined && (
+          <>
+            {' '}
+            · Net paid: {formatPrice(b.net_paid, b.currency)} · Refund due:{' '}
+            {formatPrice(b.refund_due!, b.currency)}
+          </>
+        )}
       </p>
     </>
   );
@@ -726,6 +734,7 @@ function BookingContent({ initial }: { initial: Booking }) {
           Refresh booking
         </button>
       </section>
+      <PaymentPanel booking={booking} onUpdate={setBooking} />
       <AttendancePanel
         key={`${booking.checked_in_at}:${booking.checked_out_at}`}
         booking={booking}

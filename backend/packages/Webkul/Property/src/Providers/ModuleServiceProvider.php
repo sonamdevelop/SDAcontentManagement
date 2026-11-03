@@ -14,8 +14,9 @@ use Webkul\Property\Models\SiteVisitEvent;
 use Webkul\Property\Models\Stay;
 use Webkul\Property\Models\StayBooking;
 use Webkul\Property\Models\StayBookingEvent;
+use Webkul\Property\Models\StayPayment;
 
 class ModuleServiceProvider extends BaseModuleServiceProvider
 {
-    protected $models = [Stay::class, RoomType::class, StayBooking::class, StayBookingEvent::class, Property::class, PropertyDeal::class, PropertyDealEvent::class, PropertyDocument::class, Enquiry::class, SiteVisit::class, SiteVisitEvent::class];
+    protected $models = [StayPayment::class, Stay::class, RoomType::class, StayBooking::class, StayBookingEvent::class, Property::class, PropertyDeal::class, PropertyDealEvent::class, PropertyDocument::class, Enquiry::class, SiteVisit::class, SiteVisitEvent::class];
 }

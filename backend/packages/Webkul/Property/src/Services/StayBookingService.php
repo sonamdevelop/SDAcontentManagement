@@ -6,6 +6,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Webkul\Property\Repositories\StayBookingRepository;
+use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Repositories\StayRepository;
 use Webkul\Property\Support\DealMoney;
 use Webkul\Property\Support\StayAttendance;
@@ -86,6 +87,7 @@ class StayBookingService
                     $this->invalid('rooms', 'unavailable');
                 }
                 $record = $this->bookings->create(array_merge($data, ['payload_hash' => $hash, 'user_id' => $room->stay->user_id, 'created_by' => auth()->guard('user')->id(), 'stay_name' => $room->stay->name, 'room_name' => $room->name, 'timezone' => $room->stay->timezone, 'nightly_rate' => $room->nightly_rate, 'total' => StayDates::amount($total), 'currency' => config('app.currency'), 'status' => 'confirmed']));
+                app(StayPaymentRepository::class)->opening($record);
                 $record->events()->create(['actor_id' => auth()->guard('user')->id(), 'action' => 'created', 'changes' => ['status' => 'confirmed', 'check_in' => $record->check_in, 'check_out' => $record->check_out, 'rooms' => $record->rooms, 'total' => $record->total, 'advance' => $record->advance, 'payment_reference' => $record->payment_reference]]);
 
                 return [$record->load('events'), true];

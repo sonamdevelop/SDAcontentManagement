@@ -728,3 +728,7 @@ return 422, missing/out-of-scope records return 404, missing ACL/abilities retur
 ## Staff stay and room bookings
 
 See [stay booking API and staff workflow](STAYS.md) for inventory setup, date-based availability, exact offline advances, idempotent creation, cancellation, permissions and history. These routes are independent of exclusive property deals.
+
+## Staff stay booking payments
+
+See [offline payment ledger](PAYMENTS.md) for additional receipts, refunds, reasoned reversals, exact outstanding/refund totals, scoped permissions and idempotent/concurrent writes.

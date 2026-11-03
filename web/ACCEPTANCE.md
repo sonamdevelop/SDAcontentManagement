@@ -78,3 +78,5 @@ release and backup identifiers and prepare rollback of application artifacts;
 do not roll back financial schema/data blindly.
 
 A third real-service scenario records same-day guest check-in/check-out, checks persisted attendance history after reload, and verifies early departure preserves original charges and availability allocation.
+
+A fourth real-service scenario exercises an opening advance, additional payment, partial refund, correction, cancellation and final refund. The synthetic backup/restore checks include stay_payments.

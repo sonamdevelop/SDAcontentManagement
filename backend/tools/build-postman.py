@@ -133,6 +133,9 @@ def reference(spec):
         ('post', '/admin/stays/{stayId}/rooms'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
         ('put', '/admin/stays/{stayId}/rooms/{id}'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
         ('post', '/admin/stay-bookings'): {'request_id': '{{stay_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example guest', 'guest_email': 'guest@example.test', 'expected_rate': '1000.25', 'advance': '100.01'},
+        ('post', '/admin/stay-bookings/{id}/payments'): {'request_id': '{{ledger_request_id}}', 'amount': '100.01', 'method': 'cash', 'reference': 'Offline receipt', 'reason': 'Already received offline'},
+        ('post', '/admin/stay-bookings/{id}/refunds'): {'request_id': '{{ledger_request_id}}', 'amount': '25.25', 'method': 'cash', 'reason': 'Already refunded offline'},
+        ('post', '/admin/stay-bookings/{id}/payments/{entryId}/reverse'): {'request_id': '{{ledger_request_id}}', 'reason': 'Incorrect financial entry'},
         ('patch', '/admin/stay-bookings/{id}/check-in'): {},
         ('patch', '/admin/stay-bookings/{id}/check-out'): {},
         ('patch', '/admin/stay-bookings/{id}/cancel'): {'cancellation_reason': 'Guest changed plans'},
@@ -145,11 +148,12 @@ def reference(spec):
                 continue
             doc = '/documents' in path
             ident = 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith('/admin/stays/') else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
-            url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}')
+            url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}').replace('{entryId}', '{{payment_entry_id}}')
             if path.endswith('/availability'):url += '?check_in={{check_in}}&check_out={{check_out}}'
             public = path.startswith('/auth/login') or path.startswith('/properties')
             expected = min(int(c) for c in operation.get('responses', {}) if c.isdigit() and 200 <= int(c) < 300)
             if method == 'post' and path in ('/admin/property-deals', '/admin/stay-bookings'):expected = 201
+            if method == 'post' and path.startswith('/admin/stay-bookings/') and ('/payments' in path or path.endswith('/refunds')):expected = 201
             item = request(method.upper()+' '+path, method.upper(), url, expected, bodies.get((method, path)), public, form=DOCUMENT if doc and method == 'post' else None)
             if operation.get('requestBody', {}).get('required') and item['request'].get('body') is None:
                 raise ValueError('Missing required request example: '+method.upper()+' '+path)
@@ -164,7 +168,7 @@ def environment(staging):
     base = 'https://api-staging.example.com/api/v1' if staging else 'http://127.0.0.1:8081/api/v1'
     origin = 'https://web-staging.example.com' if staging else 'http://localhost:5173'
     values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': ''}
-    values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out'], ''))
+    values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out', 'ledger_request_id', 'payment_entry_id'], ''))
     return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
 
 

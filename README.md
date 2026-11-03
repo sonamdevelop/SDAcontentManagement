@@ -28,3 +28,5 @@ rollout still needs deployment and acceptance checks.
 Staff stays and room bookings now have separate inventory, date-based availability, exact advance/balance records and cancellation history. See [stay booking documentation](backend/docs/STAYS.md). Public online booking/payment and migration remain later phases.
 
 Stay booking details also support staff check-in/check-out, attendance filters and actor/time history without changing booked charges or inventory dates.
+
+Stay bookings now include an immutable offline payment ledger with additional receipts, refunds, corrections and exact outstanding/refund balances. See [ledger documentation](backend/docs/PAYMENTS.md).

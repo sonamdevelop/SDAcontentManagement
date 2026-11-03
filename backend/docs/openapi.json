@@ -5708,6 +5708,441 @@
           }
         ]
       }
+    },
+    "/admin/stay-bookings/{id}/payments": {
+      "get": {
+        "summary": "List private offline ledger and exact financial totals",
+        "operationId": "stayPaymentIndex",
+        "description": "Requires stay-bookings.view + stay-bookings.payments and bookings:read. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. New entries return 201; identical creator/UUID/payload retries return 200 with the existing entry and current totals.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StayPayment"
+                      }
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/StayFinancialSummary"
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "summary",
+                    "meta",
+                    "links"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Record additional offline payment",
+        "operationId": "stayPaymentStore",
+        "description": "Requires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.create + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. New entries return 201; identical creator/UUID/payload retries return 200 with the existing entry and current totals.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayPayment"
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/StayFinancialSummary"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          },
+          "201": {
+            "description": "Success. New entries return 201; identical creator/UUID/payload retries return 200 with the existing entry and current totals.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayPayment"
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/StayFinancialSummary"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayPaymentWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stay-bookings/{id}/refunds": {
+      "post": {
+        "summary": "Record offline refund with a reason",
+        "operationId": "stayRefundStore",
+        "description": "Requires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.refund + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. New entries return 201; identical creator/UUID/payload retries return 200 with the existing entry and current totals.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayPayment"
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/StayFinancialSummary"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          },
+          "201": {
+            "description": "Success. New entries return 201; identical creator/UUID/payload retries return 200 with the existing entry and current totals.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayPayment"
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/StayFinancialSummary"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayRefundWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stay-bookings/{id}/payments/{entryId}/reverse": {
+      "post": {
+        "summary": "Append reversal of an incorrect original entry",
+        "operationId": "stayPaymentReverse",
+        "description": "Requires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.reverse + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. New entries return 201; identical creator/UUID/payload retries return 200 with the existing entry and current totals.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayPayment"
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/StayFinancialSummary"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          },
+          "201": {
+            "description": "Success. New entries return 201; identical creator/UUID/payload retries return 200 with the existing entry and current totals.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayPayment"
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/StayFinancialSummary"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayPaymentReversalWrite"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7593,7 +8028,8 @@
           },
           "balance": {
             "type": "string",
-            "pattern": "^\\d{1,13}\\.\\d{2}$"
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "description": "Current outstanding amount, max(amount_due - net_paid, 0). Cancelled bookings have zero amount_due."
           },
           "currency": {
             "type": "string"
@@ -7635,6 +8071,26 @@
               "checked_in",
               "checked_out"
             ]
+          },
+          "received_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refunded_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "net_paid": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "amount_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refund_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
           }
         },
         "required": [
@@ -7659,7 +8115,12 @@
           "cancelled_at",
           "checked_in_at",
           "checked_out_at",
-          "attendance_status"
+          "attendance_status",
+          "received_total",
+          "refunded_total",
+          "net_paid",
+          "amount_due",
+          "refund_due"
         ]
       },
       "StayBooking": {
@@ -7716,7 +8177,8 @@
           },
           "balance": {
             "type": "string",
-            "pattern": "^\\d{1,13}\\.\\d{2}$"
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "description": "Current outstanding amount, max(amount_due - net_paid, 0). Cancelled bookings have zero amount_due."
           },
           "currency": {
             "type": "string"
@@ -7795,7 +8257,10 @@
                     "created",
                     "cancelled",
                     "checked_in",
-                    "checked_out"
+                    "checked_out",
+                    "payment_recorded",
+                    "refund_recorded",
+                    "payment_reversed"
                   ]
                 },
                 "changes": {
@@ -7839,6 +8304,26 @@
               "checked_in",
               "checked_out"
             ]
+          },
+          "received_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refunded_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "net_paid": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "amount_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refund_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
           }
         },
         "required": [
@@ -7872,7 +8357,12 @@
           "events",
           "checked_in_at",
           "checked_out_at",
-          "attendance_status"
+          "attendance_status",
+          "received_total",
+          "refunded_total",
+          "net_paid",
+          "amount_due",
+          "refund_due"
         ]
       },
       "StayAvailability": {
@@ -7962,6 +8452,244 @@
           "city",
           "timezone",
           "active"
+        ]
+      },
+      "StayFinancialSummary": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "advance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "received_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refunded_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "net_paid": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "amount_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "balance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refund_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "total",
+          "advance",
+          "received_total",
+          "refunded_total",
+          "net_paid",
+          "amount_due",
+          "balance",
+          "refund_due",
+          "currency",
+          "status"
+        ]
+      },
+      "StayPayment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "booking_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "opening_advance",
+              "payment",
+              "refund",
+              "reversal"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other",
+              "unspecified"
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "reversal_of": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "reversed_by": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "actor_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "booking_id",
+          "kind",
+          "amount",
+          "currency",
+          "method",
+          "reference",
+          "reason",
+          "reversal_of",
+          "reversed_by",
+          "actor_id",
+          "created_at"
+        ]
+      },
+      "StayPaymentWrite": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d{1,13}(?:\\.\\d{1,2})?$",
+            "description": "Positive exact decimal string; maximum 9999999999999.99. No actual payment is initiated."
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other"
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 190,
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "request_id",
+          "amount",
+          "method"
+        ]
+      },
+      "StayRefundWrite": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d{1,13}(?:\\.\\d{1,2})?$",
+            "description": "Positive exact decimal string; maximum 9999999999999.99. No actual payment is initiated."
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other"
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 190,
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "request_id",
+          "amount",
+          "method",
+          "reason"
+        ]
+      },
+      "StayPaymentReversalWrite": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "request_id",
+          "reason"
         ]
       }
     }

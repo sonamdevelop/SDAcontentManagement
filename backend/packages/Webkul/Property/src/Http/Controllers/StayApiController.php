@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Webkul\Property\Http\Resources\StayBookingResource;
 use Webkul\Property\Repositories\StayBookingRepository;
+use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Repositories\StayRepository;
 use Webkul\Property\Services\StayBookingService;
 use Webkul\Property\Support\DealMoney;
@@ -70,7 +71,10 @@ class StayApiController
             };
         }
 
-        return StayBookingResource::collection($q->latest('id')->paginate($f['per_page'] ?? 20)->withQueryString())->response()->header('Cache-Control', 'no-store');
+        $page = $q->latest('id')->paginate($f['per_page'] ?? 20)->withQueryString();
+        app(StayPaymentRepository::class)->prime($page->getCollection());
+
+        return StayBookingResource::collection($page)->response()->header('Cache-Control', 'no-store');
     }
 
     public function show(int $id)

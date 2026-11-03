@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added an immutable offline stay payment ledger with preserved opening advances, additional receipts/refunds, reasoned reversals, exact net/outstanding/refund balances, permissions and concurrent retry protection.
+
 * [fixed] Kept nullable booking fields consistent across create, retry and detail responses so a saved booking is not mistaken for an uncertain result by staff screens.
 
 * [feature] Added staff guest check-in/check-out with local-date arrival rules, permission checks, idempotent timestamps, attendance filters and actor/time history while preserving original room allocation and charges.
