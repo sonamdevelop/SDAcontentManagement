@@ -36,3 +36,5 @@ Staff can inspect nightly room allocation and remaining capacity through **Avail
 **Stay operations** provides scheduled arrivals/departures and live in-house/overdue queues with booking links and scoped guest names.
 
 **Payment follow-up** now lists scoped pending collections and refunds with exact current ledger balances and links to booking details.
+
+**Stay bookings** can be filtered by booking/stay IDs and inclusive scheduled arrival dates, together with status, room and attendance filters.

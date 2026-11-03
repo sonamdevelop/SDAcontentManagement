@@ -254,3 +254,60 @@ it('filters arrivals through URL state without discarding room filters', async (
   await waitFor(() => expect(urls.at(-1)).toContain('attendance_status=checked_in'));
   expect(urls.at(-1)).toContain('room_type_id=2');
 });
+it('combines booking finder filters, retains them on pagination and clears them', async () => {
+  const urls: string[] = [];
+  server.use(
+    http.get(`${base}/admin/stay-bookings`, ({ request }) => {
+      urls.push(request.url);
+      const params = new URL(request.url).searchParams;
+      return HttpResponse.json({
+        data: [booking],
+        meta: { current_page: Number(params.get('page') || 1), last_page: 2, total: 2 },
+      });
+    }),
+  );
+  app('/staff/stay-bookings');
+  await screen.findByRole('button', { name: 'Filter bookings' });
+  await userEvent.type(screen.getByLabelText('Stay ID', { exact: true }), '1');
+  await userEvent.type(screen.getByLabelText('Booking ID', { exact: true }), '51');
+  fireEvent.change(screen.getByLabelText('Arrival from', { exact: true }), {
+    target: { value: '2030-01-01' },
+  });
+  fireEvent.change(screen.getByLabelText('Arrival to', { exact: true }), {
+    target: { value: '2030-01-02' },
+  });
+  await userEvent.selectOptions(
+    screen.getByLabelText('Booking status', { exact: true }),
+    'confirmed',
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Filter bookings' }));
+  await waitFor(() => expect(urls.at(-1)).toContain('arrival_to=2030-01-02'));
+  expect(urls.at(-1)).toContain('booking_id=51');
+  expect(urls.at(-1)).toContain('stay_id=1');
+  await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+  await waitFor(() => expect(urls.at(-1)).toContain('page=2'));
+  expect(screen.getByLabelText('Arrival from', { exact: true })).toHaveValue('2030-01-01');
+  await userEvent.click(screen.getByRole('link', { name: 'Clear booking filters' }));
+  await waitFor(() => expect(new URL(urls.at(-1)!).searchParams.toString()).toBe(''));
+});
+it('keeps results and draft when arrival bounds are reversed instead of sending a broad search', async () => {
+  let calls = 0;
+  server.use(
+    http.get(`${base}/admin/stay-bookings`, () => {
+      calls++;
+      return HttpResponse.json({ data: [booking], meta });
+    }),
+  );
+  app('/staff/stay-bookings');
+  await screen.findByRole('button', { name: 'Filter bookings' });
+  fireEvent.change(screen.getByLabelText('Arrival from', { exact: true }), {
+    target: { value: '2030-01-03' },
+  });
+  fireEvent.change(screen.getByLabelText('Arrival to', { exact: true }), {
+    target: { value: '2030-01-02' },
+  });
+  await userEvent.click(screen.getByRole('button', { name: 'Filter bookings' }));
+  await screen.findByText('Arrival to must be on or after arrival from.');
+  expect(calls).toBe(1);
+  expect(screen.getByLabelText('Arrival from', { exact: true })).toHaveValue('2030-01-03');
+});

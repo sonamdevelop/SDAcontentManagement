@@ -213,3 +213,25 @@ stays 404, denied permissions/abilities 403 and absent authentication 401. Respo
 use no-store. A missing booking-detail permission also hides the staff navigation
 entry and prevents loading guest names. The real acceptance journey verifies that
 check-in increases in-house count and check-out removes the booking from it.
+
+## Booking finder
+
+GET `/admin/stay-bookings` additionally accepts `stay_id`, `booking_id`,
+`arrival_from` and `arrival_to`. IDs must be positive integers. Arrival bounds
+are optional and inclusive, comparing the stored scheduled check_in calendar date
+in each booking's timezone, with no UTC conversion. They select arrivals rather
+than occupancy overlap. Either bound works alone; when both are present, to must
+be on or after from. Invalid dates/IDs or reversed ranges return 422.
+
+All filters combine with room_type_id, status and attendance_status. Stay filters
+now restrict results to room types belonging to that stay. Contradictory or
+unmatched IDs return an empty page; they do not reveal another user's records.
+The existing booking list scope and `stay-bookings` / `bookings:read` requirements
+remain in force, without requiring stay setup or booking-detail access. Lists
+retain their existing private-field omissions. No new permissions or migration
+are needed. Newest booking ID first; page/per_page and no-store remain unchanged.
+
+Use **Stay bookings** to enter booking/stay IDs and arrival bounds. Filters persist
+in the URL across reload/back and pagination. Applying new filters resets page;
+**Clear booking filters** restores the full authorized list. The form rejects
+reversed arrival ranges while retaining the draft and current results.

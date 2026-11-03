@@ -312,3 +312,5 @@ Stay booking details now include offline payments/refunds, explicit review, exac
 ### Stay payment follow-up
 
 **Payment follow-up** lists outstanding collection and refund-due bookings by stay, with exact per-currency amounts, URL filters, pagination and refresh. Open booking detail for permitted ledger actions. Requires stay, booking list/detail and payment ledger access. See [queue rules and API](../backend/docs/PAYMENTS.md#stay-payment-follow-up).
+
+**Stay bookings** also supports combined booking/stay IDs and inclusive arrival-date bounds, alongside room/status/attendance filters. URL filters survive reload and pagination; clearing restores the authorized list. See [booking finder semantics](../backend/docs/STAYS.md#booking-finder).

@@ -43,6 +43,20 @@ test('real stay setup, room inventory, exact booking totals, rejection and cance
   await page.getByRole('button', { name: 'Save stay booking', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Stay booking #/ })).toBeVisible();
   const bookedUrl = page.url();
+  const bookingId = new URL(bookedUrl).pathname.split('/').at(-1)!;
+  await page.goto(
+    `/staff/stay-bookings?booking_id=${bookingId}&arrival_from=${inDate}&arrival_to=${inDate}`,
+  );
+  await expect(
+    page.getByRole('link', {
+      name: new RegExp(`Acceptance forest stay — Acceptance deluxe #${bookingId}$`),
+    }),
+  ).toBeVisible();
+  await expect(page.getByText('Synthetic stay guest', { exact: true })).toHaveCount(0);
+  await page.goto(`/staff/stay-bookings?booking_id=${bookingId}&arrival_from=${outDate}`);
+  await expect(page.getByText('No matching stay bookings.', { exact: true })).toBeVisible();
+  await page.goto(bookedUrl);
+
   await expect(page.getByText(/Balance: ₹3,900.99/)).toBeVisible();
   await page.goto('/staff/stay-calendar');
   await page

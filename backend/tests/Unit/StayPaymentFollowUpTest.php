@@ -1,7 +1,10 @@
 <?php
 
+use Tests\TestCase;
 use Webkul\Property\Http\Resources\StayPaymentFollowUpResource;
 use Webkul\Property\Models\StayBooking;
+
+uses(TestCase::class);
 
 it('serializes exact follow-up amounts and only curated fields', function () {
     $booking = new StayBooking(['guest_name' => 'Guest', 'guest_email' => 'secret@example.test', 'payment_reference' => 'secret reference', 'notes' => 'secret notes']);

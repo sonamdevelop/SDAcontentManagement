@@ -5220,7 +5220,7 @@
       "get": {
         "summary": "List scoped stay booking summaries",
         "operationId": "stayBookingsIndex",
-        "description": "Requires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "description": "Requires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules. Booking finder filters combine stay_id, booking_id and inclusive arrival_from/arrival_to with room/status/attendance. Dates use each booking local scheduled check_in. List-only users retain existing private field omissions. Unmatched or contradictory IDs return an empty page; invalid filters return 422.",
         "security": [
           {
             "bearerAuth": []
@@ -5333,6 +5333,46 @@
                 "checked_out"
               ]
             }
+          },
+          {
+            "name": "booking_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Exact ID filter combined with all other filters; no scope expansion."
+          },
+          {
+            "name": "stay_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Exact ID filter combined with all other filters; no scope expansion."
+          },
+          {
+            "name": "arrival_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive local scheduled arrival date bound, not an occupancy filter. Either bound optional; arrival_to must be >= arrival_from."
+          },
+          {
+            "name": "arrival_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive local scheduled arrival date bound, not an occupancy filter. Either bound optional; arrival_to must be >= arrival_from."
           }
         ]
       },

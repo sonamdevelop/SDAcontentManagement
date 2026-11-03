@@ -137,3 +137,48 @@ test('read-only booking staff cannot create or cancel bookings', async ({ page }
   );
   await expect(page.getByRole('link', { name: 'New stay booking', exact: true })).toHaveCount(0);
 });
+test('finds bookings with combined IDs and inclusive arrival filters across URL reloads', async ({
+  page,
+}) => {
+  await page.addInitScript(() => sessionStorage.setItem('sda.staff.token', 'finder-browser'));
+  await page.route('**/api/v1/**', async (route) => {
+    const req = route.request(),
+      url = new URL(req.url());
+    expect(req.headers().authorization).toBe('Bearer finder-browser');
+    if (url.pathname.endsWith('/auth/me'))
+      return route.fulfill({
+        json: {
+          data: {
+            id: 1,
+            name: 'Staff',
+            email: 'staff@example.test',
+            role: { name: 'Reader', permission_type: 'custom', permissions: ['stay-bookings'] },
+          },
+        },
+      });
+    if (url.pathname.endsWith('/stay-bookings'))
+      return route.fulfill({
+        json: {
+          data: [fixture],
+          meta: { current_page: Number(url.searchParams.get('page') || 1), last_page: 2, total: 2 },
+        },
+      });
+    throw new Error('Unexpected request ' + url.pathname);
+  });
+  await page.goto('/staff/stay-bookings');
+  await page.getByLabel('Stay ID', { exact: true }).fill('1');
+  await page.getByLabel('Booking ID', { exact: true }).fill('51');
+  await page.getByLabel('Arrival from', { exact: true }).fill('2030-01-01');
+  await page.getByLabel('Arrival to', { exact: true }).fill('2030-01-02');
+  await page.getByRole('button', { name: 'Filter bookings', exact: true }).click();
+  await expect(page).toHaveURL(/stay_id=1/);
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page).toHaveURL(/page=2/);
+  await page.reload();
+  await expect(page.getByLabel('Arrival from', { exact: true })).toHaveValue('2030-01-01');
+  await expect(page.getByLabel('Booking ID', { exact: true })).toHaveValue('51');
+  await expect(page.getByRole('link', { name: /River stay — Deluxe #/ })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Clear booking filters', exact: true }).click();
+  await expect(page).toHaveURL('/staff/stay-bookings');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

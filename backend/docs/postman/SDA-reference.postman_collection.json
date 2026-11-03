@@ -1775,7 +1775,7 @@
               }
             ],
             "url": "{{base_url}}/admin/stay-bookings",
-            "description": "List scoped stay booking summaries\n\nRequires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+            "description": "List scoped stay booking summaries\n\nRequires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules. Booking finder filters combine stay_id, booking_id and inclusive arrival_from/arrival_to with room/status/attendance. Dates use each booking local scheduled check_in. List-only users retain existing private field omissions. Unmatched or contradictory IDs return an empty page; invalid filters return 422.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {

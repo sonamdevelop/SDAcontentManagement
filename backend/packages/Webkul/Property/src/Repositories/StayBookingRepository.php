@@ -4,6 +4,7 @@ namespace Webkul\Property\Repositories;
 
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Property\Contracts\StayBooking;
+use Webkul\Property\Models\RoomType;
 
 class StayBookingRepository extends Repository
 {
@@ -31,6 +32,33 @@ class StayBookingRepository extends Repository
         }
 
         return $q->findOrFail($id);
+    }
+
+    public function filteredQuery(array $filters)
+    {
+        $query = $this->scopedQuery();
+        foreach (['booking_id' => 'id', 'room_type_id' => 'room_type_id', 'status' => 'status'] as $filter => $column) {
+            if (isset($filters[$filter])) {
+                $query->where($column, $filters[$filter]);
+            }
+        }
+        if (isset($filters['stay_id'])) {
+            $query->whereIn('room_type_id', RoomType::query()->select('id')->where('stay_id', $filters['stay_id']));
+        }
+        foreach (['arrival_from' => '>=', 'arrival_to' => '<='] as $filter => $operator) {
+            if (isset($filters[$filter])) {
+                $query->where('check_in', $operator, $filters[$filter]);
+            }
+        }
+        if (isset($filters['attendance_status'])) {
+            match ($filters['attendance_status']) {
+                'not_arrived' => $query->whereNull('checked_in_at')->whereNull('checked_out_at'),
+                'checked_in' => $query->whereNotNull('checked_in_at')->whereNull('checked_out_at'),
+                'checked_out' => $query->whereNotNull('checked_out_at'),
+            };
+        }
+
+        return $query;
     }
 
     public function operationsBase($stay)
