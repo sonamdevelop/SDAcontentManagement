@@ -1,6 +1,40 @@
 <?php
 
 return [
+    'stay-api' => [
+        'calendar-range' => 'Choose a valid calendar range of 1 to 62 nights.',
+        'ledger' => 'Payment ledger',
+        'ledger-payment' => 'Record offline payment',
+        'ledger-refund' => 'Record offline refund',
+        'ledger-reverse' => 'Reverse incorrect entry',
+        'ledger-positive' => 'Enter a positive payment or refund amount.',
+        'ledger-payment-limit' => 'Payment exceeds the outstanding balance or the booking is cancelled.',
+        'ledger-refund-limit' => 'Refund exceeds the net recorded payment.',
+        'ledger-reversed' => 'This entry is already reversed or is itself a reversal.',
+        'ledger-invariant' => 'Correction would produce invalid totals. Reverse dependent refunds first, or choose an amount within the supported range.',
+
+        'check-in' => 'Record check-in',
+        'check-out' => 'Record check-out',
+        'attendance-state' => 'Only confirmed bookings support arrival/departure recording.',
+        'arrival-window' => 'Check-in must be on or after the booked arrival date and before the booked checkout date, in the stay timezone.',
+        'arrival-required' => 'Record check-in before recording check-out.',
+
+        'stays' => 'Stays and room types',
+        'bookings' => 'Stay bookings',
+        'cancel' => 'Cancel booking',
+        'dates' => 'Choose valid dates for a stay of 1 to 365 nights.',
+        'past' => 'Check-in cannot be before today in the stay timezone.',
+        'inactive' => 'This stay or room type is inactive.',
+        'capacity' => 'Guest count exceeds capacity for the requested rooms.',
+        'rate-changed' => 'The nightly rate changed. Refresh availability before booking.',
+        'amount-limit' => 'The booking total exceeds the supported amount.',
+        'advance' => 'Advance cannot exceed the booking total.',
+        'unavailable' => 'Not enough rooms remain for every night. Refresh availability.',
+        'started' => 'Bookings cannot be cancelled on or after their check-in date.',
+        'timezone' => 'Timezone cannot change after room types have been created.',
+        'positive' => 'Nightly rate must be positive.',
+        'inventory' => 'Inventory/capacity cannot change while current or future bookings exist.',
+    ],
     'property-api' => [
         'deals' => 'Property deals and reservations',
         'confirm-deal' => 'Confirm property deals',

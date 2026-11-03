@@ -20,7 +20,7 @@ function useVisits() {
   return useMemo(() => new VisitApi(api), [api]);
 }
 const shownTime = (iso: string) => new Date(iso).toLocaleString();
-function Picker({
+export function Picker({
   kind,
   value,
   onChange,

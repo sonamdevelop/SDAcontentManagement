@@ -7,8 +7,7 @@ for byte. Property/enquiry domain behavior is implemented in the extension packa
 `packages/Webkul/Property`. Existing upstream CRM frontend assets are retained. The separate public property
 website in `../web/` connects to the public APIs and includes a Laravel staff
 workspace for property management and read-only CRM queues; see its README.
-Site visits and private property document screens are also connected; deal UI
-and mobile/Firebase migration remain separate work.
+Site visits, private property documents and property deal reservation/advance/confirmation/cancellation/history screens are connected. Mobile/Firebase migration remains separate work.
 
 Requirements: Linux with Docker Compose, Python 3, and enough disk for PHP/MariaDB
 images. From this `backend/` directory:
@@ -71,3 +70,7 @@ contract. Runtime processes do not survive snapshots. Code is now inside the
 SDA Git repository; keep a Git commit/remote backup or publish a verified
 workspace snapshot before replacing environments. A local setup does not prove
 fresh-task snapshot restoration, and nothing is deployed publicly.
+
+## Staff stays and room bookings
+
+Apply the additive stay-booking migration with ordinary `php artisan migrate` (the setup helper runs it). Log in again for stay/booking token abilities. See [stay booking API and rules](docs/STAYS.md). `tools/test-api.sh` includes stay/date/inventory/money checks and two-process concurrency tests on the isolated database. The real browser acceptance runner includes stay setup/booking/cancellation and backs up/restores the stay tables.

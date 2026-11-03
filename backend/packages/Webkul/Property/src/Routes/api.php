@@ -10,6 +10,8 @@ use Webkul\Property\Http\Controllers\PropertyDealApiController;
 use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
+use Webkul\Property\Http\Controllers\StayApiController;
+use Webkul\Property\Http\Controllers\StayPaymentController;
 use Webkul\Property\Http\Middleware\ApiAccess;
 
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:property-api-login')->name('auth.login');
@@ -71,6 +73,32 @@ Route::prefix('admin/property-deals')->name('admin.deals.')->group(function () {
     Route::get('{id}', [PropertyDealApiController::class, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':deals.view,deals:read')->name('show');
     Route::patch('{id}/confirm', [PropertyDealApiController::class, 'confirm'])->whereNumber('id')->middleware(ApiAccess::class.':deals.confirm,deals:write,deals.view')->name('confirm');
     Route::patch('{id}/cancel', [PropertyDealApiController::class, 'cancel'])->whereNumber('id')->middleware(ApiAccess::class.':deals.cancel,deals:write,deals.view')->name('cancel');
+});
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    $stays = StayApiController::class;
+    Route::get('stays', [$stays, 'stays'])->middleware(ApiAccess::class.':stays,stays:read')->name('stays.index');
+    Route::post('stays', [$stays, 'stay'])->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('stays.store');
+    Route::put('stays/{id}', [$stays, 'stay'])->whereNumber('id')->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('stays.update');
+    Route::post('stays/{stayId}/rooms', [$stays, 'room'])->whereNumber('stayId')->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('rooms.store');
+    Route::put('stays/{stayId}/rooms/{id}', [$stays, 'room'])->whereNumber(['stayId', 'id'])->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('rooms.update');
+    Route::get('stay-rooms/{id}/calendar', [$stays, 'calendar'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('rooms.calendar');
+    Route::get('stay-rooms/{id}/availability', [$stays, 'availability'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('rooms.availability');
+    Route::get('stay-bookings', [$stays, 'index'])->middleware(ApiAccess::class.':stay-bookings,bookings:read')->name('bookings.index');
+    Route::get('stay-bookings/{id}', [$stays, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.view,bookings:read')->name('bookings.show');
+    Route::post('stay-bookings', [$stays, 'store'])->middleware([ApiAccess::class.':stay-bookings.create,bookings:write,stay-bookings.view', ApiAccess::class.':stays,stays:read'])->name('bookings.store');
+    Route::patch('stay-bookings/{id}/check-in', [$stays, 'checkIn'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.check-in,bookings:write,stay-bookings.view')->name('bookings.check-in');
+    Route::patch('stay-bookings/{id}/check-out', [$stays, 'checkOut'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.check-out,bookings:write,stay-bookings.view')->name('bookings.check-out');
+    Route::patch('stay-bookings/{id}/cancel', [$stays, 'cancel'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.cancel,bookings:write,stay-bookings.view')->name('bookings.cancel');
+});
+
+Route::prefix('admin/stay-bookings/{id}')->whereNumber('id')->name('admin.booking-payments.')->group(function () {
+    $payments = StayPaymentController::class;
+    Route::get('payments', [$payments, 'index'])->middleware(ApiAccess::class.':stay-bookings.payments,bookings:read,stay-bookings.view')->name('index');
+    foreach (['payments' => ['payment', 'create'], 'refunds' => ['refund', 'refund']] as $path => [$method,$permission]) {
+        Route::post($path, [$payments, $method])->middleware([ApiAccess::class.':stay-bookings.payments.'.$permission.',bookings:write,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name($method);
+    }
+    Route::post('payments/{entryId}/reverse', [$payments, 'reverse'])->whereNumber('entryId')->middleware([ApiAccess::class.':stay-bookings.payments.reverse,bookings:write,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name('reverse');
 });
 
 Route::fallback(fn () => response()->json(['message' => 'Not found.'], 404));

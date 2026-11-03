@@ -1,3 +1,7 @@
+import { StayCalendarPage } from './CalendarWorkspace';
+import { StayList, BookingList, BookingCreate, BookingDetail } from './StayWorkspace';
+import { DealList, DealCreate, DealDetail } from './DealWorkspace';
+import { dealWriteAllowed } from './deals';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   Link,
@@ -130,6 +134,14 @@ export function StaffApp() {
           <Route path="leads" element={<Records kind="leads" />} />
           <Route path="leads/:id" element={<LeadPage />} />
           <Route path="follow-ups" element={<FollowUpQueue />} />
+          <Route path="stay-calendar" element={<StayCalendarPage />} />
+          <Route path="stays" element={<StayList />} />
+          <Route path="stay-bookings" element={<BookingList />} />
+          <Route path="stay-bookings/new" element={<BookingCreate />} />
+          <Route path="stay-bookings/:id" element={<BookingDetail />} />
+          <Route path="property-deals" element={<DealList />} />
+          <Route path="property-deals/new" element={<DealCreate />} />
+          <Route path="property-deals/:id" element={<DealDetail />} />
           <Route path="site-visits" element={<VisitList />} />
           <Route path="site-visits/new" element={<VisitCreate />} />
           <Route path="site-visits/:id" element={<VisitDetail />} />
@@ -262,6 +274,22 @@ function Shell() {
           {can(profile, 'visits.view') && can(profile, 'visits.create') && (
             <NavLink to="/staff/site-visits/new">Schedule visit</NavLink>
           )}
+          {can(profile, 'deals') && <NavLink to="/staff/property-deals">Property deals</NavLink>}
+          {dealWriteAllowed(profile, 'create') && (
+            <NavLink to="/staff/property-deals/new">Reserve property</NavLink>
+          )}
+          {can(profile, 'stays') && (
+            <>
+              <NavLink to="/staff/stays">Stays and rooms</NavLink>
+              <NavLink to="/staff/stay-calendar">Availability calendar</NavLink>
+            </>
+          )}
+          {can(profile, 'stay-bookings') && (
+            <NavLink to="/staff/stay-bookings">Stay bookings</NavLink>
+          )}
+          {['stays', 'stay-bookings.create', 'stay-bookings.view'].every((p) =>
+            can(profile, p),
+          ) && <NavLink to="/staff/stay-bookings/new">New stay booking</NavLink>}
           <Link to="/properties">Public website ↗</Link>
         </nav>
         <main>
@@ -468,6 +496,11 @@ function PropertyList() {
                 </p>
                 {can(profile, 'properties.edit') && (
                   <Link to={`/staff/properties/${p.id}/edit`}>Edit property</Link>
+                )}
+                {can(profile, 'deals') && (
+                  <p>
+                    <Link to={`/staff/property-deals?property_id=${p.id}`}>Property deals</Link>
+                  </p>
                 )}
                 {(can(profile, 'properties.documents') ||
                   can(profile, 'properties.documents.create')) && (

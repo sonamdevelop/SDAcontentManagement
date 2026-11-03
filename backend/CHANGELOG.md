@@ -4,6 +4,20 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added a scoped nightly stay availability calendar with URL-backed staff filters, current-capacity allocation, inactive/past-date indicators and cancellation refresh without exposing guest or payment data.
+
+* [feature] Added an immutable offline stay payment ledger with preserved opening advances, additional receipts/refunds, reasoned reversals, exact net/outstanding/refund balances, permissions and concurrent retry protection.
+
+* [fixed] Kept nullable booking fields consistent across create, retry and detail responses so a saved booking is not mistaken for an uncertain result by staff screens.
+
+* [feature] Added staff guest check-in/check-out with local-date arrival rules, permission checks, idempotent timestamps, attendance filters and actor/time history while preserving original room allocation and charges.
+
+* [feature] Added scoped stay/room inventory management, calendar-date availability and staff bookings with exact nightly totals, offline advance/balance records, idempotent retries, concurrency protection and cancellation history.
+
+* [feature] Added a real-browser staff/public acceptance journey on a unique isolated database, with synthetic database and public/private upload backup recovery verification and a staging handoff guide.
+
+* [feature] Added staff property deal reservation screens with exact recorded advances, idempotent uncertain retries, scoped filters, reviewed confirmation/cancellation and audit history, covered by unit/integration and desktop/mobile browser tests.
+
 * [feature] Added staff private property document upload, category filters, authenticated attachment downloads and confirmed deletion, with separate permissions and no public photo/token URL fallback.
 
 * [feature] Added staff site visit scheduling with scoped source/agent choices, timezone-aware filters and rescheduling, conflict errors, completion/cancellation/no-show, feedback and audit history.

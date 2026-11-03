@@ -164,8 +164,7 @@ browser. User IDs come from the authenticated backend account.
 
 Staff changes need no new migration. Use the existing API deployment, CORS
 allowlist and `/storage` routing described above. SPA fallback must cover
-`/staff/*`. Deals, booking management and mobile migration
-remain future UI phases; their existing backend APIs are unchanged.
+`/staff/*`. Booking management and mobile migration remain future phases; their existing backend APIs are unchanged.
 
 Validation for this phase includes unit/integration tests, desktop/mobile browser
 checks, and a real browser against an isolated Laravel test database: login,
@@ -275,3 +274,33 @@ confirmed deletion followed by download 404, and logout token revocation. All
 synthetic actors, properties, files and temporary services were removed afterward.
 No schema/backend API changes are needed for this phase; existing private storage
 and scheduled cleanup configuration still apply.
+
+### Property deals
+
+Open **Property deals** (`/staff/property-deals`) or **Reserve property** in the staff navigation. Property cards link to their filtered deal history. Lists support status, sale/rent purpose, property/lead/agent IDs, creation dates and pagination. Dates use the displayed browser timezone; filters persist in the URL. List-only users do not receive customer contact, notes, payment references or audit details.
+
+Reserve an available property for an open lead with a customer. Enter the full negotiated agreed total and the recorded advance (included in that total), optional payment reference and internal notes. Monetary input stays as exact decimal strings, up to 13 integer digits and two decimal places. The advance cannot exceed the positive total. This records an offline advance; it does not collect money or verify a receipt. There is no additional advance/edit endpoint: correct a reservation by cancelling it and creating a new one.
+
+An uncertain reservation response locks the draft and retries the identical payload with the same UUID. Do not start another reservation while resolving an uncertain save. The pending request stays in component memory only; navigating away or reloading loses it, so inspect existing deals before creating a replacement. Validation failures retain an editable draft.
+
+The detail screen shows exact amounts, customer snapshots, reference, notes, timestamps, source lead link and chronological audit changes. Confirmation requires an explicit review: sale becomes sold, rental becomes rented, and confirmation is final. Cancellation requires a reason and releases an eligible hold, retaining its advance/reference and history; it does not initiate a refund. Neither action changes the lead stage. Final deals offer no reopen/edit actions. Refresh deal reloads current server state; uncertain transitions can retry the same action without changing the cancellation reason. Deleted source records retain readable snapshots/history.
+
+Permissions mirror the API: `deals` lists, `deals.view` reads detail/history, and `deals.create`, `deals.confirm` or `deals.cancel` enables the corresponding action. Writes also require `properties` and `properties.edit`; reservation/confirmation need `leads.view`, and the reservation picker additionally needs `leads`. Cancellation does not require lead access. Laravel independently checks scope, source visibility and `deals:read`/`deals:write` plus source token abilities; log in again if an old token lacks them. Account permissions are rechecked on focus. Read access does not require source module rights.
+
+Deal coverage includes exact high-value money, malformed data, UUID reuse on uncertain saves, rejected drafts, permission restrictions, URL filtering/pagination, terminal states, safe audit rendering and desktop/mobile reservation/confirmation/cancellation. Browser tests use controlled API fixtures; run the backend's isolated `tools/test-api.sh` for real MariaDB API integration and concurrent reservation checks.
+
+For the real Laravel/MariaDB browser journey and staging requirements, see [acceptance and staging handoff](ACCEPTANCE.md).
+
+### Staff stay bookings
+
+**Stays and rooms** manages stays, timezone, room-type inventory/capacity and flat nightly rates. **Stay bookings** supports date-based availability, staff booking creation, offline advance/balance records, cancellation before check-in and history. See [stay booking rules and API](../backend/docs/STAYS.md). This does not migrate the original stay website or add public booking/payment collection.
+
+Stay booking details now include reviewed **Record check-in/check-out** actions and local-time attendance history. List filters include not arrived, checked in and checked out. Early checkout preserves scheduled inventory and charges; it does not collect/refund money. See [attendance rules](../backend/docs/STAYS.md#guest-check-in-and-check-out).
+
+### Stay payment ledger
+
+Stay booking details now include offline payments/refunds, explicit review, exact net paid/outstanding/refund totals, immutable history and reasoned reversals. Original advance snapshots remain unchanged. See [payment rules and permissions](../backend/docs/PAYMENTS.md). This records offline events and never transfers money.
+
+### Stay availability calendar
+
+**Availability calendar** shows nightly room-type allocation/remaining capacity for a URL-backed date range of up to 62 nights. Refresh reflects cancellations. Inactive and past dates are not bookable, checkout dates are exclusive, and historical rows use current capacity. Guest/payment data is never included. See [calendar API](../backend/docs/STAYS.md#nightly-availability-calendar).

@@ -1,6 +1,18 @@
 <?php
 
 return [
+    ['key' => 'stay-bookings.payments', 'name' => 'admin::app.stay-api.ledger', 'route' => 'api.v1.admin.booking-payments.index', 'sort' => 6],
+    ['key' => 'stay-bookings.payments.create', 'name' => 'admin::app.stay-api.ledger-payment', 'route' => 'api.v1.admin.booking-payments.payment', 'sort' => 1],
+    ['key' => 'stay-bookings.payments.refund', 'name' => 'admin::app.stay-api.ledger-refund', 'route' => 'api.v1.admin.booking-payments.refund', 'sort' => 2],
+    ['key' => 'stay-bookings.payments.reverse', 'name' => 'admin::app.stay-api.ledger-reverse', 'route' => 'api.v1.admin.booking-payments.reverse', 'sort' => 3],
+    ['key' => 'stay-bookings.check-in', 'name' => 'admin::app.stay-api.check-in', 'route' => 'api.v1.admin.bookings.check-in', 'sort' => 4],
+    ['key' => 'stay-bookings.check-out', 'name' => 'admin::app.stay-api.check-out', 'route' => 'api.v1.admin.bookings.check-out', 'sort' => 5],
+    ['key' => 'stays', 'name' => 'admin::app.stay-api.stays', 'route' => ['api.v1.admin.stays.index', 'api.v1.admin.rooms.availability', 'api.v1.admin.rooms.calendar'], 'sort' => 8],
+    ['key' => 'stays.manage', 'name' => 'admin::app.acl.edit', 'route' => ['api.v1.admin.stays.store', 'api.v1.admin.stays.update', 'api.v1.admin.rooms.store', 'api.v1.admin.rooms.update'], 'sort' => 1],
+    ['key' => 'stay-bookings', 'name' => 'admin::app.stay-api.bookings', 'route' => 'api.v1.admin.bookings.index', 'sort' => 9],
+    ['key' => 'stay-bookings.view', 'name' => 'admin::app.acl.view', 'route' => 'api.v1.admin.bookings.show', 'sort' => 1],
+    ['key' => 'stay-bookings.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.bookings.store', 'sort' => 2],
+    ['key' => 'stay-bookings.cancel', 'name' => 'admin::app.stay-api.cancel', 'route' => 'api.v1.admin.bookings.cancel', 'sort' => 3],
     ['key' => 'deals', 'name' => 'admin::app.property-api.deals', 'route' => 'api.v1.admin.deals.index', 'sort' => 8],
     ['key' => 'deals.view', 'name' => 'admin::app.acl.view', 'route' => 'api.v1.admin.deals.show', 'sort' => 1],
     ['key' => 'deals.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.deals.store', 'sort' => 2],

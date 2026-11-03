@@ -1530,6 +1530,647 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Stays and bookings",
+      "item": [
+        {
+          "name": "GET /admin/stays",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays",
+            "description": "List scoped stays and room types\n\nRequires stays / stays:read. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stays",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example stay\",\n  \"city\": \"Dandeli\",\n  \"timezone\": \"Asia/Kolkata\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a stay\n\nRequires stays + stays.manage / stays:write. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /admin/stays/{id}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example stay\",\n  \"city\": \"Dandeli\",\n  \"timezone\": \"Asia/Kolkata\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Update stay setup\n\nRequires stays + stays.manage / stays:write. Timezone cannot change after rooms exist. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stays/{stayId}/rooms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/rooms",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Deluxe\",\n  \"inventory\": 2,\n  \"capacity\": 2,\n  \"nightly_rate\": \"1000.25\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create room type inventory\n\nRequires stays + stays.manage / stays:write. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /admin/stays/{stayId}/rooms/{id}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/rooms/{{room_type_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Deluxe\",\n  \"inventory\": 2,\n  \"capacity\": 2,\n  \"nightly_rate\": \"1000.25\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Update room type setup\n\nRequires stays + stays.manage / stays:write. Inventory/capacity are locked while active current/future bookings exist. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stay-rooms/{id}/availability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-rooms/{{room_type_id}}/availability?check_in={{check_in}}&check_out={{check_out}}",
+            "description": "Get minimum available rooms across a date range\n\nRequires stays / stays:read. Advisory availability using peak nightly occupancy, exclusive checkout, local stay timezone, 1–365 nights. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stay-bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings",
+            "description": "List scoped stay booking summaries\n\nRequires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stay-bookings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{stay_request_id}}\",\n  \"room_type_id\": \"{{room_type_id}}\",\n  \"check_in\": \"{{check_in}}\",\n  \"check_out\": \"{{check_out}}\",\n  \"rooms\": 1,\n  \"guests\": 2,\n  \"guest_name\": \"Example guest\",\n  \"guest_email\": \"guest@example.test\",\n  \"expected_rate\": \"1000.25\",\n  \"advance\": \"100.01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a confirmed stay booking\n\nRequires stay-bookings.create + stay-bookings.view + stays / bookings:write + stays:read. UUID retries return the same record, including after cancellation. Flat nightly totals and offline advances are immutable records; no payment is collected. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stay-bookings/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}",
+            "description": "Read stay booking and history\n\nRequires stay-bookings.view / bookings:read. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/stay-bookings/{id}/cancel",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancellation_reason\": \"Guest changed plans\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cancel a stay booking before local check-in date\n\nRequires stay-bookings.cancel + stay-bookings.view / bookings:write. Repeated cancellation preserves original reason/history. No refund is initiated. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/stay-bookings/{id}/check-in",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/check-in",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Record guest check-in\n\nRequires stay-bookings.check-in + stay-bookings.view / bookings:write. Only confirmed bookings. Record arrival within the booked check-in inclusive / checkout exclusive local-date window. Repeat requests preserve timestamp/history, including after departure. Timestamp and actor are server-generated. All mutations serialize on the source stay/room and booking locks.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/stay-bookings/{id}/check-out",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/check-out",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Record guest check-out\n\nRequires stay-bookings.check-out + stay-bookings.view / bookings:write. Only confirmed bookings. Record departure only after arrival. Early departure does not release scheduled inventory, reprice charges, alter advances or initiate refunds. Repeat requests preserve timestamp/history. Timestamp and actor are server-generated. All mutations serialize on the source stay/room and booking locks.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stay-bookings/{id}/payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/payments",
+            "description": "List private offline ledger and exact financial totals\n\nRequires stay-bookings.view + stay-bookings.payments and bookings:read. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stay-bookings/{id}/payments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/payments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{ledger_request_id}}\",\n  \"amount\": \"100.01\",\n  \"method\": \"cash\",\n  \"reference\": \"Offline receipt\",\n  \"reason\": \"Already received offline\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Record additional offline payment\n\nRequires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.create + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stay-bookings/{id}/refunds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/refunds",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{ledger_request_id}}\",\n  \"amount\": \"25.25\",\n  \"method\": \"cash\",\n  \"reason\": \"Already refunded offline\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Record offline refund with a reason\n\nRequires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.refund + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stay-bookings/{id}/payments/{entryId}/reverse",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/payments/{{payment_entry_id}}/reverse",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{ledger_request_id}}\",\n  \"reason\": \"Incorrect financial entry\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Append reversal of an incorrect original entry\n\nRequires stay-bookings.view + stay-bookings.payments and bookings:read + stay-bookings.payments.reverse + bookings:write. Uses booking visibility, immutable entries, exact cents and current locking reads. No money is transferred or verified. See PAYMENTS.md for correction order, cancellation, refund and retry rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stay-rooms/{id}/calendar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-rooms/{{room_type_id}}/calendar?from={{check_in}}&to={{check_out}}",
+            "description": "Read nightly room-type availability calendar\n\nRequires stays / stays:read and scoped stay visibility. Read-only nightly room allocations with current capacity, no guest/contact/payment data. Dates use the stay timezone; from is inclusive and to exclusive, 1–62 nights. Historical rows use current inventory and may flag over-capacity. Early checkout retains original allocation. Inactive inventory has zero bookable availability. No-store; counts are advisory and booking save rechecks inventory.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

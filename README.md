@@ -14,17 +14,21 @@ consented enquiries. Staff workflows include property/lead management and site
 visits. Firebase data/account migration and mobile integration remain separate work. The original Stay in Dandeli and Buy Rent Sell
 Admin repositories are read-only references; all changes are made in SDA.
 
-
 Staff workspace: the SDA React frontend now includes `/staff` for Laravel login,
 property creation/editing, photos and publication, overview counts, enquiry/lead lists, lead detail/assignment/stage changes and
 notes with dated follow-up tasks, plus site visit scheduling, outcomes/history and private property documents. See [web setup and permissions](web/README.md#staff-workspace).
 Both reference repositories remain read-only. This does not deploy changes to
 stayindandeli.in or migrate the Firebase app.
 
-
 Current staff workflow status: property/enquiry management, leads/follow-ups,
-site visits and private documents have web screens. **Property deal management**
-(reservation, advances, confirmation/cancellation and history) is the remaining
-major staff UI module in the current plan. Room/stay booking integration and
+site visits and private documents have web screens. **Property deal management** now includes staff reservation, recorded advance, confirmation/cancellation and history screens. Public stay booking, payment integration and
 mobile/Firebase account/data migration are separate later phases; production
 rollout still needs deployment and acceptance checks.
+
+Staff stays and room bookings now have separate inventory, date-based availability, exact advance/balance records and cancellation history. See [stay booking documentation](backend/docs/STAYS.md). Public online booking/payment and migration remain later phases.
+
+Stay booking details also support staff check-in/check-out, attendance filters and actor/time history without changing booked charges or inventory dates.
+
+Stay bookings now include an immutable offline payment ledger with additional receipts, refunds, corrections and exact outstanding/refund balances. See [ledger documentation](backend/docs/PAYMENTS.md).
+
+Staff can inspect nightly room allocation and remaining capacity through **Availability calendar**, including scoped date ranges and cancellation refresh.

@@ -81,8 +81,15 @@ it('assigns only eligible active agents and transfers exclusive task ownership',
     $lead = workflowLead($manager);
     $h = apiHeaders($manager);
     $task = $this->postJson('/api/v1/admin/leads/'.$lead->id.'/follow-ups', workflowTask(), $h)->assertCreated()->json('data.id');
-    $response = $this->getJson('/api/v1/admin/lead-assignees', $h)->assertOk();
-    $ids = array_column($response->json('data'), 'id');
+    // Retained isolated concurrency fixtures may occupy earlier pages.
+    // Verify eligibility across the actual paginated API rather than assuming one page.
+    $ids = [];
+    $page = 1;
+    do {
+        $response = $this->getJson('/api/v1/admin/lead-assignees?per_page=100&page='.$page, $h)->assertOk();
+        $ids = array_merge($ids, array_column($response->json('data'), 'id'));
+        $page++;
+    } while ($page <= $response->json('meta.last_page'));
     expect($ids)->toContain($target->id)->not->toContain($inactive->id)->not->toContain($ineligible->id);
     foreach ([$inactive->id, $ineligible->id, 4294967294] as $id) {
         $this->patchJson('/api/v1/admin/leads/'.$lead->id.'/assignment', ['user_id' => $id], $h)->assertUnprocessable()->assertJsonValidationErrors('user_id');

@@ -1,0 +1,52 @@
+<?php
+
+namespace Webkul\Property\Repositories;
+
+use Webkul\Core\Eloquent\Repository;
+use Webkul\Property\Contracts\Stay;
+use Webkul\Property\Models\RoomType;
+
+class StayRepository extends Repository
+{
+    public function model()
+    {
+        return Stay::class;
+    }
+
+    public function scopedQuery()
+    {
+        $q = $this->model->newQuery();
+        $ids = bouncer()->getAuthorizedUserIds();
+        if ($ids !== null) {
+            $q->whereIn('user_id', $ids);
+        }
+
+return $q;
+    }
+
+    public function authorized(int $id, bool $lock = false)
+    {
+        $q = $this->scopedQuery();
+        if ($lock) {
+            $q->lockForUpdate();
+        }
+
+return $q->findOrFail($id);
+    }
+
+    public function room(int $id, bool $lock = false)
+    {
+        // All writes lock parent stay before room, including edits and cancellations.
+        $parent = RoomType::query()->whereKey($id)->value('stay_id');
+        abort_unless($parent, 404);
+        $stay = $this->authorized($parent, $lock);
+        $q = $stay->rooms();
+        if ($lock) {
+            $q->lockForUpdate();
+        }
+        $room = $q->findOrFail($id);
+        $room->setRelation('stay', $stay);
+
+        return $room;
+    }
+}
