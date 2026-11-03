@@ -32,3 +32,11 @@ Stay booking details also support staff check-in/check-out, attendance filters a
 Stay bookings now include an immutable offline payment ledger with additional receipts, refunds, corrections and exact outstanding/refund balances. See [ledger documentation](backend/docs/PAYMENTS.md).
 
 Staff can inspect nightly room allocation and remaining capacity through **Availability calendar**, including scoped date ranges and cancellation refresh.
+
+**Stay operations** provides scheduled arrivals/departures and live in-house/overdue queues with booking links and scoped guest names.
+
+**Payment follow-up** now lists scoped pending collections and refunds with exact current ledger balances and links to booking details.
+
+**Stay bookings** can be filtered by booking/stay IDs and inclusive scheduled arrival dates, together with status, room and attendance filters.
+
+**Printable stay statements** present booking charges, complete offline payment/correction history and current balances with a print layout that omits staff controls and internal metadata.

@@ -1,3 +1,6 @@
+import { StayStatementPage } from './StatementWorkspace';
+import { PaymentFollowUpPage } from './PaymentFollowUpWorkspace';
+import { StayOperationsPage } from './OperationsWorkspace';
 import { StayCalendarPage } from './CalendarWorkspace';
 import { StayList, BookingList, BookingCreate, BookingDetail } from './StayWorkspace';
 import { DealList, DealCreate, DealDetail } from './DealWorkspace';
@@ -134,10 +137,13 @@ export function StaffApp() {
           <Route path="leads" element={<Records kind="leads" />} />
           <Route path="leads/:id" element={<LeadPage />} />
           <Route path="follow-ups" element={<FollowUpQueue />} />
+          <Route path="stay-payment-follow-ups" element={<PaymentFollowUpPage />} />
+          <Route path="stay-operations" element={<StayOperationsPage />} />
           <Route path="stay-calendar" element={<StayCalendarPage />} />
           <Route path="stays" element={<StayList />} />
           <Route path="stay-bookings" element={<BookingList />} />
           <Route path="stay-bookings/new" element={<BookingCreate />} />
+          <Route path="stay-bookings/:id/statement" element={<StayStatementPage />} />
           <Route path="stay-bookings/:id" element={<BookingDetail />} />
           <Route path="property-deals" element={<DealList />} />
           <Route path="property-deals/new" element={<DealCreate />} />
@@ -283,6 +289,12 @@ function Shell() {
               <NavLink to="/staff/stays">Stays and rooms</NavLink>
               <NavLink to="/staff/stay-calendar">Availability calendar</NavLink>
             </>
+          )}
+          {['stays', 'stay-bookings', 'stay-bookings.view', 'stay-bookings.payments'].every((p) =>
+            can(profile, p),
+          ) && <NavLink to="/staff/stay-payment-follow-ups">Payment follow-up</NavLink>}
+          {['stays', 'stay-bookings', 'stay-bookings.view'].every((p) => can(profile, p)) && (
+            <NavLink to="/staff/stay-operations">Stay operations</NavLink>
           )}
           {can(profile, 'stay-bookings') && (
             <NavLink to="/staff/stay-bookings">Stay bookings</NavLink>

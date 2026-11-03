@@ -304,3 +304,17 @@ Stay booking details now include offline payments/refunds, explicit review, exac
 ### Stay availability calendar
 
 **Availability calendar** shows nightly room-type allocation/remaining capacity for a URL-backed date range of up to 62 nights. Refresh reflects cancellations. Inactive and past dates are not bookable, checkout dates are exclusive, and historical rows use current capacity. Guest/payment data is never included. See [calendar API](../backend/docs/STAYS.md#nightly-availability-calendar).
+
+### Stay operations
+
+**Stay operations** shows scheduled arrivals/departures for a selected stay/date, plus live in-house and overdue check-out queues. Filters survive URL reloads and pagination. Refresh reflects recorded attendance; open a booking for existing check-in/check-out actions. Requires stay access plus booking list/detail permissions. Guest contacts and payments are excluded from this dashboard. See [operations API and date semantics](../backend/docs/STAYS.md#staff-operations-dashboard).
+
+### Stay payment follow-up
+
+**Payment follow-up** lists outstanding collection and refund-due bookings by stay, with exact per-currency amounts, URL filters, pagination and refresh. Open booking detail for permitted ledger actions. Requires stay, booking list/detail and payment ledger access. See [queue rules and API](../backend/docs/PAYMENTS.md#stay-payment-follow-up).
+
+**Stay bookings** also supports combined booking/stay IDs and inclusive arrival-date bounds, alongside room/status/attendance filters. URL filters survive reload and pagination; clearing restores the authorized list. See [booking finder semantics](../backend/docs/STAYS.md#booking-finder).
+
+### Printable stay statement
+
+Booking detail's ledger links to a print-friendly statement with complete chronological payment/correction history and exact balances. Refresh before printing to include recent changes. The browser print dialog supports printing or Save as PDF; staff navigation and controls are hidden. Requires booking-detail and ledger access. Internal notes/references/contacts are omitted. See [statement API and rules](../backend/docs/PAYMENTS.md#printable-booking-statement).

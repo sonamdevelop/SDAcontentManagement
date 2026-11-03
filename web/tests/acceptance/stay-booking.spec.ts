@@ -43,6 +43,20 @@ test('real stay setup, room inventory, exact booking totals, rejection and cance
   await page.getByRole('button', { name: 'Save stay booking', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Stay booking #/ })).toBeVisible();
   const bookedUrl = page.url();
+  const bookingId = new URL(bookedUrl).pathname.split('/').at(-1)!;
+  await page.goto(
+    `/staff/stay-bookings?booking_id=${bookingId}&arrival_from=${inDate}&arrival_to=${inDate}`,
+  );
+  await expect(
+    page.getByRole('link', {
+      name: new RegExp(`Acceptance forest stay — Acceptance deluxe #${bookingId}$`),
+    }),
+  ).toBeVisible();
+  await expect(page.getByText('Synthetic stay guest', { exact: true })).toHaveCount(0);
+  await page.goto(`/staff/stay-bookings?booking_id=${bookingId}&arrival_from=${outDate}`);
+  await expect(page.getByText('No matching stay bookings.', { exact: true })).toBeVisible();
+  await page.goto(bookedUrl);
+
   await expect(page.getByText(/Balance: ₹3,900.99/)).toBeVisible();
   await page.goto('/staff/stay-calendar');
   await page
@@ -116,9 +130,30 @@ test('real same-day check-in/out preserves charges and inventory and records aud
   await page.getByLabel('Guest name', { exact: true }).fill('Synthetic attendance guest');
   await page.getByRole('button', { name: 'Save stay booking', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Stay booking #/ })).toBeVisible();
+  const attendanceBookingUrl = page.url();
+  await page.goto('/staff/stay-operations');
+  await page
+    .getByRole('combobox', { name: 'Operations stay', exact: true })
+    .selectOption({ label: 'Attendance test stay · Dandeli' });
+  await page.getByLabel('Scheduled date', { exact: true }).fill(today);
+  await page.getByRole('button', { name: 'Show operations', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Scheduled arrivals (1)', exact: true }),
+  ).toBeVisible();
+  const operationsUrl = page.url();
+  await page
+    .getByRole('link', { name: /Synthetic attendance guest — Attendance deluxe #/ })
+    .click();
   await page.getByRole('button', { name: 'Record check-in', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm check-in', exact: true }).click();
   await expect(page.getByText('Current attendance: Checked in', { exact: true })).toBeVisible();
+  await page.goto(operationsUrl);
+  await page.getByRole('button', { name: 'In house now (1)', exact: true }).click();
+  await expect(
+    page.getByRole('link', { name: /Synthetic attendance guest — Attendance deluxe #/ }),
+  ).toBeVisible();
+  const inHouseUrl = page.url();
+  await page.goto(attendanceBookingUrl);
   await page.getByRole('button', { name: 'Record check-out', exact: true }).click();
   await expect(page.getByText(/Early checkout keeps the original room dates/)).toBeVisible();
   await page.getByRole('button', { name: 'Confirm check-out', exact: true }).click();
@@ -129,6 +164,11 @@ test('real same-day check-in/out preserves charges and inventory and records aud
   const history = page.getByRole('heading', { name: 'Booking history', exact: true }).locator('..');
   await expect(history.getByText('Checked in', { exact: true })).toBeVisible();
   await expect(history.getByText('Checked out', { exact: true })).toBeVisible();
+  await page.goto(inHouseUrl);
+  await expect(page.getByRole('button', { name: 'In house now (0)', exact: true })).toBeVisible();
+  await expect(
+    page.getByText('No bookings in this operations queue.', { exact: true }),
+  ).toBeVisible();
   await page.goto('/staff/stay-bookings/new');
   await page
     .getByRole('combobox', { name: 'Booking room type', exact: true })

@@ -1,3 +1,4 @@
+import { bookingFilters } from './stays';
 import { PaymentPanel } from './PaymentWorkspace';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -303,6 +304,7 @@ export function BookingList() {
     [api, allowed, query],
   );
   const result = useResource(query, load);
+  const [filterError, setFilterError] = useState<unknown>();
   if (!allowed) return <p role="alert">You do not have permission to list stay bookings.</p>;
   return (
     <>
@@ -319,13 +321,16 @@ export function BookingList() {
         key={query}
         onSubmit={(e) => {
           e.preventDefault();
-          const f = new FormData(e.currentTarget),
-            next = new URLSearchParams();
-          for (const k of ['status', 'room_type_id', 'attendance_status']) {
-            const v = String(f.get(k) || '');
-            if (v) next.set(k, v);
+          setFilterError(undefined);
+          try {
+            setParams(
+              bookingFilters(
+                Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>,
+              ),
+            );
+          } catch (error) {
+            setFilterError(error);
           }
-          setParams(next);
         }}
       >
         <label>
@@ -354,9 +359,30 @@ export function BookingList() {
             defaultValue={params.get('room_type_id') || ''}
           />
         </label>
+        {['booking_id', 'stay_id'].map((key) => (
+          <label key={key}>
+            {key === 'booking_id' ? 'Booking ID' : 'Stay ID'}
+            <input name={key} type="number" min="1" step="1" defaultValue={params.get(key) || ''} />
+          </label>
+        ))}
+        <label>
+          Arrival from
+          <input type="date" name="arrival_from" defaultValue={params.get('arrival_from') || ''} />
+        </label>
+        <label>
+          Arrival to
+          <input type="date" name="arrival_to" defaultValue={params.get('arrival_to') || ''} />
+        </label>
         <button>Filter bookings</button>
-        <Link to="/staff/stay-bookings">Clear booking filters</Link>
+        <Link to="/staff/stay-bookings" onClick={() => setFilterError(undefined)}>
+          Clear booking filters
+        </Link>
       </form>
+      <p>
+        Arrival bounds include both dates, using each booking’s local scheduled check-in date. All
+        filters combine; no guest contact search is performed.
+      </p>
+      {filterError ? <Failure error={filterError} /> : null}
       {result.loading ? (
         <p role="status">Loading bookings…</p>
       ) : result.error ? (

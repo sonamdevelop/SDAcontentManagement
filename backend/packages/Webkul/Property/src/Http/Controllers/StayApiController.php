@@ -10,6 +10,7 @@ use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Repositories\StayRepository;
 use Webkul\Property\Services\StayBookingService;
 use Webkul\Property\Support\DealMoney;
+use Webkul\Property\Support\StayBookingFilters;
 
 class StayApiController
 {
@@ -60,21 +61,8 @@ class StayApiController
 
     public function index(Request $r)
     {
-        $f = $this->filters($r);
-        $q = $this->bookings->scopedQuery();
-        foreach (['room_type_id', 'status'] as $k) {
-            if (isset($f[$k])) {
-                $q->where($k, $f[$k]);
-            }
-        }
-
-        if (isset($f['attendance_status'])) {
-            match ($f['attendance_status']) {
-                'not_arrived' => $q->whereNull('checked_in_at')->whereNull('checked_out_at'),
-                'checked_in' => $q->whereNotNull('checked_in_at')->whereNull('checked_out_at'),
-                'checked_out' => $q->whereNotNull('checked_out_at'),
-            };
-        }
+        $f = $this->filters($r) + StayBookingFilters::validate($r->query());
+        $q = $this->bookings->filteredQuery($f);
 
         $page = $q->latest('id')->paginate($f['per_page'] ?? 20)->withQueryString();
         app(StayPaymentRepository::class)->prime($page->getCollection());

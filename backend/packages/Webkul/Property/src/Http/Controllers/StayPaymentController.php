@@ -9,6 +9,7 @@ use Webkul\Property\Repositories\StayBookingRepository;
 use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Services\StayPaymentService;
 use Webkul\Property\Support\DealMoney;
+use Webkul\Property\Support\StayStatement;
 
 class StayPaymentController
 {
@@ -22,6 +23,17 @@ class StayPaymentController
             $booking = $this->bookings->authorized($id, true);
 
             return StayPaymentResource::collection($this->payments->page($id, $data['per_page'] ?? 20))->additional(['summary' => $this->summary($booking)])->response()->header('Cache-Control', 'no-store');
+        });
+    }
+
+    public function statement(int $id)
+    {
+        return DB::transaction(function () use ($id) {
+            $booking = $this->bookings->authorized($id, true);
+            $entries = $this->payments->entries($id, true);
+            $snapshot = StayStatement::make($booking->toArray(), $entries->toArray(), now()->toIso8601String());
+
+            return response()->json(['data' => $snapshot])->header('Cache-Control', 'no-store');
         });
     }
 
@@ -53,6 +65,6 @@ class StayPaymentController
         }
         [$entry,$booking,$created,$totals] = $this->service->record($id, $kind, $request->validate($rules), $entryId);
 
-        return (new StayPaymentResource($entry))->additional(['summary' => $this->summary($booking, $totals)])->response()->setStatusCode($created ? 201 : 200)->header('Cache-Control','no-store');
+        return (new StayPaymentResource($entry))->additional(['summary' => $this->summary($booking, $totals)])->response()->setStatusCode($created ? 201 : 200)->header('Cache-Control', 'no-store');
     }
 }

@@ -179,3 +179,59 @@ are paginated without losing the draft selection. Refresh calendar re-reads a
 consistent allocation snapshot; it never reserves a room. A booking save remains
 the authoritative inventory check. Invalid/missing ranges return 422, scope/missing
 records 404, missing permission/ability 403 and absent authentication 401.
+
+## Staff operations dashboard
+
+GET `/admin/stays/{id}/operations?date=2030-01-02&view=arrivals` requires `stays`,
+`stay-bookings` and `stay-bookings.view`, plus both `stays:read` and `bookings:read`
+token abilities. Stay and booking own/group/global scopes apply independently.
+No new token abilities or database migrations are required. Cancelled bookings
+are excluded, while existing bookings in inactive stays/rooms remain visible.
+
+Views are `arrivals` (default), `departures`, `in_house`, and `overdue`:
+
+- Arrivals/departures include all confirmed bookings scheduled for the selected
+  date, including completed attendance. date defaults to the stay's local today.
+- In-house lists currently recorded arrivals without recorded departure.
+- Overdue lists in-house bookings whose scheduled checkout date is before today
+  in the stay timezone. Checkout due today is a departure, not yet overdue.
+
+Live queues/counts are independent of selected date and are labelled accordingly.
+This is not a reconstructed historical attendance report. Counts measure bookings,
+not room quantities. Data and counts come from the same read transaction. Context
+contains stay/name/timezone, selected date, today, as_of and all four counts.
+Responses are paginated (page/per_page 1–100, default 20), with earliest scheduled
+arrival/checkout and then ID ordering. Curated rows contain booking/room IDs, room
+and guest names, dates, room/guest quantities and attendance only. They omit guest
+contact details, payment amounts/references, notes and internal hashes.
+
+Use **Stay operations** (`/staff/stay-operations`) to choose a stay/date, switch
+queues, paginate and refresh. Filters persist in the URL. Open a booking to use
+its existing permitted attendance actions; the dashboard itself never changes
+attendance, inventory or money. Invalid filters return 422, missing/out-of-scope
+stays 404, denied permissions/abilities 403 and absent authentication 401. Responses
+use no-store. A missing booking-detail permission also hides the staff navigation
+entry and prevents loading guest names. The real acceptance journey verifies that
+check-in increases in-house count and check-out removes the booking from it.
+
+## Booking finder
+
+GET `/admin/stay-bookings` additionally accepts `stay_id`, `booking_id`,
+`arrival_from` and `arrival_to`. IDs must be positive integers. Arrival bounds
+are optional and inclusive, comparing the stored scheduled check_in calendar date
+in each booking's timezone, with no UTC conversion. They select arrivals rather
+than occupancy overlap. Either bound works alone; when both are present, to must
+be on or after from. Invalid dates/IDs or reversed ranges return 422.
+
+All filters combine with room_type_id, status and attendance_status. Stay filters
+now restrict results to room types belonging to that stay. Contradictory or
+unmatched IDs return an empty page; they do not reveal another user's records.
+The existing booking list scope and `stay-bookings` / `bookings:read` requirements
+remain in force, without requiring stay setup or booking-detail access. Lists
+retain their existing private-field omissions. No new permissions or migration
+are needed. Newest booking ID first; page/per_page and no-store remain unchanged.
+
+Use **Stay bookings** to enter booking/stay IDs and arrival bounds. Filters persist
+in the URL across reload/back and pagination. Applying new filters resets page;
+**Clear booking filters** restores the full authorized list. The form rejects
+reversed arrival ranges while retaining the draft and current results.

@@ -1775,7 +1775,7 @@
               }
             ],
             "url": "{{base_url}}/admin/stay-bookings",
-            "description": "List scoped stay booking summaries\n\nRequires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+            "description": "List scoped stay booking summaries\n\nRequires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules. Booking finder filters combine stay_id, booking_id and inclusive arrival_from/arrival_to with room/status/attendance. Dates use each booking local scheduled check_in. List-only users retain existing private field omissions. Unmatched or contradictory IDs return an empty page; invalid filters return 422.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {
@@ -2157,6 +2157,93 @@
             ],
             "url": "{{base_url}}/admin/stay-rooms/{{room_type_id}}/calendar?from={{check_in}}&to={{check_out}}",
             "description": "Read nightly room-type availability calendar\n\nRequires stays / stays:read and scoped stay visibility. Read-only nightly room allocations with current capacity, no guest/contact/payment data. Dates use the stay timezone; from is inclusive and to exclusive, 1–62 nights. Historical rows use current inventory and may flag over-capacity. Early checkout retains original allocation. Inactive inventory has zero bookable availability. No-store; counts are advisory and booking save rechecks inventory.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stays/{id}/operations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/operations?date={{check_in}}&view=arrivals",
+            "description": "Read staff stay operations queues\n\nRequires stays + stay-bookings + stay-bookings.view and stays:read + bookings:read, with both stay and booking visibility. Scheduled arrivals/departures use selected date (defaults to stay local today). in_house and overdue are live attendance snapshots, independent of selected date; overdue means check_out before local today and no recorded departure. Cancelled bookings excluded. Counts are booking counts, not room counts. Curated rows include guest name but no contacts, notes or financial metadata. Read-only; actions remain on booking detail. Consistent snapshot with no-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stays/{id}/payment-follow-ups",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/payment-follow-ups?view=collection",
+            "description": "Current outstanding collection and refund queues\n\nRequires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Independent stay/booking visibility applies. Effective immutable ledger excludes reversed entries. Cancelled bookings have zero amount due. Current balances, no date filter or automatic money movement. Oldest check-in then booking ID order. Counts are bookings, not monetary totals. Inactive stays remain visible. No contacts, references, notes or hashes. Cache-Control: no-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stay-bookings/{id}/statement",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/statement",
+            "description": "Read a complete printable booking account statement\n\nRequires stay-bookings.view + stay-bookings.payments ACL and bookings:read, with existing booking visibility. Read-only locked snapshot of booking and all ledger entries in ascending ID order, without pagination or truncation. Curated guest name and exact financial summary; excludes contacts, internal notes, bank references, reasons, staff IDs, request IDs and hashes. Reversed entries/corrections remain visible but excluded from effective totals. Cancelled bookings owe zero and retain any refund due. Offline account statement, not a tax invoice or transfer of money. Cache-Control: no-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {

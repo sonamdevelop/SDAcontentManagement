@@ -151,6 +151,8 @@ def reference(spec):
             url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}').replace('{entryId}', '{{payment_entry_id}}')
             if path.endswith('/availability'):url += '?check_in={{check_in}}&check_out={{check_out}}'
             if path.endswith('/calendar'):url += '?from={{check_in}}&to={{check_out}}'
+            if path.endswith('/payment-follow-ups'):url += '?view=collection'
+            if path.endswith('/operations'):url += '?date={{check_in}}&view=arrivals'
             public = path.startswith('/auth/login') or path.startswith('/properties')
             expected = min(int(c) for c in operation.get('responses', {}) if c.isdigit() and 200 <= int(c) < 300)
             if method == 'post' and path in ('/admin/property-deals', '/admin/stay-bookings'):expected = 201

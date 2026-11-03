@@ -5220,7 +5220,7 @@
       "get": {
         "summary": "List scoped stay booking summaries",
         "operationId": "stayBookingsIndex",
-        "description": "Requires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules.",
+        "description": "Requires stay-bookings / bookings:read. Lists omit guest/contact, request ID, notes, payment reference and events. See STAYS.md for date, snapshot, retry and cancellation rules. Booking finder filters combine stay_id, booking_id and inclusive arrival_from/arrival_to with room/status/attendance. Dates use each booking local scheduled check_in. List-only users retain existing private field omissions. Unmatched or contradictory IDs return an empty page; invalid filters return 422.",
         "security": [
           {
             "bearerAuth": []
@@ -5333,6 +5333,46 @@
                 "checked_out"
               ]
             }
+          },
+          {
+            "name": "booking_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Exact ID filter combined with all other filters; no scope expansion."
+          },
+          {
+            "name": "stay_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Exact ID filter combined with all other filters; no scope expansion."
+          },
+          {
+            "name": "arrival_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive local scheduled arrival date bound, not an occupancy filter. Either bound optional; arrival_to must be >= arrival_from."
+          },
+          {
+            "name": "arrival_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive local scheduled arrival date bound, not an occupancy filter. Either bound optional; arrival_to must be >= arrival_from."
           }
         ]
       },
@@ -6226,6 +6266,303 @@
             }
           }
         ]
+      }
+    },
+    "/admin/stays/{id}/operations": {
+      "get": {
+        "summary": "Read staff stay operations queues",
+        "operationId": "stayOperationsIndex",
+        "description": "Requires stays + stay-bookings + stay-bookings.view and stays:read + bookings:read, with both stay and booking visibility. Scheduled arrivals/departures use selected date (defaults to stay local today). in_house and overdue are live attendance snapshots, independent of selected date; overdue means check_out before local today and no recorded departure. Cancelled bookings excluded. Counts are booking counts, not room counts. Curated rows include guest name but no contacts, notes or financial metadata. Read-only; actions remain on booking detail. Consistent snapshot with no-store.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StayOperation"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    },
+                    "context": {
+                      "$ref": "#/components/schemas/StayOperationsContext"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "links",
+                    "context"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "nullable": true
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "arrivals",
+                "departures",
+                "in_house",
+                "overdue"
+              ],
+              "default": "arrivals"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/admin/stays/{id}/payment-follow-ups": {
+      "get": {
+        "summary": "Current outstanding collection and refund queues",
+        "operationId": "stayPaymentFollowUpsIndex",
+        "description": "Requires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Independent stay/booking visibility applies. Effective immutable ledger excludes reversed entries. Cancelled bookings have zero amount due. Current balances, no date filter or automatic money movement. Oldest check-in then booking ID order. Counts are bookings, not monetary totals. Inactive stays remain visible. No contacts, references, notes or hashes. Cache-Control: no-store.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StayPaymentFollowUp"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    },
+                    "context": {
+                      "$ref": "#/components/schemas/StayPaymentFollowUpContext"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "links",
+                    "context"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "collection",
+                "refund"
+              ],
+              "default": "collection"
+            },
+            "description": "Positive balance or positive refund due."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/admin/stay-bookings/{id}/statement": {
+      "get": {
+        "summary": "Read a complete printable booking account statement",
+        "operationId": "stayBookingStatement",
+        "description": "Requires stay-bookings.view + stay-bookings.payments ACL and bookings:read, with existing booking visibility. Read-only locked snapshot of booking and all ledger entries in ascending ID order, without pagination or truncation. Curated guest name and exact financial summary; excludes contacts, internal notes, bank references, reasons, staff IDs, request IDs and hashes. Reversed entries/corrections remain visible but excluded from effective totals. Cancelled bookings owe zero and retain any refund due. Offline account statement, not a tax invoice or transfer of money. Cache-Control: no-store.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete current statement snapshot",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayStatement"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Missing permission or token ability"
+          },
+          "404": {
+            "description": "Missing or out-of-scope booking"
+          }
+        }
       }
     }
   },
@@ -8857,6 +9194,409 @@
                   "type": "boolean"
                 }
               }
+            }
+          }
+        }
+      },
+      "StayOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "guest_name": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "attendance_status": {
+            "type": "string",
+            "enum": [
+              "not_arrived",
+              "checked_in",
+              "checked_out"
+            ]
+          },
+          "checked_in_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checked_out_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "room_type_id",
+          "room_name",
+          "guest_name",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "attendance_status",
+          "checked_in_at",
+          "checked_out_at"
+        ]
+      },
+      "StayOperationsContext": {
+        "type": "object",
+        "properties": {
+          "stay_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "today": {
+            "type": "string",
+            "format": "date"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "view": {
+            "type": "string",
+            "enum": [
+              "arrivals",
+              "departures",
+              "in_house",
+              "overdue"
+            ]
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "arrivals": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "departures": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "in_house": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "overdue": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "arrivals",
+              "departures",
+              "in_house",
+              "overdue"
+            ]
+          }
+        },
+        "required": [
+          "stay_id",
+          "stay_name",
+          "timezone",
+          "date",
+          "today",
+          "as_of",
+          "view",
+          "counts"
+        ]
+      },
+      "StayPaymentFollowUp": {
+        "type": "object",
+        "required": [
+          "id",
+          "room_type_id",
+          "room_name",
+          "guest_name",
+          "check_in",
+          "check_out",
+          "status",
+          "currency",
+          "net_paid",
+          "amount_due",
+          "balance",
+          "refund_due"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "guest_name": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "net_paid": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "0.01"
+          },
+          "amount_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "0.01"
+          },
+          "balance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "0.01"
+          },
+          "refund_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "0.01"
+          }
+        }
+      },
+      "StayPaymentFollowUpContext": {
+        "type": "object",
+        "required": [
+          "stay_id",
+          "stay_name",
+          "view",
+          "as_of",
+          "counts"
+        ],
+        "properties": {
+          "stay_id": {
+            "type": "integer"
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "view": {
+            "type": "string",
+            "enum": [
+              "collection",
+              "refund"
+            ]
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "collection",
+              "refund"
+            ],
+            "properties": {
+              "collection": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "refund": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "StayStatementBooking": {
+        "type": "object",
+        "required": [
+          "id",
+          "room_type_id",
+          "stay_name",
+          "room_name",
+          "timezone",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "nightly_rate",
+          "guest_name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "guest_name": {
+            "type": "string"
+          }
+        }
+      },
+      "StayStatementEntry": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "amount",
+          "method",
+          "created_at",
+          "reversal_of",
+          "reversed_by",
+          "effective"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "opening_advance",
+              "payment",
+              "refund",
+              "reversal"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other",
+              "unspecified"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reversal_of": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "reversed_by": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "effective": {
+            "type": "boolean",
+            "description": "False for reversal rows and reversed original entries."
+          }
+        }
+      },
+      "StayStatement": {
+        "type": "object",
+        "required": [
+          "generated_at",
+          "booking",
+          "summary",
+          "entries"
+        ],
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "booking": {
+            "$ref": "#/components/schemas/StayStatementBooking"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/StayFinancialSummary"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StayStatementEntry"
             }
           }
         }

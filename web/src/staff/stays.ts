@@ -1,6 +1,27 @@
+import { operationDate } from './operations';
 import { StaffApi, StaffError } from './api';
 import { VisitApi, type VisitEvent } from './visits';
 import { money } from './deals';
+export function bookingFilters(values: Record<string, string | undefined>) {
+  const params = new URLSearchParams();
+  for (const key of ['booking_id', 'stay_id', 'room_type_id']) {
+    const value = values[key];
+    if (value && (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(Number(value))))
+      throw new Error('Use a positive whole-number ID.');
+    if (value) params.set(key, value);
+  }
+  for (const key of ['arrival_from', 'arrival_to']) {
+    const value = values[key];
+    if (value) {
+      operationDate(value);
+      params.set(key, value);
+    }
+  }
+  if (values.arrival_from && values.arrival_to && values.arrival_to < values.arrival_from)
+    throw new Error('Arrival to must be on or after arrival from.');
+  for (const key of ['status', 'attendance_status']) if (values[key]) params.set(key, values[key]);
+  return params;
+}
 export type Room = {
   id: number;
   stay_id: number;

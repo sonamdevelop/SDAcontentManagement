@@ -11,7 +11,9 @@ use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
 use Webkul\Property\Http\Controllers\StayApiController;
+use Webkul\Property\Http\Controllers\StayOperationsController;
 use Webkul\Property\Http\Controllers\StayPaymentController;
+use Webkul\Property\Http\Controllers\StayPaymentFollowUpController;
 use Webkul\Property\Http\Middleware\ApiAccess;
 
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:property-api-login')->name('auth.login');
@@ -94,11 +96,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 Route::prefix('admin/stay-bookings/{id}')->whereNumber('id')->name('admin.booking-payments.')->group(function () {
     $payments = StayPaymentController::class;
+    Route::get('statement', [$payments, 'statement'])->middleware(ApiAccess::class.':stay-bookings.payments,bookings:read,stay-bookings.view')->name('statement');
     Route::get('payments', [$payments, 'index'])->middleware(ApiAccess::class.':stay-bookings.payments,bookings:read,stay-bookings.view')->name('index');
     foreach (['payments' => ['payment', 'create'], 'refunds' => ['refund', 'refund']] as $path => [$method,$permission]) {
         Route::post($path, [$payments, $method])->middleware([ApiAccess::class.':stay-bookings.payments.'.$permission.',bookings:write,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name($method);
     }
     Route::post('payments/{entryId}/reverse', [$payments, 'reverse'])->whereNumber('entryId')->middleware([ApiAccess::class.':stay-bookings.payments.reverse,bookings:write,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name('reverse');
 });
+
+Route::get('admin/stays/{id}/payment-follow-ups', [StayPaymentFollowUpController::class, 'index'])->whereNumber('id')->middleware([ApiAccess::class.':stays,stays:read', ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name('admin.stays.payment-follow-ups');
+
+Route::get('admin/stays/{id}/operations', [StayOperationsController::class, 'index'])->whereNumber('id')->middleware([ApiAccess::class.':stays,stays:read', ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view'])->name('admin.stays.operations');
 
 Route::fallback(fn () => response()->json(['message' => 'Not found.'], 404));
