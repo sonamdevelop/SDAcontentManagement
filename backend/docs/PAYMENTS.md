@@ -156,3 +156,33 @@ existing booking detail. Stay/view/page filters persist in the URL. Navigation
 and requests require all four permissions. Responses use no-store. Invalid view
 or pagination returns 422; denied permissions/abilities 403, out-of-scope stay
 404 and absent authentication 401.
+
+## Printable booking statement
+
+GET `/admin/stay-bookings/{id}/statement` requires `stay-bookings.view` and
+`stay-bookings.payments` ACL plus `bookings:read`. Existing own/group/global
+booking scope applies. No new permission, token ability or migration is needed.
+Inactive source inventory and cancelled bookings retain readable statements.
+Unauthenticated returns 401, missing rights/ability 403 and missing/out-of-scope
+booking 404. Responses use `Cache-Control: no-store`.
+
+The response data contains generated_at, curated booking snapshots, the current
+financial summary and **all** ledger entries in ascending ID order, without
+pagination or truncation. Booking/ledger locks give one consistent snapshot with
+existing financial writes. Money remains decimal strings in the booking currency.
+Corrections link reversal_of/reversed_by and explicitly mark effective entries;
+reversed originals and reversal rows remain visible but do not add to totals.
+Original advance is already part of the ledger, not another charge or receipt.
+Cancelled bookings owe zero and retain any refund due until recorded refunds.
+
+Fields exclude guest email/phone, internal notes, payment references/reasons,
+staff identities, request IDs and payload hashes. This is an offline account
+statement, not a tax invoice, payment collection or gateway receipt verification.
+It is generated on demand; it is not a stored/issued immutable document.
+
+Use **Open printable statement** on booking detail's payment ledger, then
+**Print statement** for the browser print dialog / Save as PDF. Refresh statement
+reads current balances again. The print layout hides staff navigation, account
+controls and buttons, and retains booking, summary and complete history. Browser
+printing can add its own headers/footers; adjust those in the print dialog.
+Statements require staff authentication; there is no public share link.

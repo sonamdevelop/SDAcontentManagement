@@ -103,6 +103,21 @@ test('real offline payment, refund, reversal, cancellation and final refund pres
   await expect(page.getByRole('heading', { name: /^Payment #/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: /^Opening advance #/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: /^Reversal #/ })).toBeVisible();
+  await page.getByRole('link', { name: 'Open printable statement', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /^Stay booking statement #/ })).toBeVisible();
+  await expect(page.getByText(/All 5 ledger entries, in recorded order/)).toBeVisible();
+  const summary = page.getByRole('heading', { name: 'Account summary', exact: true }).locator('..');
+  await expect(
+    summary
+      .locator('dt', { hasText: /^Net paid$/ })
+      .locator('..')
+      .locator('dd'),
+  ).toHaveText('₹0');
+  await expect(page.getByText('Wrong refund record', { exact: true })).toHaveCount(0);
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeHidden();
+  await expect(page.getByRole('article', { name: 'Booking statement', exact: true })).toBeVisible();
+  await page.emulateMedia({ media: 'screen' });
   await page.goto(refundUrl);
   await expect(page.getByRole('button', { name: 'Pending refund (0)', exact: true })).toBeVisible();
   await expect(page.getByText('No bookings in this payment queue.', { exact: true })).toBeVisible();

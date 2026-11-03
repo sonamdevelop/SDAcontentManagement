@@ -314,3 +314,7 @@ Stay booking details now include offline payments/refunds, explicit review, exac
 **Payment follow-up** lists outstanding collection and refund-due bookings by stay, with exact per-currency amounts, URL filters, pagination and refresh. Open booking detail for permitted ledger actions. Requires stay, booking list/detail and payment ledger access. See [queue rules and API](../backend/docs/PAYMENTS.md#stay-payment-follow-up).
 
 **Stay bookings** also supports combined booking/stay IDs and inclusive arrival-date bounds, alongside room/status/attendance filters. URL filters survive reload and pagination; clearing restores the authorized list. See [booking finder semantics](../backend/docs/STAYS.md#booking-finder).
+
+### Printable stay statement
+
+Booking detail's ledger links to a print-friendly statement with complete chronological payment/correction history and exact balances. Refresh before printing to include recent changes. The browser print dialog supports printing or Save as PDF; staff navigation and controls are hidden. Requires booking-detail and ledger access. Internal notes/references/contacts are omitted. See [statement API and rules](../backend/docs/PAYMENTS.md#printable-booking-statement).

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import {
   useCallback,
   useEffect,
@@ -60,6 +61,7 @@ export function PaymentPanel({
   return (
     <section className="staff-panel">
       <h2>Payment ledger</h2>
+      <Link to={`/staff/stay-bookings/${booking.id}/statement`}>Open printable statement</Link>
       <p>
         Record payments/refunds that already occurred offline. These entries do not transfer money
         or verify receipts. Correct mistakes by reversing the entry and recording a replacement;

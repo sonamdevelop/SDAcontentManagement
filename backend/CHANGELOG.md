@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added printable stay booking statements with complete correction history, exact current balances and scoped access while omitting internal contacts, references and notes.
+
 * [enhancement] Added combined stay booking ID and inclusive arrival-date filters, fixed ignored stay filters, and retained staff URL filters across pagination without exposing guest contacts.
 
 * [feature] Added staff payment follow-up queues for exact outstanding collections and refunds with effective ledger balances, permission checks and booking links.

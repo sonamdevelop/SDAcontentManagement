@@ -2227,6 +2227,35 @@
               }
             }
           ]
+        },
+        {
+          "name": "GET /admin/stay-bookings/{id}/statement",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-bookings/{{stay_booking_id}}/statement",
+            "description": "Read a complete printable booking account statement\n\nRequires stay-bookings.view + stay-bookings.payments ACL and bookings:read, with existing booking visibility. Read-only locked snapshot of booking and all ledger entries in ascending ID order, without pagination or truncation. Curated guest name and exact financial summary; excludes contacts, internal notes, bank references, reasons, staff IDs, request IDs and hashes. Reversed entries/corrections remain visible but excluded from effective totals. Cancelled bookings owe zero and retain any refund due. Offline account statement, not a tax invoice or transfer of money. Cache-Control: no-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

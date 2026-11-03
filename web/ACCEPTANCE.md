@@ -88,3 +88,5 @@ The real same-day attendance scenario also verifies operations arrivals, in-hous
 The real ledger journey also checks payment follow-up: initial collection, cancellation moving the booking to refund due, then a recorded final refund clearing the queue.
 
 The real stay booking journey also finds its booking by ID and inclusive arrival date, rejects a later nonmatching bound and confirms guest identity is absent from the list.
+
+The real ledger journey opens a printable statement after payment/refund/reversal/cancellation, checks all entries and settled totals, and verifies staff controls are hidden under print media.

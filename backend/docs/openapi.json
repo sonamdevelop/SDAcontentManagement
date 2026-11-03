@@ -6504,6 +6504,66 @@
           }
         ]
       }
+    },
+    "/admin/stay-bookings/{id}/statement": {
+      "get": {
+        "summary": "Read a complete printable booking account statement",
+        "operationId": "stayBookingStatement",
+        "description": "Requires stay-bookings.view + stay-bookings.payments ACL and bookings:read, with existing booking visibility. Read-only locked snapshot of booking and all ledger entries in ascending ID order, without pagination or truncation. Curated guest name and exact financial summary; excludes contacts, internal notes, bank references, reasons, staff IDs, request IDs and hashes. Reversed entries/corrections remain visible but excluded from effective totals. Cancelled bookings owe zero and retain any refund due. Offline account statement, not a tax invoice or transfer of money. Cache-Control: no-store.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete current statement snapshot",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayStatement"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Missing permission or token ability"
+          },
+          "404": {
+            "description": "Missing or out-of-scope booking"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9391,6 +9451,152 @@
                 "type": "integer",
                 "minimum": 0
               }
+            }
+          }
+        }
+      },
+      "StayStatementBooking": {
+        "type": "object",
+        "required": [
+          "id",
+          "room_type_id",
+          "stay_name",
+          "room_name",
+          "timezone",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "nightly_rate",
+          "guest_name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "guest_name": {
+            "type": "string"
+          }
+        }
+      },
+      "StayStatementEntry": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "amount",
+          "method",
+          "created_at",
+          "reversal_of",
+          "reversed_by",
+          "effective"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "opening_advance",
+              "payment",
+              "refund",
+              "reversal"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other",
+              "unspecified"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reversal_of": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "reversed_by": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "effective": {
+            "type": "boolean",
+            "description": "False for reversal rows and reversed original entries."
+          }
+        }
+      },
+      "StayStatement": {
+        "type": "object",
+        "required": [
+          "generated_at",
+          "booking",
+          "summary",
+          "entries"
+        ],
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "booking": {
+            "$ref": "#/components/schemas/StayStatementBooking"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/StayFinancialSummary"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StayStatementEntry"
             }
           }
         }

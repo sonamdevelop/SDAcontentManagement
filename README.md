@@ -38,3 +38,5 @@ Staff can inspect nightly room allocation and remaining capacity through **Avail
 **Payment follow-up** now lists scoped pending collections and refunds with exact current ledger balances and links to booking details.
 
 **Stay bookings** can be filtered by booking/stay IDs and inclusive scheduled arrival dates, together with status, room and attendance filters.
+
+**Printable stay statements** present booking charges, complete offline payment/correction history and current balances with a print layout that omits staff controls and internal metadata.

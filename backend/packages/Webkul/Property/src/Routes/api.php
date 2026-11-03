@@ -96,6 +96,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 Route::prefix('admin/stay-bookings/{id}')->whereNumber('id')->name('admin.booking-payments.')->group(function () {
     $payments = StayPaymentController::class;
+    Route::get('statement', [$payments, 'statement'])->middleware(ApiAccess::class.':stay-bookings.payments,bookings:read,stay-bookings.view')->name('statement');
     Route::get('payments', [$payments, 'index'])->middleware(ApiAccess::class.':stay-bookings.payments,bookings:read,stay-bookings.view')->name('index');
     foreach (['payments' => ['payment', 'create'], 'refunds' => ['refund', 'refund']] as $path => [$method,$permission]) {
         Route::post($path, [$payments, $method])->middleware([ApiAccess::class.':stay-bookings.payments.'.$permission.',bookings:write,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name($method);
