@@ -9,7 +9,7 @@ return [
     ['key' => 'stay-bookings.check-out', 'name' => 'admin::app.stay-api.check-out', 'route' => 'api.v1.admin.bookings.check-out', 'sort' => 5],
     ['key' => 'stays', 'name' => 'admin::app.stay-api.stays', 'route' => ['api.v1.admin.stays.index', 'api.v1.admin.rooms.availability', 'api.v1.admin.rooms.calendar'], 'sort' => 8],
     ['key' => 'stays.manage', 'name' => 'admin::app.acl.edit', 'route' => ['api.v1.admin.stays.store', 'api.v1.admin.stays.update', 'api.v1.admin.rooms.store', 'api.v1.admin.rooms.update'], 'sort' => 1],
-    ['key' => 'stay-bookings', 'name' => 'admin::app.stay-api.bookings', 'route' => 'api.v1.admin.bookings.index', 'sort' => 9],
+    ['key' => 'stay-bookings', 'name' => 'admin::app.stay-api.bookings', 'route' => ['api.v1.admin.bookings.index', 'api.v1.admin.stays.operations'], 'sort' => 9],
     ['key' => 'stay-bookings.view', 'name' => 'admin::app.acl.view', 'route' => 'api.v1.admin.bookings.show', 'sort' => 1],
     ['key' => 'stay-bookings.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.bookings.store', 'sort' => 2],
     ['key' => 'stay-bookings.cancel', 'name' => 'admin::app.stay-api.cancel', 'route' => 'api.v1.admin.bookings.cancel', 'sort' => 3],

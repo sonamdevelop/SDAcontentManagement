@@ -2169,6 +2169,35 @@
               }
             }
           ]
+        },
+        {
+          "name": "GET /admin/stays/{id}/operations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/operations?date={{check_in}}&view=arrivals",
+            "description": "Read staff stay operations queues\n\nRequires stays + stay-bookings + stay-bookings.view and stays:read + bookings:read, with both stay and booking visibility. Scheduled arrivals/departures use selected date (defaults to stay local today). in_house and overdue are live attendance snapshots, independent of selected date; overdue means check_out before local today and no recorded departure. Cancelled bookings excluded. Counts are booking counts, not room counts. Curated rows include guest name but no contacts, notes or financial metadata. Read-only; actions remain on booking detail. Consistent snapshot with no-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

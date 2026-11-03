@@ -82,3 +82,5 @@ A third real-service scenario records same-day guest check-in/check-out, checks 
 A fourth real-service scenario exercises an opening advance, additional payment, partial refund, correction, cancellation and final refund. The synthetic backup/restore checks include stay_payments.
 
 The real stay-booking journey also checks calendar rows before and after cancellation, verifying that nightly allocation changes without exposing guest/contact details.
+
+The real same-day attendance scenario also verifies operations arrivals, in-house count after check-in, and removal from the live queue after check-out.

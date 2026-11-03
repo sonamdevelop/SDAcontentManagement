@@ -20,7 +20,7 @@ class StayBookingRepository extends Repository
             $q->whereIn('user_id', $ids);
         }
 
-return $q;
+        return $q;
     }
 
     public function authorized(int $id, bool $lock = false)
@@ -30,7 +30,25 @@ return $q;
             $q->lockForUpdate();
         }
 
-return $q->findOrFail($id);
+        return $q->findOrFail($id);
+    }
+
+    public function operationsBase($stay)
+    {
+        return $this->scopedQuery()->select(['id', 'room_type_id', 'room_name', 'guest_name', 'check_in', 'check_out', 'rooms', 'guests', 'checked_in_at', 'checked_out_at'])->where('status', 'confirmed')->whereIn('room_type_id', $stay->rooms()->select('id')->getQuery());
+    }
+
+    public function operationsQueue($base, string $view, string $date, string $today)
+    {
+        $query = clone $base;
+
+        return match ($view) {
+            'arrivals' => $query->where('check_in', $date),
+            'departures' => $query->where('check_out', $date),
+            'in_house' => $query->whereNotNull('checked_in_at')->whereNull('checked_out_at'),
+            'overdue' => $query->whereNotNull('checked_in_at')->whereNull('checked_out_at')->where('check_out', '<', $today),
+            default => throw new \InvalidArgumentException('Invalid operations queue.'),
+        };
     }
 
     public function request(string $id)

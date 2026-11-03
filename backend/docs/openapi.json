@@ -6227,6 +6227,130 @@
           }
         ]
       }
+    },
+    "/admin/stays/{id}/operations": {
+      "get": {
+        "summary": "Read staff stay operations queues",
+        "operationId": "stayOperationsIndex",
+        "description": "Requires stays + stay-bookings + stay-bookings.view and stays:read + bookings:read, with both stay and booking visibility. Scheduled arrivals/departures use selected date (defaults to stay local today). in_house and overdue are live attendance snapshots, independent of selected date; overdue means check_out before local today and no recorded departure. Cancelled bookings excluded. Counts are booking counts, not room counts. Curated rows include guest name but no contacts, notes or financial metadata. Read-only; actions remain on booking detail. Consistent snapshot with no-store.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StayOperation"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    },
+                    "context": {
+                      "$ref": "#/components/schemas/StayOperationsContext"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "links",
+                    "context"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "nullable": true
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "arrivals",
+                "departures",
+                "in_house",
+                "overdue"
+              ],
+              "default": "arrivals"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -8860,6 +8984,145 @@
             }
           }
         }
+      },
+      "StayOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "guest_name": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "attendance_status": {
+            "type": "string",
+            "enum": [
+              "not_arrived",
+              "checked_in",
+              "checked_out"
+            ]
+          },
+          "checked_in_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checked_out_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "room_type_id",
+          "room_name",
+          "guest_name",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "attendance_status",
+          "checked_in_at",
+          "checked_out_at"
+        ]
+      },
+      "StayOperationsContext": {
+        "type": "object",
+        "properties": {
+          "stay_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "today": {
+            "type": "string",
+            "format": "date"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "view": {
+            "type": "string",
+            "enum": [
+              "arrivals",
+              "departures",
+              "in_house",
+              "overdue"
+            ]
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "arrivals": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "departures": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "in_house": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "overdue": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "arrivals",
+              "departures",
+              "in_house",
+              "overdue"
+            ]
+          }
+        },
+        "required": [
+          "stay_id",
+          "stay_name",
+          "timezone",
+          "date",
+          "today",
+          "as_of",
+          "view",
+          "counts"
+        ]
       }
     }
   }

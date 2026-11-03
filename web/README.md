@@ -304,3 +304,7 @@ Stay booking details now include offline payments/refunds, explicit review, exac
 ### Stay availability calendar
 
 **Availability calendar** shows nightly room-type allocation/remaining capacity for a URL-backed date range of up to 62 nights. Refresh reflects cancellations. Inactive and past dates are not bookable, checkout dates are exclusive, and historical rows use current capacity. Guest/payment data is never included. See [calendar API](../backend/docs/STAYS.md#nightly-availability-calendar).
+
+### Stay operations
+
+**Stay operations** shows scheduled arrivals/departures for a selected stay/date, plus live in-house and overdue check-out queues. Filters survive URL reloads and pagination. Refresh reflects recorded attendance; open a booking for existing check-in/check-out actions. Requires stay access plus booking list/detail permissions. Guest contacts and payments are excluded from this dashboard. See [operations API and date semantics](../backend/docs/STAYS.md#staff-operations-dashboard).
