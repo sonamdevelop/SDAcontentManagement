@@ -2140,6 +2140,35 @@
               }
             }
           ]
+        },
+        {
+          "name": "GET /admin/stay-rooms/{id}/calendar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-rooms/{{room_type_id}}/calendar?from={{check_in}}&to={{check_out}}",
+            "description": "Read nightly room-type availability calendar\n\nRequires stays / stays:read and scoped stay visibility. Read-only nightly room allocations with current capacity, no guest/contact/payment data. Dates use the stay timezone; from is inclusive and to exclusive, 1–62 nights. Historical rows use current inventory and may flag over-capacity. Early checkout retains original allocation. Inactive inventory has zero bookable availability. No-store; counts are advisory and booking save rechecks inventory.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

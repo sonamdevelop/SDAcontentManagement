@@ -300,3 +300,7 @@ Stay booking details now include reviewed **Record check-in/check-out** actions 
 ### Stay payment ledger
 
 Stay booking details now include offline payments/refunds, explicit review, exact net paid/outstanding/refund totals, immutable history and reasoned reversals. Original advance snapshots remain unchanged. See [payment rules and permissions](../backend/docs/PAYMENTS.md). This records offline events and never transfers money.
+
+### Stay availability calendar
+
+**Availability calendar** shows nightly room-type allocation/remaining capacity for a URL-backed date range of up to 62 nights. Refresh reflects cancellations. Inactive and past dates are not bookable, checkout dates are exclusive, and historical rows use current capacity. Guest/payment data is never included. See [calendar API](../backend/docs/STAYS.md#nightly-availability-calendar).

@@ -44,6 +44,15 @@ test('real stay setup, room inventory, exact booking totals, rejection and cance
   await expect(page.getByRole('heading', { name: /Stay booking #/ })).toBeVisible();
   const bookedUrl = page.url();
   await expect(page.getByText(/Balance: ₹3,900.99/)).toBeVisible();
+  await page.goto('/staff/stay-calendar');
+  await page
+    .getByRole('combobox', { name: 'Calendar room type', exact: true })
+    .selectOption({ label: 'Acceptance forest stay · Acceptance deluxe' });
+  await page.getByLabel('Calendar from', { exact: true }).fill(inDate);
+  await page.getByLabel('Calendar to (exclusive)', { exact: true }).fill(outDate);
+  await page.getByRole('button', { name: 'Show calendar', exact: true }).click();
+  await expect(page.getByRole('cell', { name: 'Full', exact: true })).toHaveCount(2);
+  const calendarUrl = page.url();
   await quote();
   await expect(page.getByText(/0 rooms available/)).toBeVisible();
   await page.goto(bookedUrl);
@@ -56,6 +65,8 @@ test('real stay setup, room inventory, exact booking totals, rejection and cance
     page.getByText('Booking cancellation: Synthetic cancellation', { exact: true }),
   ).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Booking history', exact: true })).toBeVisible();
+  await page.goto(calendarUrl);
+  await expect(page.getByRole('cell', { name: 'Available', exact: true })).toHaveCount(2);
   await quote();
   await expect(page.getByText(/2 rooms available/)).toBeVisible();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();

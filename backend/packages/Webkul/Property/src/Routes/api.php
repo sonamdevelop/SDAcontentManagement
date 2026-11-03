@@ -82,6 +82,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::put('stays/{id}', [$stays, 'stay'])->whereNumber('id')->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('stays.update');
     Route::post('stays/{stayId}/rooms', [$stays, 'room'])->whereNumber('stayId')->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('rooms.store');
     Route::put('stays/{stayId}/rooms/{id}', [$stays, 'room'])->whereNumber(['stayId', 'id'])->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('rooms.update');
+    Route::get('stay-rooms/{id}/calendar', [$stays, 'calendar'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('rooms.calendar');
     Route::get('stay-rooms/{id}/availability', [$stays, 'availability'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('rooms.availability');
     Route::get('stay-bookings', [$stays, 'index'])->middleware(ApiAccess::class.':stay-bookings,bookings:read')->name('bookings.index');
     Route::get('stay-bookings/{id}', [$stays, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.view,bookings:read')->name('bookings.show');

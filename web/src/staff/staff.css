@@ -299,3 +299,19 @@
 .staff-document-confirm button {
   margin: 8px 12px 0 0;
 }
+
+.staff-calendar {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.staff-calendar th,
+.staff-calendar td {
+  padding: 0.65rem;
+  border-bottom: 1px solid #d8ddd8;
+}
+.staff-calendar caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}

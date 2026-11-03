@@ -53,6 +53,11 @@ class StayApiController
         return $this->json($this->service->availability($id, $r->validate(['check_in' => 'required|date_format:Y-m-d', 'check_out' => 'required|date_format:Y-m-d'])));
     }
 
+    public function calendar(Request $r, int $id)
+    {
+        return $this->json($this->service->calendar($id, $r->validate(['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d'])));
+    }
+
     public function index(Request $r)
     {
         $f = $this->filters($r);

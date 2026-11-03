@@ -6143,6 +6143,90 @@
           }
         }
       }
+    },
+    "/admin/stay-rooms/{id}/calendar": {
+      "get": {
+        "summary": "Read nightly room-type availability calendar",
+        "operationId": "stayRoomCalendar",
+        "description": "Requires stays / stays:read and scoped stay visibility. Read-only nightly room allocations with current capacity, no guest/contact/payment data. Dates use the stay timezone; from is inclusive and to exclusive, 1\u201362 nights. Historical rows use current inventory and may flag over-capacity. Early checkout retains original allocation. Inactive inventory has zero bookable availability. No-store; counts are advisory and booking save rechecks inventory.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayRoomCalendar"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -8691,6 +8775,91 @@
           "request_id",
           "reason"
         ]
+      },
+      "StayRoomCalendar": {
+        "type": "object",
+        "required": [
+          "room_type_id",
+          "stay_name",
+          "room_name",
+          "timezone",
+          "today",
+          "from",
+          "to",
+          "inventory",
+          "active",
+          "days"
+        ],
+        "properties": {
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "today": {
+            "type": "string",
+            "format": "date"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "inventory": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "days": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 62,
+            "items": {
+              "type": "object",
+              "required": [
+                "date",
+                "occupied_rooms",
+                "available_rooms",
+                "bookable",
+                "over_capacity"
+              ],
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "occupied_rooms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "available_rooms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "bookable": {
+                  "type": "boolean"
+                },
+                "over_capacity": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

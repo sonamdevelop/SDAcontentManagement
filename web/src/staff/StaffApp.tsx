@@ -1,3 +1,4 @@
+import { StayCalendarPage } from './CalendarWorkspace';
 import { StayList, BookingList, BookingCreate, BookingDetail } from './StayWorkspace';
 import { DealList, DealCreate, DealDetail } from './DealWorkspace';
 import { dealWriteAllowed } from './deals';
@@ -133,6 +134,7 @@ export function StaffApp() {
           <Route path="leads" element={<Records kind="leads" />} />
           <Route path="leads/:id" element={<LeadPage />} />
           <Route path="follow-ups" element={<FollowUpQueue />} />
+          <Route path="stay-calendar" element={<StayCalendarPage />} />
           <Route path="stays" element={<StayList />} />
           <Route path="stay-bookings" element={<BookingList />} />
           <Route path="stay-bookings/new" element={<BookingCreate />} />
@@ -276,7 +278,12 @@ function Shell() {
           {dealWriteAllowed(profile, 'create') && (
             <NavLink to="/staff/property-deals/new">Reserve property</NavLink>
           )}
-          {can(profile, 'stays') && <NavLink to="/staff/stays">Stays and rooms</NavLink>}
+          {can(profile, 'stays') && (
+            <>
+              <NavLink to="/staff/stays">Stays and rooms</NavLink>
+              <NavLink to="/staff/stay-calendar">Availability calendar</NavLink>
+            </>
+          )}
           {can(profile, 'stay-bookings') && (
             <NavLink to="/staff/stay-bookings">Stay bookings</NavLink>
           )}

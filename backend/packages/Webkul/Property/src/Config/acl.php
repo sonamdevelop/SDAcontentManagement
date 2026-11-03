@@ -7,7 +7,7 @@ return [
     ['key' => 'stay-bookings.payments.reverse', 'name' => 'admin::app.stay-api.ledger-reverse', 'route' => 'api.v1.admin.booking-payments.reverse', 'sort' => 3],
     ['key' => 'stay-bookings.check-in', 'name' => 'admin::app.stay-api.check-in', 'route' => 'api.v1.admin.bookings.check-in', 'sort' => 4],
     ['key' => 'stay-bookings.check-out', 'name' => 'admin::app.stay-api.check-out', 'route' => 'api.v1.admin.bookings.check-out', 'sort' => 5],
-    ['key' => 'stays', 'name' => 'admin::app.stay-api.stays', 'route' => 'api.v1.admin.stays.index', 'sort' => 8],
+    ['key' => 'stays', 'name' => 'admin::app.stay-api.stays', 'route' => ['api.v1.admin.stays.index', 'api.v1.admin.rooms.availability', 'api.v1.admin.rooms.calendar'], 'sort' => 8],
     ['key' => 'stays.manage', 'name' => 'admin::app.acl.edit', 'route' => ['api.v1.admin.stays.store', 'api.v1.admin.stays.update', 'api.v1.admin.rooms.store', 'api.v1.admin.rooms.update'], 'sort' => 1],
     ['key' => 'stay-bookings', 'name' => 'admin::app.stay-api.bookings', 'route' => 'api.v1.admin.bookings.index', 'sort' => 9],
     ['key' => 'stay-bookings.view', 'name' => 'admin::app.acl.view', 'route' => 'api.v1.admin.bookings.show', 'sort' => 1],

@@ -10,6 +10,7 @@ use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Repositories\StayRepository;
 use Webkul\Property\Support\DealMoney;
 use Webkul\Property\Support\StayAttendance;
+use Webkul\Property\Support\StayCalendar;
 use Webkul\Property\Support\StayDates;
 
 class StayBookingService
@@ -43,6 +44,28 @@ class StayBookingService
             $occupied = $this->bookings->occupancy($id, $data['check_in'], $data['check_out'])->toArray();
 
             return ['room_type_id' => $id, 'check_in' => $data['check_in'], 'check_out' => $data['check_out'], 'nights' => $n, 'timezone' => $room->stay->timezone, 'nightly_rate' => $room->nightly_rate, 'currency' => config('app.currency'), 'capacity' => $room->capacity, 'available_rooms' => ($room->active && $room->stay->active) ? max(0, $room->inventory - StayDates::peak($occupied, $data['check_in'], $data['check_out'])) : 0];
+        }, 3);
+    }
+
+    public function calendar(int $id, array $data): array
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $room = $this->stays->room($id, true);
+            $today = now($room->stay->timezone)->format('Y-m-d');
+            try {
+                $days = StayCalendar::days(
+                    $this->bookings->occupancy($id, $data['from'], $data['to'])->toArray(),
+                    $data['from'], $data['to'], $room->inventory,
+                    $room->active && $room->stay->active, $today,
+                );
+            } catch (\InvalidArgumentException) {
+                $this->invalid('to', 'calendar-range');
+            }
+
+            return ['room_type_id' => $room->id, 'stay_name' => $room->stay->name, 'room_name' => $room->name,
+                'timezone' => $room->stay->timezone, 'today' => $today,
+                'from' => $data['from'], 'to' => $data['to'], 'inventory' => $room->inventory,
+                'active' => $room->active && $room->stay->active, 'days' => $days];
         }, 3);
     }
 

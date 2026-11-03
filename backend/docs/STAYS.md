@@ -156,3 +156,26 @@ backup/restore checks. No normal development database is refreshed or reset.
 ## Offline payment ledger
 
 Additional payments, refunds and reasoned reversals now use a separate immutable ledger. See [payment ledger rules, permissions and API](PAYMENTS.md). Cancellation has zero amount due and a derived refund-due balance; it never creates a refund automatically.
+
+## Nightly availability calendar
+
+GET `/admin/stay-rooms/{id}/calendar?from=2030-01-01&to=2030-02-01` requires
+`stays` and `stays:read`, with the same own/group/global stay scope as setup and
+availability. It returns no guest identity, booking IDs or financial metadata.
+The calendar uses the stay timezone, inclusive from and exclusive to, limited to
+1–62 nights. Past ranges are allowed for viewing, but past days are not bookable.
+
+The response includes room/stay names, current inventory, active flag, timezone,
+local today and one row per night: date, occupied_rooms, available_rooms, bookable
+and over_capacity. Confirmed allocations consume rooms; cancelled bookings do not.
+Checkout day is free for another booking. Check-in/out attendance and offline
+payments do not change the scheduled allocation. Inactive stays/room types report
+zero available rooms. Historical availability is evaluated against current
+inventory, not a reconstructed historic capacity; over-capacity rows are flagged.
+
+Use **Availability calendar** (`/staff/stay-calendar`) to select a room type and
+range. Filters persist in the URL and survive reload/back navigation. Room choices
+are paginated without losing the draft selection. Refresh calendar re-reads a
+consistent allocation snapshot; it never reserves a room. A booking save remains
+the authoritative inventory check. Invalid/missing ranges return 422, scope/missing
+records 404, missing permission/ability 403 and absent authentication 401.
