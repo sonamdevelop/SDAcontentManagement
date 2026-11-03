@@ -6351,6 +6351,119 @@
           }
         ]
       }
+    },
+    "/admin/stays/{id}/payment-follow-ups": {
+      "get": {
+        "summary": "Current outstanding collection and refund queues",
+        "operationId": "stayPaymentFollowUpsIndex",
+        "description": "Requires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Independent stay/booking visibility applies. Effective immutable ledger excludes reversed entries. Cancelled bookings have zero amount due. Current balances, no date filter or automatic money movement. Oldest check-in then booking ID order. Counts are bookings, not monetary totals. Inactive stays remain visible. No contacts, references, notes or hashes. Cache-Control: no-store.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StayPaymentFollowUp"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    },
+                    "context": {
+                      "$ref": "#/components/schemas/StayPaymentFollowUpContext"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "links",
+                    "context"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "collection",
+                "refund"
+              ],
+              "default": "collection"
+            },
+            "description": "Positive balance or positive refund due."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -9123,6 +9236,124 @@
           "view",
           "counts"
         ]
+      },
+      "StayPaymentFollowUp": {
+        "type": "object",
+        "required": [
+          "id",
+          "room_type_id",
+          "room_name",
+          "guest_name",
+          "check_in",
+          "check_out",
+          "status",
+          "currency",
+          "net_paid",
+          "amount_due",
+          "balance",
+          "refund_due"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "guest_name": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "net_paid": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "0.01"
+          },
+          "amount_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "0.01"
+          },
+          "balance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "0.01"
+          },
+          "refund_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$",
+            "example": "0.01"
+          }
+        }
+      },
+      "StayPaymentFollowUpContext": {
+        "type": "object",
+        "required": [
+          "stay_id",
+          "stay_name",
+          "view",
+          "as_of",
+          "counts"
+        ],
+        "properties": {
+          "stay_id": {
+            "type": "integer"
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "view": {
+            "type": "string",
+            "enum": [
+              "collection",
+              "refund"
+            ]
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "collection",
+              "refund"
+            ],
+            "properties": {
+              "collection": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "refund": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
       }
     }
   }

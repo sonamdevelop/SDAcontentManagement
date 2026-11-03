@@ -308,3 +308,7 @@ Stay booking details now include offline payments/refunds, explicit review, exac
 ### Stay operations
 
 **Stay operations** shows scheduled arrivals/departures for a selected stay/date, plus live in-house and overdue check-out queues. Filters survive URL reloads and pagination. Refresh reflects recorded attendance; open a booking for existing check-in/check-out actions. Requires stay access plus booking list/detail permissions. Guest contacts and payments are excluded from this dashboard. See [operations API and date semantics](../backend/docs/STAYS.md#staff-operations-dashboard).
+
+### Stay payment follow-up
+
+**Payment follow-up** lists outstanding collection and refund-due bookings by stay, with exact per-currency amounts, URL filters, pagination and refresh. Open booking detail for permitted ledger actions. Requires stay, booking list/detail and payment ledger access. See [queue rules and API](../backend/docs/PAYMENTS.md#stay-payment-follow-up).

@@ -127,3 +127,32 @@ retention, role restrictions and the refresh-after-uncertain-save case. The real
 browser acceptance runner uses a separate new synthetic database and also tests
 receipt, refund, reversal, cancellation and final refund, then verifies a database
 backup/restore including stay_payments. No normal database is reset or deleted.
+
+## Stay payment follow-up
+
+GET `/admin/stays/{id}/payment-follow-ups?view=collection` requires `stays`,
+`stay-bookings`, `stay-bookings.view` and `stay-bookings.payments` permissions,
+plus `stays:read` and `bookings:read` token abilities. Stay and booking visibility
+apply independently, including own/group/global scopes. No new migration or token
+ability is needed. Inactive stays and existing room types remain accessible.
+
+`collection` (default) lists positive outstanding balances; `refund` lists positive
+refund-due balances. Totals follow the immutable ledger: opening advances and
+payments minus refunds, excluding reversed entries and reversal rows. Cancelled
+bookings owe zero; their retained net payments appear as refund due. Settled
+bookings disappear after refresh. These are current balances across all booking
+dates, not historical revenue or a date-based cash report. No money moves here.
+
+Rows are ordered by scheduled check-in then booking ID, with page/per_page
+(default 20, maximum 100). Context contains stay ID/name, view, as_of and booking
+counts for both queues from one read transaction. Exact decimal strings retain
+each booking's currency; currencies are never added together. Curated fields are
+booking/room IDs, guest/room names, dates, status, currency, net_paid, amount_due,
+balance and refund_due. Contacts, notes, payment references and hashes are omitted.
+
+Open **Payment follow-up** at `/staff/stay-payment-follow-ups`, select a stay,
+switch queues and refresh after recording an offline payment/refund through the
+existing booking detail. Stay/view/page filters persist in the URL. Navigation
+and requests require all four permissions. Responses use no-store. Invalid view
+or pagination returns 422; denied permissions/abilities 403, out-of-scope stay
+404 and absent authentication 401.

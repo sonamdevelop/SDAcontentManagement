@@ -34,3 +34,5 @@ Stay bookings now include an immutable offline payment ledger with additional re
 Staff can inspect nightly room allocation and remaining capacity through **Availability calendar**, including scoped date ranges and cancellation refresh.
 
 **Stay operations** provides scheduled arrivals/departures and live in-house/overdue queues with booking links and scoped guest names.
+
+**Payment follow-up** now lists scoped pending collections and refunds with exact current ledger balances and links to booking details.

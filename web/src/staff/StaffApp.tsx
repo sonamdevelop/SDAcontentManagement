@@ -1,3 +1,4 @@
+import { PaymentFollowUpPage } from './PaymentFollowUpWorkspace';
 import { StayOperationsPage } from './OperationsWorkspace';
 import { StayCalendarPage } from './CalendarWorkspace';
 import { StayList, BookingList, BookingCreate, BookingDetail } from './StayWorkspace';
@@ -135,6 +136,7 @@ export function StaffApp() {
           <Route path="leads" element={<Records kind="leads" />} />
           <Route path="leads/:id" element={<LeadPage />} />
           <Route path="follow-ups" element={<FollowUpQueue />} />
+          <Route path="stay-payment-follow-ups" element={<PaymentFollowUpPage />} />
           <Route path="stay-operations" element={<StayOperationsPage />} />
           <Route path="stay-calendar" element={<StayCalendarPage />} />
           <Route path="stays" element={<StayList />} />
@@ -286,6 +288,9 @@ function Shell() {
               <NavLink to="/staff/stay-calendar">Availability calendar</NavLink>
             </>
           )}
+          {['stays', 'stay-bookings', 'stay-bookings.view', 'stay-bookings.payments'].every((p) =>
+            can(profile, p),
+          ) && <NavLink to="/staff/stay-payment-follow-ups">Payment follow-up</NavLink>}
           {['stays', 'stay-bookings', 'stay-bookings.view'].every((p) => can(profile, p)) && (
             <NavLink to="/staff/stay-operations">Stay operations</NavLink>
           )}

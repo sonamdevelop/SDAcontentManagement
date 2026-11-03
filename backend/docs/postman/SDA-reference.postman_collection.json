@@ -2198,6 +2198,35 @@
               }
             }
           ]
+        },
+        {
+          "name": "GET /admin/stays/{id}/payment-follow-ups",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/payment-follow-ups?view=collection",
+            "description": "Current outstanding collection and refund queues\n\nRequires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Independent stay/booking visibility applies. Effective immutable ledger excludes reversed entries. Cancelled bookings have zero amount due. Current balances, no date filter or automatic money movement. Oldest check-in then booking ID order. Counts are bookings, not monetary totals. Inactive stays remain visible. No contacts, references, notes or hashes. Cache-Control: no-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

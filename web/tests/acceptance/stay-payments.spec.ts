@@ -37,6 +37,15 @@ test('real offline payment, refund, reversal, cancellation and final refund pres
   await page.getByRole('button', { name: 'Save stay booking', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Stay booking #/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Opening advance #/ })).toBeVisible();
+  const bookingUrl = page.url();
+  await page.goto('/staff/stay-payment-follow-ups');
+  await page
+    .getByRole('combobox', { name: 'Payment follow-up stay', exact: true })
+    .selectOption({ label: 'Ledger acceptance stay · Dandeli' });
+  await page.getByRole('button', { name: 'Show payment follow-up', exact: true }).click();
+  await expect(page.getByText('Pending collection: ₹1,900.49', { exact: true })).toBeVisible();
+  const collectionUrl = page.url();
+  await page.getByRole('link', { name: /Synthetic ledger guest — Ledger deluxe #/ }).click();
   async function record(kind: 'payment' | 'refund', amount: string, reason: string) {
     await page
       .getByRole('button', {
@@ -79,6 +88,14 @@ test('real offline payment, refund, reversal, cancellation and final refund pres
     page.getByText(/Net paid: ₹600.50 · Outstanding: ₹0 · Refund due: ₹600.50/),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Record payment', exact: true })).toHaveCount(0);
+  await page.goto(collectionUrl);
+  await expect(
+    page.getByRole('button', { name: 'Pending collection (0)', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Pending refund (1)', exact: true }).click();
+  await expect(page.getByText('Pending refund: ₹600.50', { exact: true })).toBeVisible();
+  const refundUrl = page.url();
+  await page.goto(bookingUrl);
   await record('refund', '600.50', 'Refund after cancellation');
   await expect(page.getByText(/Net paid: ₹0 · Outstanding: ₹0 · Refund due: ₹0/)).toBeVisible();
   await page.reload();
@@ -86,6 +103,9 @@ test('real offline payment, refund, reversal, cancellation and final refund pres
   await expect(page.getByRole('heading', { name: /^Payment #/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: /^Opening advance #/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: /^Reversal #/ })).toBeVisible();
+  await page.goto(refundUrl);
+  await expect(page.getByRole('button', { name: 'Pending refund (0)', exact: true })).toBeVisible();
+  await expect(page.getByText('No bookings in this payment queue.', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Staff sign in', exact: true })).toBeVisible();
 });

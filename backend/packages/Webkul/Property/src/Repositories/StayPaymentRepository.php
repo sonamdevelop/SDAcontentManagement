@@ -21,7 +21,7 @@ class StayPaymentRepository extends Repository
             $q->lockForUpdate();
         }
 
-return $q->get();
+        return $q->get();
     }
 
     public function request(string $id)
@@ -45,6 +45,18 @@ return $q->get();
     public function page(int $id, int $perPage)
     {
         return $this->model->newQuery()->where('booking_id', $id)->with('reversal')->orderByDesc('id')->paginate($perPage)->withQueryString();
+    }
+
+    /** Effective ledger totals in SQL decimals, excluding reversed entries. */
+    public function effectiveTotals()
+    {
+        return $this->model->newQuery()->from('stay_payments as p')
+            ->select('p.booking_id')
+            ->selectRaw("SUM(CASE WHEN p.kind = 'refund' THEN -p.amount ELSE p.amount END) AS net_paid")
+            ->where('p.kind', '!=', 'reversal')
+            ->whereNotExists(function ($query) {
+                $query->selectRaw('1')->from('stay_payments as r')->whereColumn('r.reversal_of', 'p.id');
+            })->groupBy('p.booking_id');
     }
 
     public function opening($booking): void

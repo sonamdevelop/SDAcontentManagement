@@ -51,6 +51,24 @@ class StayBookingRepository extends Repository
         };
     }
 
+    public function paymentFollowUps($stay, string $view, $totals)
+    {
+        // Keep booking visibility independent of stay visibility; never join staff identities.
+        $base = $this->scopedQuery()->whereIn('room_type_id', $stay->rooms()->select('id')->getQuery())
+            ->leftJoinSub($totals, 'ledger', 'ledger.booking_id', '=', 'stay_bookings.id');
+        $due = "CASE WHEN stay_bookings.status = 'cancelled' THEN 0 ELSE stay_bookings.total END";
+        $net = 'COALESCE(ledger.net_paid, 0)';
+        $base->select(['stay_bookings.id', 'room_type_id', 'room_name', 'guest_name', 'check_in', 'check_out', 'status', 'currency'])
+            ->selectRaw("$net AS net_paid, $due AS amount_due")
+            ->selectRaw("GREATEST(0, $due - $net) AS balance, GREATEST(0, $net - $due) AS refund_due");
+
+        return match ($view) {
+            'collection' => $base->whereRaw("$due > $net"),
+            'refund' => $base->whereRaw("$net > $due"),
+            default => throw new \InvalidArgumentException('Invalid payment queue.'),
+        };
+    }
+
     public function request(string $id)
     {
         return $this->model->newQuery()->where('request_id', $id)->lockForUpdate()->first();
