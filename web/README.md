@@ -318,3 +318,7 @@ Stay booking details now include offline payments/refunds, explicit review, exac
 ### Printable stay statement
 
 Booking detail's ledger links to a print-friendly statement with complete chronological payment/correction history and exact balances. Refresh before printing to include recent changes. The browser print dialog supports printing or Save as PDF; staff navigation and controls are hidden. Requires booking-detail and ledger access. Internal notes/references/contacts are omitted. See [statement API and rules](../backend/docs/PAYMENTS.md#printable-booking-statement).
+
+### Rich stay content and public catalogue
+
+Use **Edit public stay content** on a staff stay card to edit stay/room descriptions, rules, amenities, gallery uploads/removals and publication. Both stay and room must be active/published to appear at `/stays` and `/stays/:id`. Anonymous catalogue requests never carry staff tokens. City/page filters persist in URLs; current nightly prices are not dated availability quotes. Customer booking is still pending. Apply the additive content migration; existing stays/rooms start unpublished. See [API, upload and publication rules](../backend/docs/STAYS.md#rich-stay-content-and-public-catalogue).

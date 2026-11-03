@@ -157,6 +157,7 @@ function StayCard({
       </p>
       {manage && (
         <>
+          <Link to={`/staff/stays/${stay.id}/content`}>Edit public stay content</Link>{' '}
           <button onClick={onEdit}>Edit stay</button>{' '}
           <button onClick={() => setEdit(null)}>Add room type</button>
         </>

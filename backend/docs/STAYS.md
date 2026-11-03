@@ -235,3 +235,60 @@ Use **Stay bookings** to enter booking/stay IDs and arrival bounds. Filters pers
 in the URL across reload/back and pagination. Applying new filters resets page;
 **Clear booking filters** restores the full authorized list. The form rejects
 reversed arrival ranges while retaining the draft and current results.
+
+## Rich stay content and public catalogue
+
+Apply the additive `2026_11_03_000003_add_stay_public_content` migration. Existing
+stays and rooms default to unpublished; booking snapshots, rates and inventory
+are unchanged. No reseeding/reset is needed. Content fields are description,
+rules, amenities, images and is_published, independently on stays and room types.
+
+| Method | Path (after /api/v1) | Permissions / abilities |
+|---|---|---|
+| GET | `/stays` | Anonymous |
+| GET | `/stays/{id}` | Anonymous |
+| GET | `/admin/stays/{id}/content` | stays / stays:read |
+| POST | `/admin/stays/{stayId}/content` | stays + stays.manage / stays:write |
+| POST | `/admin/stays/{stayId}/rooms/{id}/content` | stays + stays.manage / stays:write |
+
+Public list/detail require an active published stay with at least one active
+published room. Only eligible rooms contribute to room_types_count/from_rate;
+unpublished/inactive rooms never appear or affect the lowest rate. Detail includes
+visible rooms; list omits room details. Order is ascending stay ID, with optional
+exact city, page and per_page (default 12, maximum 50). Missing/unpublished/empty
+stays return 404. Public requests need no token and expose only names, city,
+timezone, plain text descriptions/rules, amenity labels, public photo URLs,
+capacity and exact nightly prices/currency. They omit inventory quantities,
+ownership, guest/contact, booking/payment and internal metadata. All responses
+use no-store. There is no public dated availability or booking action yet.
+
+Staff reads/writes apply existing own/group/global scope. Cross-parent room IDs
+return 404; absent authentication returns 401, denied rights/abilities 403 and
+invalid content 422. Source stay is locked before its room, matching inventory
+and booking writes. Content saves cannot override rates, quantities, owner or
+activation fields. Publishing an inactive source does not make it public.
+
+POST accepts multipart fields: description (10000), rules (5000), amenities[]
+(up to 30 distinct labels of 80 chars), is_published (required boolean), photos[]
+and remove_images[]. Omitted text becomes empty; omitted amenities clears them.
+Photos append, with up to 10 per target, each JPEG/PNG/WebP up to 5 MiB. Removal
+accepts only current paths belonging to that exact gallery. Filenames/paths are
+server generated. New uploads are removed on metadata failure; removed photos
+are deleted after commit on a best-effort basis with cleanup exceptions logged. An image
+cleanup failure must not undo committed metadata or remove new photos. This does
+not introduce a durable cleanup-retry job for marketing media.
+
+Photos are public marketing assets, including their storage URLs. Draft catalogue
+visibility is not private-file protection. Use private document storage for
+sensitive material; never upload guest IDs here. Already downloaded public photos
+cannot be recalled. Text is rendered as plain text, not HTML.
+
+Use **Edit public stay content** under `/staff/stays`. Select stay or room target,
+edit content/gallery and publication independently, save and refresh. Each save
+reloads server state. On an uncertain upload response, refresh before uploading
+again; multipart content updates have no financial-style UUID idempotency.
+
+Customers use `/stays` and `/stays/{id}` in SDA. City/page filters persist in the
+URL. Prices are current flat per-room nightly prices, not dated quotes or proof
+of availability. The separate legacy website link is explicitly labelled. No
+reference repository, customer data, account or booking was migrated.

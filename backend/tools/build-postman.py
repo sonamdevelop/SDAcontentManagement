@@ -147,22 +147,22 @@ def reference(spec):
             if method not in ('get', 'post', 'put', 'patch', 'delete'):
                 continue
             doc = '/documents' in path
-            ident = 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith('/admin/stays/') else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
+            ident = 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
             url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}').replace('{entryId}', '{{payment_entry_id}}')
             if path.endswith('/availability'):url += '?check_in={{check_in}}&check_out={{check_out}}'
             if path.endswith('/calendar'):url += '?from={{check_in}}&to={{check_out}}'
             if path.endswith('/payment-follow-ups'):url += '?view=collection'
             if path.endswith('/operations'):url += '?date={{check_in}}&view=arrivals'
-            public = path.startswith('/auth/login') or path.startswith('/properties')
+            public = path.startswith('/auth/login') or path.startswith('/properties') or path.startswith('/stays')
             expected = min(int(c) for c in operation.get('responses', {}) if c.isdigit() and 200 <= int(c) < 300)
             if method == 'post' and path in ('/admin/property-deals', '/admin/stay-bookings'):expected = 201
             if method == 'post' and path.startswith('/admin/stay-bookings/') and ('/payments' in path or path.endswith('/refunds')):expected = 201
-            item = request(method.upper()+' '+path, method.upper(), url, expected, bodies.get((method, path)), public, form=DOCUMENT if doc and method == 'post' else None)
+            item = request(method.upper()+' '+path, method.upper(), url, expected, bodies.get((method, path)), public, form=([{'key': 'description', 'value': 'Public marketing description', 'type': 'text'}, {'key': 'rules', 'value': 'Quiet hours after 10 pm', 'type': 'text'}, {'key': 'amenities[0]', 'value': 'Parking', 'type': 'text'}, {'key': 'is_published', 'value': '0', 'type': 'text'}] if path.endswith('/content') and method == 'post' else DOCUMENT if doc and method == 'post' else None))
             if operation.get('requestBody', {}).get('required') and item['request'].get('body') is None:
                 raise ValueError('Missing required request example: '+method.upper()+' '+path)
             item['request']['description'] = operation.get('summary', '')+'\n\n'+operation.get('description', '')+'\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives.'
             if method == 'post' and path == '/auth/login':item['event'].append(event('test', capture('access_token', 'pm.response.json().data.access_token')))
-            group = 'Stays and bookings' if path.startswith(('/admin/stays', '/admin/stay-')) else 'Auth' if path.startswith('/auth') else 'Documents' if doc else 'Deals' if 'property-deals' in path else 'Visits' if 'site-visit' in path else 'Reports' if '/reports/' in path else 'Leads and follow-ups' if any(x in path for x in ['lead', 'follow-up']) else 'Properties and enquiries'
+            group = 'Stays and bookings' if path.startswith(('/admin/stays', '/admin/stay-', '/stays')) else 'Auth' if path.startswith('/auth') else 'Documents' if doc else 'Deals' if 'property-deals' in path else 'Visits' if 'site-visit' in path else 'Reports' if '/reports/' in path else 'Leads and follow-ups' if any(x in path for x in ['lead', 'follow-up']) else 'Properties and enquiries'
             folders.setdefault(group, []).append(item)
     return collection('SDA — API reference', 'Every documented API operation, grouped by module. Select individual requests and supply valid current IDs/body fields; use the separate Complete integration workflow for ordered execution. Mutation/deletion requests operate on the records you supply. Credentials and token are environment variables, blank in checked-in examples.', [{'name': k, 'item': v} for k, v in folders.items()], '6e65aa01-c2b7-49fa-b544-c245712b48a3')
 

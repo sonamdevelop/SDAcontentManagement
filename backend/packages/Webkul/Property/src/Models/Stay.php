@@ -8,9 +8,9 @@ class Stay extends Model implements \Webkul\Property\Contracts\Stay
 {
     protected $table = 'stays';
 
-    protected $fillable = ['name', 'city', 'timezone', 'active', 'user_id'];
+    protected $fillable = ['name', 'city', 'timezone', 'active', 'description', 'rules', 'amenities', 'images', 'is_published', 'user_id'];
 
-    protected $casts = ['active' => 'boolean'];
+    protected $casts = ['amenities' => 'array', 'images' => 'array', 'is_published' => 'boolean', 'active' => 'boolean'];
 
     public function rooms()
     {

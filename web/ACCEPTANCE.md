@@ -90,3 +90,5 @@ The real ledger journey also checks payment follow-up: initial collection, cance
 The real stay booking journey also finds its booking by ID and inclusive arrival date, rejects a later nonmatching bound and confirms guest identity is absent from the list.
 
 The real ledger journey opens a printable statement after payment/refund/reversal/cancellation, checks all entries and settled totals, and verifies staff controls are hidden under print media.
+
+A fifth real-service journey publishes stay/room text and photos, verifies a parent alone is hidden, opens the public catalogue/detail without staff credentials, checks an actual uploaded image loads, then unpublishes the stay and confirms public detail returns unavailable. Stay/room photos join the synthetic file backup/restore checksum checks.

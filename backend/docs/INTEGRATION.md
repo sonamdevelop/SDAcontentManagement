@@ -34,7 +34,7 @@ mobile HTTP clients, but the demo's preflight assertion tests the configured ori
 Import these files from `docs/postman/`:
 
 - `SDA-workflow.postman_collection.json`: ordered, executable complete journey.
-- `SDA-reference.postman_collection.json`: all 62 documented operations; select
+- `SDA-reference.postman_collection.json`: all 67 documented operations; select
   individual requests after filling the relevant IDs. It is not an ordered runner.
 - `SDA-local.postman_environment.json` or `SDA-staging.postman_environment.json`.
 
@@ -218,3 +218,5 @@ See [API.md](API.md) and [openapi.json](openapi.json) for complete request schem
 permissions, validation and current feature limitations.
 
 See [the current feature/readiness audit](READINESS.md) for reference parity, native-app gaps and the remaining development sequence.
+
+Public stay discovery (`GET /stays`, `/stays/{id}`) and scoped staff content/publication are now implemented. Customer auth and public reservation remain separate pending work; see [stay content rules](STAYS.md#rich-stay-content-and-public-catalogue).

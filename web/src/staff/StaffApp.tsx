@@ -1,3 +1,4 @@
+import { StayContentPage } from './StayContentWorkspace';
 import { StayStatementPage } from './StatementWorkspace';
 import { PaymentFollowUpPage } from './PaymentFollowUpWorkspace';
 import { StayOperationsPage } from './OperationsWorkspace';
@@ -140,6 +141,7 @@ export function StaffApp() {
           <Route path="stay-payment-follow-ups" element={<PaymentFollowUpPage />} />
           <Route path="stay-operations" element={<StayOperationsPage />} />
           <Route path="stay-calendar" element={<StayCalendarPage />} />
+          <Route path="stays/:id/content" element={<StayContentPage />} />
           <Route path="stays" element={<StayList />} />
           <Route path="stay-bookings" element={<BookingList />} />
           <Route path="stay-bookings/new" element={<BookingCreate />} />

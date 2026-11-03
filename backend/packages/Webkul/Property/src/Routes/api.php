@@ -11,10 +11,17 @@ use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
 use Webkul\Property\Http\Controllers\StayApiController;
+use Webkul\Property\Http\Controllers\StayContentController;
 use Webkul\Property\Http\Controllers\StayOperationsController;
 use Webkul\Property\Http\Controllers\StayPaymentController;
 use Webkul\Property\Http\Controllers\StayPaymentFollowUpController;
 use Webkul\Property\Http\Middleware\ApiAccess;
+
+Route::get('stays', [StayContentController::class, 'index'])->name('stays.index');
+Route::get('stays/{id}', [StayContentController::class, 'show'])->whereNumber('id')->name('stays.show');
+Route::get('admin/stays/{id}/content', [StayContentController::class, 'edit'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('admin.stays.content');
+Route::post('admin/stays/{stayId}/content', [StayContentController::class, 'save'])->whereNumber('stayId')->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('admin.stays.content-save');
+Route::post('admin/stays/{stayId}/rooms/{id}/content', [StayContentController::class, 'save'])->whereNumber(['stayId', 'id'])->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('admin.rooms.content-save');
 
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:property-api-login')->name('auth.login');
 Route::get('auth/me', [AuthController::class, 'me'])->middleware(ApiAccess::class)->name('auth.me');

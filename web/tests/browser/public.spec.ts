@@ -107,7 +107,7 @@ test('displays empty and unavailable states and keeps legacy stays navigation', 
       'true',
     );
   }
-  await expect(page.getByRole('link', { name: 'Explore stays' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Legacy stay website' })).toHaveAttribute(
     'href',
     'https://stayindandeli.in/',
   );

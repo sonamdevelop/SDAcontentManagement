@@ -377,3 +377,34 @@
     break-after: avoid;
   }
 }
+
+.stay-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+.stay-card {
+  padding: 1.25rem;
+  margin: 1rem 0;
+  border: 1px solid #d8ddd8;
+  border-radius: 12px;
+  background: white;
+  overflow-wrap: anywhere;
+}
+.stay-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.stay-gallery img {
+  width: min(100%, 320px);
+  height: 210px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.stay-copy {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

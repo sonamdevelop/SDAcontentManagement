@@ -129,3 +129,23 @@ certification of every upstream Krayin module, OS/device or production condition
   `app/Http/Controllers/BookingController.php`,
   `app/Http/Controllers/UserController.php`,
   `app/Http/Controllers/BlogController.php`.
+
+## Incremental update: rich stay content and public discovery
+
+The subsequent stay catalogue feature completes group 13's marketing content:
+stay/room descriptions, photo upload/removal galleries, amenities, rules and
+independent publication controls. Group 17 is now **partial**: SDA public list and
+detail pages exist, while customer authentication, dated public availability and
+reservation remain pending. The checklist therefore moves to **11 local-ready,
+3 partial and 7 pending/unverified**, with the same limits on interpreting counts
+as overall effort or project completion. Native app readiness remains unverified.
+
+Verification for this feature: 464 API tests (2,323 assertions), 193 frontend
+unit/integration tests, production build and format checks, 50 desktop/mobile
+browser tests and 5 real-service journeys passed. Synthetic DB and marketing/private
+file backup/restore checks passed (four uploaded files verified). All changes remain in
+SDA. No reference data migration, environment publication or staging/deployment.
+
+The next work item is separate customer authentication and ownership mapping,
+followed by the customer booking journey; public catalogue views never reuse staff
+credentials or introduce a staff booking fallback.

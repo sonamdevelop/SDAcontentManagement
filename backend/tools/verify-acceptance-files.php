@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Property\Models\Property;
 use Webkul\Property\Models\PropertyDocument;
+use Webkul\Property\Models\RoomType;
+use Webkul\Property\Models\Stay;
 use Webkul\Property\Support\DocumentFilePolicy;
 
 require __DIR__.'/../vendor/autoload.php';
@@ -18,6 +20,13 @@ $files = [];
 foreach (Property::all() as $property) {
     foreach ($property->images ?? [] as $path) {
         $files[] = ['disk' => 'public', 'path' => $path, 'sha256' => null];
+    }
+}
+foreach ([Stay::class, RoomType::class] as $model) {
+    foreach ($model::all() as $record) {
+        foreach ($record->images ?? [] as $path) {
+            $files[] = ['disk' => 'public', 'path' => $path, 'sha256' => null];
+        }
     }
 }
 foreach (PropertyDocument::all() as $document) {

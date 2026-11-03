@@ -2256,6 +2256,207 @@
               }
             }
           ]
+        },
+        {
+          "name": "GET /stays",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/stays",
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "List active published stays\n\nAnonymous. Exact city filter, ascending stay ID, only active published stays with at least one active published room. Starting rate/count consider only visible rooms. Omits inventory quantity, owners, booking/guest/payment metadata. No online booking or date availability.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /stays/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/stays/{{stay_id}}",
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Read public stay and visible room details\n\nAnonymous curated marketing content. Parent and rooms must both be active/published; no eligible rooms returns 404. No staff scope or fallback.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/stays/{id}/content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/content",
+            "description": "Read scoped stay content for editing\n\nRequires stays ACL and stays:read. Includes existing stay inventory/room records and unpublished content; no booking data.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stays/{id}/content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/content",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "description",
+                  "value": "Public marketing description",
+                  "type": "text"
+                },
+                {
+                  "key": "rules",
+                  "value": "Quiet hours after 10 pm",
+                  "type": "text"
+                },
+                {
+                  "key": "amenities[0]",
+                  "value": "Parking",
+                  "type": "text"
+                },
+                {
+                  "key": "is_published",
+                  "value": "0",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Save stay marketing content\n\nRequires stays + stays.manage and stays:write. Source lock, own/group/global scope, maximum 10 gallery photos. Uploads cleaned on DB rollback; removed files deleted after commit on a best-effort basis. Public marketing files, not private documents.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/stays/{stayId}/rooms/{id}/content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/rooms/{{room_type_id}}/content",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "description",
+                  "value": "Public marketing description",
+                  "type": "text"
+                },
+                {
+                  "key": "rules",
+                  "value": "Quiet hours after 10 pm",
+                  "type": "text"
+                },
+                {
+                  "key": "amenities[0]",
+                  "value": "Parking",
+                  "type": "text"
+                },
+                {
+                  "key": "is_published",
+                  "value": "0",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Save room marketing content\n\nSame content rules/permissions. Room must belong to the authorized stay. Parent then room lock order; inventory/rates/booking snapshots unchanged.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

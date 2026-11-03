@@ -41,3 +41,5 @@ Staff can inspect nightly room allocation and remaining capacity through **Avail
 **Stay bookings** can be filtered by booking/stay IDs and inclusive scheduled arrival dates, together with status, room and attendance filters.
 
 **Printable stay statements** present booking charges, complete offline payment/correction history and current balances with a print layout that omits staff controls and internal metadata.
+
+**Public stay catalogue** now lives at `/stays`, with stay/room descriptions, amenities, rules, galleries and exact nightly rates. Staff manage content/publication separately from inventory. Customer login, dated public availability and online booking remain pending.
