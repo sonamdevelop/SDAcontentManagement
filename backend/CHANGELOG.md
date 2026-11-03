@@ -4,6 +4,10 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [fixed] Kept nullable booking fields consistent across create, retry and detail responses so a saved booking is not mistaken for an uncertain result by staff screens.
+
+* [feature] Added staff guest check-in/check-out with local-date arrival rules, permission checks, idempotent timestamps, attendance filters and actor/time history while preserving original room allocation and charges.
+
 * [feature] Added scoped stay/room inventory management, calendar-date availability and staff bookings with exact nightly totals, offline advance/balance records, idempotent retries, concurrency protection and cancellation history.
 
 * [feature] Added a real-browser staff/public acceptance journey on a unique isolated database, with synthetic database and public/private upload backup recovery verification and a staging handoff guide.

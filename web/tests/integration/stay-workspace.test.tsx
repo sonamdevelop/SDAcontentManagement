@@ -174,3 +174,83 @@ it('creates stays and rooms and preserves drafts on invalid inventory edits', as
   await userEvent.click(screen.getByRole('button', { name: 'Save stay' }));
   await waitFor(() => expect(saved).toBe(true));
 });
+
+import { localStayDate } from '../../src/staff/stays';
+it('reviews and retries uncertain check-in, then records departure with unchanged money', async () => {
+  let current = {
+    ...booking,
+    check_in: localStayDate('Asia/Kolkata'),
+    check_out: localStayDate('Asia/Kolkata', Date.now() + 2 * 86400000),
+    checked_in_at: null as string | null,
+    checked_out_at: null as string | null,
+  };
+  let arrivals = 0;
+  server.use(
+    http.get(`${base}/admin/stay-bookings/:id`, () => HttpResponse.json({ data: current })),
+    http.patch(`${base}/admin/stay-bookings/51/check-in`, async ({ request }) => {
+      expect(request.headers.get('authorization')).toBe('Bearer stay-token');
+      expect(await request.json()).toEqual({});
+      arrivals++;
+      if (arrivals === 1) return HttpResponse.error();
+      current = { ...current, checked_in_at: new Date().toISOString() };
+      return HttpResponse.json({ data: current });
+    }),
+    http.patch(`${base}/admin/stay-bookings/51/check-out`, () => {
+      current = { ...current, checked_out_at: new Date(Date.now() + 1000).toISOString() };
+      return HttpResponse.json({ data: current });
+    }),
+  );
+  app('/staff/stay-bookings/51');
+  await userEvent.click(await screen.findByRole('button', { name: 'Record check-in' }));
+  expect(arrivals).toBe(0);
+  await userEvent.click(screen.getByRole('button', { name: 'Confirm check-in' }));
+  await screen.findByText(/Outcome uncertain. Retry this same attendance/);
+  expect(screen.getByRole('button', { name: 'Keep attendance unchanged' })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: 'Confirm check-in' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Record check-out' }));
+  expect(screen.getByText(/Early checkout keeps the original room dates/)).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Confirm check-out' }));
+  await screen.findByText('Current attendance: Checked out');
+  expect(screen.queryByRole('button', { name: 'Record check-in' })).not.toBeInTheDocument();
+  expect(screen.getByText(/Balance: ₹3,900.99/)).toBeInTheDocument();
+});
+it('enforces attendance permissions even for current bookings', async () => {
+  server.use(
+    http.get(`${base}/auth/me`, () =>
+      HttpResponse.json({
+        data: {
+          ...profile,
+          role: { name: 'Reader', permission_type: 'custom', permissions: ['stay-bookings.view'] },
+        },
+      }),
+    ),
+    http.get(`${base}/admin/stay-bookings/:id`, () =>
+      HttpResponse.json({
+        data: {
+          ...booking,
+          check_in: localStayDate('Asia/Kolkata'),
+          check_out: localStayDate('Asia/Kolkata', Date.now() + 86400000),
+        },
+      }),
+    ),
+  );
+  app('/staff/stay-bookings/51');
+  await screen.findByRole('heading', { name: 'Arrival and departure' });
+  expect(screen.queryByRole('button', { name: 'Record check-in' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Record check-out' })).not.toBeInTheDocument();
+});
+it('filters arrivals through URL state without discarding room filters', async () => {
+  const urls: string[] = [];
+  server.use(
+    http.get(`${base}/admin/stay-bookings`, ({ request }) => {
+      urls.push(request.url);
+      return HttpResponse.json({ data: [booking], meta });
+    }),
+  );
+  app('/staff/stay-bookings?room_type_id=2');
+  await screen.findByRole('heading', { name: 'River stay — Deluxe #51' });
+  await userEvent.selectOptions(screen.getByLabelText('Attendance'), 'checked_in');
+  await userEvent.click(screen.getByRole('button', { name: 'Filter bookings' }));
+  await waitFor(() => expect(urls.at(-1)).toContain('attendance_status=checked_in'));
+  expect(urls.at(-1)).toContain('room_type_id=2');
+});

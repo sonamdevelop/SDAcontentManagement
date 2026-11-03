@@ -8,6 +8,7 @@ use Illuminate\Validation\ValidationException;
 use Webkul\Property\Repositories\StayBookingRepository;
 use Webkul\Property\Repositories\StayRepository;
 use Webkul\Property\Support\DealMoney;
+use Webkul\Property\Support\StayAttendance;
 use Webkul\Property\Support\StayDates;
 
 class StayBookingService
@@ -117,11 +118,44 @@ class StayBookingService
             if ($record->status === 'cancelled') {
                 return $record->load('events');
             }
-            if ($record->check_in <= now($record->timezone)->format('Y-m-d')) {
+            if ($record->checked_in_at || $record->check_in <= now($record->timezone)->format('Y-m-d')) {
                 $this->invalid('status', 'started');
             }
             $record->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => $reason]);
             $record->events()->create(['actor_id' => auth()->guard('user')->id(), 'action' => 'cancelled', 'changes' => ['status' => 'cancelled', 'cancellation_reason' => $reason]]);
+
+            return $record->load('events');
+        }, 3);
+    }
+
+    public function attendance(int $id, string $action)
+    {
+        abort_unless(in_array($action, ['check-in', 'check-out'], true), 404);
+
+        return DB::transaction(function () use ($id, $action) {
+            $initial = $this->bookings->authorized($id);
+            $this->stays->room($initial->room_type_id, true);
+            $record = $this->bookings->authorized($id, true);
+            if ($record->status !== 'confirmed') {
+                $this->invalid('status', 'attendance-state');
+            }
+            $field = $action === 'check-in' ? 'checked_in_at' : 'checked_out_at';
+            // A transport retry must preserve the original timestamp and event count.
+            if ($record->$field) {
+                return $record->load('events');
+            }
+            if ($action === 'check-in' && ! StayAttendance::canArrive($record->status, $record->check_in, $record->check_out, now($record->timezone)->format('Y-m-d'))) {
+                $this->invalid('check_in', 'arrival-window');
+            }
+            if ($action === 'check-out' && ! $record->checked_in_at) {
+                $this->invalid('status', 'arrival-required');
+            }
+            $record->forceFill([$field => now()])->save();
+            $record->events()->create([
+                'actor_id' => auth()->guard('user')->id(),
+                'action' => $action === 'check-in' ? 'checked_in' : 'checked_out',
+                'changes' => [$field => $record->$field->toIso8601String()],
+            ]);
 
             return $record->load('events');
         }, 3);

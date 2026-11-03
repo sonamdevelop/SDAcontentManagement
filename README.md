@@ -26,3 +26,5 @@ mobile/Firebase account/data migration are separate later phases; production
 rollout still needs deployment and acceptance checks.
 
 Staff stays and room bookings now have separate inventory, date-based availability, exact advance/balance records and cancellation history. See [stay booking documentation](backend/docs/STAYS.md). Public online booking/payment and migration remain later phases.
+
+Stay booking details also support staff check-in/check-out, attendance filters and actor/time history without changing booked charges or inventory dates.

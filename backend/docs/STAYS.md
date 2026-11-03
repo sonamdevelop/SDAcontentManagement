@@ -80,7 +80,7 @@ phase are a flat per-room nightly total; extra beds, tax breakdowns, seasonal ra
 packages and discounts are not modelled.
 
 Bookings are confirmed immediately and hold inventory. There is no temporary
-hold/expiry, room-number assignment, check-in/out action, editing, extra payment,
+hold/expiry, room-number assignment, editing, extra payment,
 refund accounting or online collection in this phase. The guest is a booking
 snapshot rather than a migrated customer login or CRM lead. Owner, creator,
 status, rates, total and balance cannot be overridden by client fields.
@@ -101,9 +101,40 @@ rewritten. Cancelled bookings cannot be reopened.
 
 Lists support status, room_type_id, page/per_page, newest first. They omit guest
 identity/contact, notes, request IDs, references, cancellation reasons and history.
-Details include private snapshots and chronological created/cancelled events.
+Details include private snapshots and chronological booking/attendance events.
 Internal payload hashes are never returned. Room/stay records and assigned owners
 cannot be hard-deleted while referenced, retaining financial history.
+
+## Guest check-in and check-out
+
+Confirmed bookings now expose `checked_in_at`, `checked_out_at` and derived
+`attendance_status` (`not_arrived`, `checked_in`, `checked_out`). Booking financial
+status remains confirmed; attendance is tracked independently. Existing bookings
+start with no attendance recorded. Lists accept the attendance_status filter,
+independently of status/room_type_id filters, without exposing guest details.
+
+PATCH `/admin/stay-bookings/{id}/check-in` requires `stay-bookings.check-in` plus
+`stay-bookings.view` and the `bookings:write` ability. Arrival can be recorded only
+on/after check_in and before check_out, using the booking's snapshotted timezone.
+PATCH `/admin/stay-bookings/{id}/check-out` requires `stay-bookings.check-out` plus
+`stay-bookings.view` and `bookings:write`. Departure requires a recorded arrival;
+it may be recorded early or after the scheduled departure. Both use an empty body,
+server timestamps and the authenticated actor. Cancelled bookings reject both.
+Source/booking visibility still applies; inactive stay/room setup does not prevent
+recording an existing guest's attendance. No new login token abilities are needed.
+
+Repeated actions return the current detail without changing the original timestamp
+or adding another event, even when replaying check-in after recorded check-out.
+Check-in/out, cancellation and inventory writes use the same source lock order.
+The timestamp and audit event commit or roll back together. Clients cannot supply
+backdated timestamps or another staff actor. There is no reopen, undo, backdate,
+no-show or partial-room attendance operation; these actions cover the whole booking.
+
+Early checkout preserves original dates, inventory allocation, total, advance and
+balance. It neither resells the remaining nights nor performs a refund. Checked-in
+bookings cannot be cancelled. Staff screens review each action, display timestamps
+in the stay timezone, and offer Refresh booking. An uncertain response can safely
+retry the same action; it must not be treated as proof of failure.
 
 ## Staff workspace and verification
 

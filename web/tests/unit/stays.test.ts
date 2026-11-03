@@ -48,3 +48,32 @@ it('rejects lossy JSON numeric money in booking responses', () => {
     }),
   ).toBe(false);
 });
+
+import { attendanceStatus, canRecordAttendance, localStayDate } from '../../src/staff/stays';
+import { booking } from '../stay-fixtures';
+it('uses stay timezone at the arrival midnight boundary', () => {
+  const b = { ...booking, check_in: '2030-01-02', check_out: '2030-01-04' };
+  expect(localStayDate('Asia/Kolkata', Date.parse('2030-01-01T18:31:00Z'))).toBe('2030-01-02');
+  expect(canRecordAttendance(b, 'check-in', Date.parse('2030-01-01T18:29:00Z'))).toBe(false);
+  expect(canRecordAttendance(b, 'check-in', Date.parse('2030-01-01T18:31:00Z'))).toBe(true);
+  expect(canRecordAttendance(b, 'check-in', Date.parse('2030-01-03T18:30:00Z'))).toBe(false);
+  expect(
+    canRecordAttendance(
+      { ...b, status: 'cancelled' },
+      'check-in',
+      Date.parse('2030-01-02T05:00:00Z'),
+    ),
+  ).toBe(false);
+});
+it('requires arrival before departure and rejects inconsistent attendance timestamps', () => {
+  expect(canRecordAttendance(booking, 'check-out')).toBe(false);
+  const arrived = { ...booking, checked_in_at: '2030-01-02T05:00:00Z' };
+  expect(attendanceStatus(arrived)).toBe('checked_in');
+  expect(canRecordAttendance(arrived, 'check-out')).toBe(true);
+  expect(isBooking({ ...booking, checked_out_at: '2030-01-02T06:00:00Z' })).toBe(false);
+  expect(isBooking({ ...arrived, checked_out_at: '2030-01-02T04:00:00Z' })).toBe(false);
+  expect(isBooking({ ...arrived, attendance_status: 'not_arrived' })).toBe(false);
+  expect(
+    canRecordAttendance({ ...arrived, checked_out_at: '2030-01-02T06:00:00Z' }, 'check-out'),
+  ).toBe(false);
+});

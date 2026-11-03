@@ -133,6 +133,8 @@ def reference(spec):
         ('post', '/admin/stays/{stayId}/rooms'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
         ('put', '/admin/stays/{stayId}/rooms/{id}'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
         ('post', '/admin/stay-bookings'): {'request_id': '{{stay_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example guest', 'guest_email': 'guest@example.test', 'expected_rate': '1000.25', 'advance': '100.01'},
+        ('patch', '/admin/stay-bookings/{id}/check-in'): {},
+        ('patch', '/admin/stay-bookings/{id}/check-out'): {},
         ('patch', '/admin/stay-bookings/{id}/cancel'): {'cancellation_reason': 'Guest changed plans'},
         ('post', '/auth/logout'): {},
     }

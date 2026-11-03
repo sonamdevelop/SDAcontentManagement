@@ -5320,6 +5320,19 @@
                 "cancelled"
               ]
             }
+          },
+          {
+            "name": "attendance_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "not_arrived",
+                "checked_in",
+                "checked_out"
+              ]
+            }
           }
         ]
       },
@@ -5562,6 +5575,138 @@
             }
           }
         }
+      }
+    },
+    "/admin/stay-bookings/{id}/check-in": {
+      "patch": {
+        "summary": "Record guest check-in",
+        "operationId": "stayBookingCheckIn",
+        "description": "Requires stay-bookings.check-in + stay-bookings.view / bookings:write. Only confirmed bookings. Record arrival within the booked check-in inclusive / checkout exclusive local-date window. Repeat requests preserve timestamp/history, including after departure. Timestamp and actor are server-generated. All mutations serialize on the source stay/room and booking locks.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayBooking"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/admin/stay-bookings/{id}/check-out": {
+      "patch": {
+        "summary": "Record guest check-out",
+        "operationId": "stayBookingCheckOut",
+        "description": "Requires stay-bookings.check-out + stay-bookings.view / bookings:write. Only confirmed bookings. Record departure only after arrival. Early departure does not release scheduled inventory, reprice charges, alter advances or initiate refunds. Repeat requests preserve timestamp/history. Timestamp and actor are server-generated. All mutations serialize on the source stay/room and booking locks.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayBooking"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "409": {
+            "description": "Request ID already used for other payload or creator"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
       }
     }
   },
@@ -7472,6 +7617,24 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "checked_in_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checked_out_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "attendance_status": {
+            "type": "string",
+            "enum": [
+              "not_arrived",
+              "checked_in",
+              "checked_out"
+            ]
           }
         },
         "required": [
@@ -7493,7 +7656,10 @@
           "status",
           "created_at",
           "updated_at",
-          "cancelled_at"
+          "cancelled_at",
+          "checked_in_at",
+          "checked_out_at",
+          "attendance_status"
         ]
       },
       "StayBooking": {
@@ -7627,7 +7793,9 @@
                   "type": "string",
                   "enum": [
                     "created",
-                    "cancelled"
+                    "cancelled",
+                    "checked_in",
+                    "checked_out"
                   ]
                 },
                 "changes": {
@@ -7653,6 +7821,24 @@
                 "updated_at"
               ]
             }
+          },
+          "checked_in_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checked_out_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "attendance_status": {
+            "type": "string",
+            "enum": [
+              "not_arrived",
+              "checked_in",
+              "checked_out"
+            ]
           }
         },
         "required": [
@@ -7683,7 +7869,10 @@
           "payment_reference",
           "notes",
           "cancellation_reason",
-          "events"
+          "events",
+          "checked_in_at",
+          "checked_out_at",
+          "attendance_status"
         ]
       },
       "StayAvailability": {

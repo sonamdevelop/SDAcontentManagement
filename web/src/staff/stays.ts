@@ -19,6 +19,9 @@ export type Stay = {
   rooms: Room[];
 };
 export type Booking = {
+  checked_in_at?: string | null;
+  checked_out_at?: string | null;
+  attendance_status?: 'not_arrived' | 'checked_in' | 'checked_out';
   id: number;
   room_type_id: number;
   stay_name: string;
@@ -102,6 +105,26 @@ export function isBooking(v: unknown): v is Booking {
     return false;
   try {
     bookingWindow(String(v.check_in), String(v.check_out));
+    for (const field of ['checked_in_at', 'checked_out_at']) {
+      const value = v[field];
+      if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value !== 'string' || !Number.isFinite(Date.parse(value)))
+      )
+        return false;
+    }
+    if (
+      v.checked_out_at &&
+      (!v.checked_in_at ||
+        Date.parse(String(v.checked_out_at)) < Date.parse(String(v.checked_in_at)))
+    )
+      return false;
+    if (
+      v.attendance_status !== undefined &&
+      v.attendance_status !== attendanceStatus(v as unknown as Booking)
+    )
+      return false;
     const cents = (key: string) => BigInt(String(v[key]).replace('.', ''));
     return cents('total') > 0n && cents('advance') + cents('balance') === cents('total');
   } catch {
@@ -227,6 +250,15 @@ export class StayApi {
       }),
     );
   }
+  async attendance(id: number, action: 'check-in' | 'check-out') {
+    if (!Number.isSafeInteger(id) || id < 1) throw new StaffError(404);
+    return this.detail(
+      await this.api.request(`/admin/stay-bookings/${id}/${action}`, {
+        method: 'PATCH',
+        body: JSON.stringify({}),
+      }),
+    );
+  }
   async cancel(id: number, reason: string) {
     return this.detail(
       await this.api.request(`/admin/stay-bookings/${id}/cancel`, {
@@ -235,4 +267,37 @@ export class StayApi {
       }),
     );
   }
+}
+
+export function attendanceStatus(booking: Booking) {
+  return booking.checked_out_at
+    ? 'checked_out'
+    : booking.checked_in_at
+      ? 'checked_in'
+      : 'not_arrived';
+}
+export function localStayDate(timezone: string, now = Date.now()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(now));
+  const part = (key: string) => parts.find((p) => p.type === key)?.value;
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+export function canRecordAttendance(
+  booking: Booking,
+  action: 'check-in' | 'check-out',
+  now = Date.now(),
+) {
+  if (booking.status !== 'confirmed') return false;
+  if (action === 'check-out') return !!booking.checked_in_at && !booking.checked_out_at;
+  const today = localStayDate(booking.timezone, now);
+  return (
+    !booking.checked_in_at &&
+    !booking.checked_out_at &&
+    booking.check_in <= today &&
+    today < booking.check_out
+  );
 }

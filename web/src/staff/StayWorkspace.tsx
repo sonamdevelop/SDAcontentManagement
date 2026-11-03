@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useResource } from '../api/useResource';
 import { formatPrice, label } from '../domain/property';
@@ -6,6 +6,9 @@ import { can, StaffError } from './api';
 import { useAuth } from './session';
 import { Failure, Pagination, useMutation } from './StaffUi';
 import {
+  attendanceStatus,
+  canRecordAttendance,
+  localStayDate,
   StayApi,
   bookingWindow,
   quotedTotal,
@@ -266,6 +269,7 @@ function RoomForm({
 function BookingSummary({ booking: b }: { booking: Booking }) {
   return (
     <>
+      <p>Attendance: {label(attendanceStatus(b))}</p>
       <p>
         {label(b.status)} · {b.check_in} → {b.check_out} ({b.timezone})
       </p>
@@ -309,7 +313,7 @@ export function BookingList() {
           e.preventDefault();
           const f = new FormData(e.currentTarget),
             next = new URLSearchParams();
-          for (const k of ['status', 'room_type_id']) {
+          for (const k of ['status', 'room_type_id', 'attendance_status']) {
             const v = String(f.get(k) || '');
             if (v) next.set(k, v);
           }
@@ -322,6 +326,15 @@ export function BookingList() {
             <option value="">All statuses</option>
             <option value="confirmed">Confirmed</option>
             <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+        <label>
+          Attendance
+          <select name="attendance_status" defaultValue={params.get('attendance_status') || ''}>
+            <option value="">All attendance</option>
+            <option value="not_arrived">Not arrived</option>
+            <option value="checked_in">Checked in</option>
+            <option value="checked_out">Checked out</option>
           </select>
         </label>
         <label>
@@ -672,14 +685,12 @@ function BookingContent({ initial }: { initial: Booking }) {
     api = useStays(),
     mutation = useMutation(),
     { profile } = useAuth();
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: booking.timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-  const part = (k: string) => parts.find((p) => p.type === k)?.value;
-  const today = `${part('year')}-${part('month')}-${part('day')}`;
+  const [clock, setClock] = useState(Date.now);
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const today = localStayDate(booking.timezone, clock);
   return (
     <>
       <h1>Stay booking #{booking.id}</h1>
@@ -715,7 +726,14 @@ function BookingContent({ initial }: { initial: Booking }) {
           Refresh booking
         </button>
       </section>
+      <AttendancePanel
+        key={`${booking.checked_in_at}:${booking.checked_out_at}`}
+        booking={booking}
+        clock={clock}
+        onUpdate={setBooking}
+      />
       {booking.status === 'confirmed' &&
+        !booking.checked_in_at &&
         booking.check_in > today &&
         can(profile, 'stay-bookings.cancel') && (
           <section className="staff-panel">
@@ -800,5 +818,90 @@ function BookingContent({ initial }: { initial: Booking }) {
         </ol>
       </section>
     </>
+  );
+}
+
+function AttendancePanel({
+  booking,
+  clock,
+  onUpdate,
+}: {
+  booking: Booking;
+  clock: number;
+  onUpdate: (b: Booking) => void;
+}) {
+  const { profile } = useAuth(),
+    api = useStays(),
+    mutation = useMutation();
+  const [action, setAction] = useState<'check-in' | 'check-out' | null>(null),
+    [uncertain, setUncertain] = useState(false);
+  const shown = (iso: string | null | undefined) =>
+    iso ? new Date(iso).toLocaleString(undefined, { timeZone: booking.timezone }) : 'Not recorded';
+  return (
+    <section className="staff-panel">
+      <h2>Arrival and departure</h2>
+      <p>Current attendance: {label(attendanceStatus(booking))}</p>
+      <p>Checked in: {shown(booking.checked_in_at)}</p>
+      <p>Checked out: {shown(booking.checked_out_at)}</p>
+      <p>Times shown in {booking.timezone}.</p>
+      {!action ? (
+        <>
+          {(['check-in', 'check-out'] as const).map(
+            (a) =>
+              can(profile, `stay-bookings.${a}`) &&
+              canRecordAttendance(booking, a, clock) && (
+                <button key={a} onClick={() => setAction(a)}>
+                  {a === 'check-in' ? 'Record check-in' : 'Record check-out'}
+                </button>
+              ),
+          )}
+        </>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void mutation.run(async () => {
+              if (!can(profile, `stay-bookings.${action}`)) throw new StaffError(403);
+              try {
+                const saved = await api.attendance(booking.id, action);
+                if (mutation.isActive()) onUpdate(saved);
+              } catch (e) {
+                if (mutation.isActive())
+                  setUncertain(
+                    !(e instanceof StaffError && [401, 403, 404, 422].includes(e.status)),
+                  );
+                throw e;
+              }
+            }, '');
+          }}
+        >
+          <p>
+            {action === 'check-in'
+              ? 'Record that the guest has arrived now?'
+              : 'Record that the guest has departed now? Early checkout keeps the original room dates, charges and balance; it does not release inventory or issue a refund.'}
+          </p>
+          {uncertain && (
+            <p role="alert">
+              Outcome uncertain. Retry this same attendance action or use Refresh booking.
+            </p>
+          )}
+          <button disabled={mutation.busy || !can(profile, `stay-bookings.${action}`)}>
+            {mutation.busy
+              ? 'Saving…'
+              : action === 'check-in'
+                ? 'Confirm check-in'
+                : 'Confirm check-out'}
+          </button>
+          <button
+            type="button"
+            disabled={mutation.busy || uncertain}
+            onClick={() => setAction(null)}
+          >
+            Keep attendance unchanged
+          </button>
+        </form>
+      )}
+      {mutation.error ? <Failure error={mutation.error} /> : null}
+    </section>
   );
 }

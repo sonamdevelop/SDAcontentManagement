@@ -85,6 +85,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('stay-bookings', [$stays, 'index'])->middleware(ApiAccess::class.':stay-bookings,bookings:read')->name('bookings.index');
     Route::get('stay-bookings/{id}', [$stays, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.view,bookings:read')->name('bookings.show');
     Route::post('stay-bookings', [$stays, 'store'])->middleware([ApiAccess::class.':stay-bookings.create,bookings:write,stay-bookings.view', ApiAccess::class.':stays,stays:read'])->name('bookings.store');
+    Route::patch('stay-bookings/{id}/check-in', [$stays, 'checkIn'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.check-in,bookings:write,stay-bookings.view')->name('bookings.check-in');
+    Route::patch('stay-bookings/{id}/check-out', [$stays, 'checkOut'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.check-out,bookings:write,stay-bookings.view')->name('bookings.check-out');
     Route::patch('stay-bookings/{id}/cancel', [$stays, 'cancel'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.cancel,bookings:write,stay-bookings.view')->name('bookings.cancel');
 });
 

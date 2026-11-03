@@ -2,6 +2,12 @@
 
 return [
     'stay-api' => [
+        'check-in' => 'Record check-in',
+        'check-out' => 'Record check-out',
+        'attendance-state' => 'Only confirmed bookings support arrival/departure recording.',
+        'arrival-window' => 'Check-in must be on or after the booked arrival date and before the booked checkout date, in the stay timezone.',
+        'arrival-required' => 'Record check-in before recording check-out.',
+
         'stays' => 'Stays and room types',
         'bookings' => 'Stay bookings',
         'cancel' => 'Cancel booking',

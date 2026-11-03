@@ -21,7 +21,7 @@ class StayApiController
 
     protected function filters(Request $r): array
     {
-        return $r->validate(['page' => 'sometimes|integer|min:1', 'per_page' => 'sometimes|integer|min:1|max:100', 'stay_id' => 'sometimes|integer|min:1', 'room_type_id' => 'sometimes|integer|min:1', 'status' => 'sometimes|in:confirmed,cancelled']);
+        return $r->validate(['page' => 'sometimes|integer|min:1', 'per_page' => 'sometimes|integer|min:1|max:100', 'stay_id' => 'sometimes|integer|min:1', 'room_type_id' => 'sometimes|integer|min:1', 'status' => 'sometimes|in:confirmed,cancelled', 'attendance_status' => 'sometimes|in:not_arrived,checked_in,checked_out']);
     }
 
     public function stays(Request $r)
@@ -62,6 +62,14 @@ class StayApiController
             }
         }
 
+        if (isset($f['attendance_status'])) {
+            match ($f['attendance_status']) {
+                'not_arrived' => $q->whereNull('checked_in_at')->whereNull('checked_out_at'),
+                'checked_in' => $q->whereNotNull('checked_in_at')->whereNull('checked_out_at'),
+                'checked_out' => $q->whereNotNull('checked_out_at'),
+            };
+        }
+
         return StayBookingResource::collection($q->latest('id')->paginate($f['per_page'] ?? 20)->withQueryString())->response()->header('Cache-Control', 'no-store');
     }
 
@@ -80,6 +88,16 @@ class StayApiController
         [$record, $created] = $this->service->reserve($data);
 
         return (new StayBookingResource($record))->response()->setStatusCode($created ? 201 : 200)->header('Cache-Control', 'no-store');
+    }
+
+    public function checkIn(int $id)
+    {
+        return (new StayBookingResource($this->service->attendance($id, 'check-in')))->response()->header('Cache-Control', 'no-store');
+    }
+
+    public function checkOut(int $id)
+    {
+        return (new StayBookingResource($this->service->attendance($id, 'check-out')))->response()->header('Cache-Control', 'no-store');
     }
 
     public function cancel(Request $r, int $id)
