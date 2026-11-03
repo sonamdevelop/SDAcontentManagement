@@ -1,7 +1,7 @@
 # Web and mobile API integration kit
 
 The public property website now lives in [web/](../../web/README.md) and connects
-to catalogue, detail and enquiry APIs. Staff/mobile integration remains separate.
+to catalogue, detail and enquiry APIs. The staff web workspace is integrated; native/mobile integration remains separate.
 The backend is ready for further client integration testing. This kit supplies requests,
 configuration examples and a repeatable journey. It does not deploy a staging
 server or migrate the existing Firebase/mobile accounts.
@@ -34,7 +34,7 @@ mobile HTTP clients, but the demo's preflight assertion tests the configured ori
 Import these files from `docs/postman/`:
 
 - `SDA-workflow.postman_collection.json`: ordered, executable complete journey.
-- `SDA-reference.postman_collection.json`: all 42 documented operations; select
+- `SDA-reference.postman_collection.json`: all 62 documented operations; select
   individual requests after filling the relevant IDs. It is not an ordered runner.
 - `SDA-local.postman_environment.json` or `SDA-staging.postman_environment.json`.
 
@@ -208,7 +208,7 @@ flows, including real Laravel HTTP verification in an isolated test database.
 Site visit scheduling, filtered lists, rescheduling/assignment, outcomes, feedback
 and audit history are also connected in the staff frontend. Property document
 upload, authenticated download, filters and confirmed deletion are connected too.
-Deal management remains future UI work. Lead stages can change
+Deal management, staff stay bookings, attendance, calendar/operations, offline ledger, payment follow-up, booking finder and printable statements are now connected in the staff web workspace. Lead stages can change
 within the current pipeline; cross-pipeline moves and email/push follow-up
 notifications are not part of the frontend.
 Mobile wiring and device acceptance checks follow after its auth/account mapping
@@ -216,3 +216,5 @@ is defined.
 
 See [API.md](API.md) and [openapi.json](openapi.json) for complete request schemas,
 permissions, validation and current feature limitations.
+
+See [the current feature/readiness audit](READINESS.md) for reference parity, native-app gaps and the remaining development sequence.

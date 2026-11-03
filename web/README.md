@@ -164,7 +164,7 @@ browser. User IDs come from the authenticated backend account.
 
 Staff changes need no new migration. Use the existing API deployment, CORS
 allowlist and `/storage` routing described above. SPA fallback must cover
-`/staff/*`. Booking management and mobile migration remain future phases; their existing backend APIs are unchanged.
+`/staff/*`. Staff booking management is implemented in the later stay sections below; customer booking and mobile/account migration remain pending.
 
 Validation for this phase includes unit/integration tests, desktop/mobile browser
 checks, and a real browser against an isolated Laravel test database: login,

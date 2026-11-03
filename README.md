@@ -3,6 +3,7 @@
 The Laravel/Krayin backend lives in [`backend/`](backend/). The public property
 website lives in [`web/`](web/) and connects to its public APIs.
 
+- [Feature progress and web/mobile readiness audit](backend/docs/READINESS.md)
 - [Backend setup and tests](backend/SETUP.md)
 - [API v1 documentation](backend/docs/API.md) and [OpenAPI](backend/docs/openapi.json)
 - [Postman and client integration kit](backend/docs/INTEGRATION.md)
