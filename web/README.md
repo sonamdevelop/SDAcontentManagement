@@ -54,10 +54,13 @@ also accept enquiries for the form to appear. Empty databases show an empty stat
 Create/publish records through the staff workspace or backend API/Postman kit.
 Existing Firebase listings and room bookings are not automatically migrated.
 
-The existing stay/booking website remains reachable through **Explore stays**.
-Its Laravel 11 room/booking backend was not copied into the Laravel 12 CRM. The
-SDA staff workspace covers property/lead management and site visits. Firebase
-account/data migration, customer authentication and mobile wiring are later work.
+SDA now has its own public stay catalogue at `/stays`; the reference website
+remains separately labelled **Legacy stay website**. Its Laravel 11 backend was
+not copied wholesale into the Laravel 12 CRM. SDA's staff inventory, booking and
+finance workflows are implemented separately. Customer signup/login/profile and
+owned booking reads are available at `/account`; customer reservation creation,
+email verification/recovery, Firebase data/account migration and native mobile
+integration remain pending.
 
 ## Source provenance and import boundary
 
@@ -322,3 +325,7 @@ Booking detail's ledger links to a print-friendly statement with complete chrono
 ### Rich stay content and public catalogue
 
 Use **Edit public stay content** on a staff stay card to edit stay/room descriptions, rules, amenities, gallery uploads/removals and publication. Both stay and room must be active/published to appear at `/stays` and `/stays/:id`. Anonymous catalogue requests never carry staff tokens. City/page filters persist in URLs; current nightly prices are not dated availability quotes. Customer booking is still pending. Apply the additive content migration; existing stays/rooms start unpublished. See [API, upload and publication rules](../backend/docs/STAYS.md#rich-stay-content-and-public-catalogue).
+
+### Customer accounts and owned bookings
+
+**My account** (`/account`) supports separate customer signup/login, profile and password changes. **My bookings** (`/account/bookings`) shows only explicitly linked customer-owned booking snapshots and exact balances. New accounts normally start empty; no historical email-based linking or customer reservation creation occurs. Customer tokens are separate from staff tokens and public catalogue calls. Password recovery, email verification and native clients remain pending. Apply the additive customer migration and see [account rules/API](../backend/docs/CUSTOMERS.md).

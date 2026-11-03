@@ -34,6 +34,11 @@ class StayBookingRepository extends Repository
         return $q->findOrFail($id);
     }
 
+    public function forCustomer(int $id)
+    {
+        return $this->model->newQuery()->where('customer_id', $id);
+    }
+
     public function filteredQuery(array $filters)
     {
         $query = $this->scopedQuery();

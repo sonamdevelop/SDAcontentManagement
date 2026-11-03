@@ -149,3 +149,22 @@ SDA. No reference data migration, environment publication or staging/deployment.
 The next work item is separate customer authentication and ownership mapping,
 followed by the customer booking journey; public catalogue views never reuse staff
 credentials or introduce a staff booking fallback.
+
+## Incremental update: customer identity and owned booking reads
+
+Separate customer signup/login, profile/password changes, per-device logout and
+read-only owned booking list/detail are implemented in SDA web/API. Historical
+bookings are not claimed by email; empty new-account booking lists are expected
+until trusted reservation/migration ownership is delivered. Group 16 moves from
+pending to **partial**: email verification/recovery and other account lifecycle
+work remain. Checklist is now **11 local-ready, 4 partial and 6 pending/unverified**,
+not an effort/time completion percentage. Public reservation creation and native
+clients remain pending. See [customer scope and tests](CUSTOMERS.md).
+
+Customer account verification: 471 API tests (2,395 assertions), 201 frontend
+unit/integration tests, production build and format checks, and 56 desktop/mobile
+browser tests passed. All six real
+Laravel/MariaDB browser journeys and synthetic DB/upload recovery checks passed.
+The frontend additionally verifies customer-only session expiry and rejection of
+unexpected logout responses; historical booking ownership is covered by explicit
+synthetic API fixtures, not a production backfill.

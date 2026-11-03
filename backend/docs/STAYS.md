@@ -292,3 +292,5 @@ Customers use `/stays` and `/stays/{id}` in SDA. City/page filters persist in th
 URL. Prices are current flat per-room nightly prices, not dated quotes or proof
 of availability. The separate legacy website link is explicitly labelled. No
 reference repository, customer data, account or booking was migrated.
+
+Customer identity is now separate from staff identity. Read-only customer-owned bookings use a nullable explicit customer_id; no existing booking is linked automatically and customer reservation creation is still pending. See [customer accounts](CUSTOMERS.md).

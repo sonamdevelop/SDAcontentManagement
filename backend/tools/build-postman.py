@@ -114,6 +114,11 @@ if (pm.response.code === 200 && pm.response.json().data.length === 1) {
 def reference(spec):
     bodies = {
         ('post', '/auth/login'): LOGIN,
+        ('post', '/customer/auth/register'): {'name': '{{customer_name}}', 'email': '{{customer_email}}', 'password': '{{customer_password}}', 'password_confirmation': '{{customer_password}}'},
+        ('post', '/customer/auth/login'): {'email': '{{customer_email}}', 'password': '{{customer_password}}'},
+        ('patch', '/customer/me'): {'name': '{{customer_name}}', 'phone': '+91 9000000000'},
+        ('post', '/customer/password'): {'current_password': '{{customer_password}}', 'password': '{{customer_new_password}}', 'password_confirmation': '{{customer_new_password}}'},
+        ('post', '/customer/auth/logout'): {},
         ('post', '/admin/properties'): PROPERTY, ('put', '/admin/properties/{id}'): PROPERTY,
         ('post', '/properties/{id}/enquiries'): ENQUIRY,
         ('patch', '/admin/leads/{id}/assignment'): {'user_id': '{{user_id}}'},
@@ -147,22 +152,28 @@ def reference(spec):
             if method not in ('get', 'post', 'put', 'patch', 'delete'):
                 continue
             doc = '/documents' in path
-            ident = 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
+            ident = 'customer_booking_id' if path.startswith('/customer/bookings/') else 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
             url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}').replace('{entryId}', '{{payment_entry_id}}')
             if path.endswith('/availability'):url += '?check_in={{check_in}}&check_out={{check_out}}'
             if path.endswith('/calendar'):url += '?from={{check_in}}&to={{check_out}}'
             if path.endswith('/payment-follow-ups'):url += '?view=collection'
             if path.endswith('/operations'):url += '?date={{check_in}}&view=arrivals'
-            public = path.startswith('/auth/login') or path.startswith('/properties') or path.startswith('/stays')
+            public = path in ('/customer/auth/register', '/customer/auth/login') or path.startswith('/auth/login') or path.startswith('/properties') or path.startswith('/stays')
             expected = min(int(c) for c in operation.get('responses', {}) if c.isdigit() and 200 <= int(c) < 300)
             if method == 'post' and path in ('/admin/property-deals', '/admin/stay-bookings'):expected = 201
             if method == 'post' and path.startswith('/admin/stay-bookings/') and ('/payments' in path or path.endswith('/refunds')):expected = 201
             item = request(method.upper()+' '+path, method.upper(), url, expected, bodies.get((method, path)), public, form=([{'key': 'description', 'value': 'Public marketing description', 'type': 'text'}, {'key': 'rules', 'value': 'Quiet hours after 10 pm', 'type': 'text'}, {'key': 'amenities[0]', 'value': 'Parking', 'type': 'text'}, {'key': 'is_published', 'value': '0', 'type': 'text'}] if path.endswith('/content') and method == 'post' else DOCUMENT if doc and method == 'post' else None))
             if operation.get('requestBody', {}).get('required') and item['request'].get('body') is None:
                 raise ValueError('Missing required request example: '+method.upper()+' '+path)
+            if path.startswith('/customer/') and not public:
+                item['request']['auth'] = {'type': 'bearer', 'bearer': [{'key': 'token', 'value': '{{customer_access_token}}', 'type': 'string'}]}
+            if path in ('/customer/auth/register', '/customer/auth/login'):
+                item['event'].append(event('test', capture('customer_access_token', 'pm.response.json().data.access_token')))
+            if path in ('/customer/password', '/customer/auth/logout'):
+                item['event'].append(event('test', "if (pm.response.code === 204) pm.environment.unset('customer_access_token');"))
             item['request']['description'] = operation.get('summary', '')+'\n\n'+operation.get('description', '')+'\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives.'
             if method == 'post' and path == '/auth/login':item['event'].append(event('test', capture('access_token', 'pm.response.json().data.access_token')))
-            group = 'Stays and bookings' if path.startswith(('/admin/stays', '/admin/stay-', '/stays')) else 'Auth' if path.startswith('/auth') else 'Documents' if doc else 'Deals' if 'property-deals' in path else 'Visits' if 'site-visit' in path else 'Reports' if '/reports/' in path else 'Leads and follow-ups' if any(x in path for x in ['lead', 'follow-up']) else 'Properties and enquiries'
+            group = 'Customer accounts and bookings' if path.startswith('/customer/') else 'Stays and bookings' if path.startswith(('/admin/stays', '/admin/stay-', '/stays')) else 'Auth' if path.startswith('/auth') else 'Documents' if doc else 'Deals' if 'property-deals' in path else 'Visits' if 'site-visit' in path else 'Reports' if '/reports/' in path else 'Leads and follow-ups' if any(x in path for x in ['lead', 'follow-up']) else 'Properties and enquiries'
             folders.setdefault(group, []).append(item)
     return collection('SDA — API reference', 'Every documented API operation, grouped by module. Select individual requests and supply valid current IDs/body fields; use the separate Complete integration workflow for ordered execution. Mutation/deletion requests operate on the records you supply. Credentials and token are environment variables, blank in checked-in examples.', [{'name': k, 'item': v} for k, v in folders.items()], '6e65aa01-c2b7-49fa-b544-c245712b48a3')
 
@@ -170,9 +181,9 @@ def reference(spec):
 def environment(staging):
     base = 'https://api-staging.example.com/api/v1' if staging else 'http://127.0.0.1:8081/api/v1'
     origin = 'https://web-staging.example.com' if staging else 'http://localhost:5173'
-    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': ''}
+    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'customer_booking_id': ''}
     values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out', 'ledger_request_id', 'payment_entry_id'], ''))
-    return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
+    return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token', 'customer_password', 'customer_new_password', 'customer_access_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
 
 
 def sample_pdf():

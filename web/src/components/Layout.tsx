@@ -42,6 +42,7 @@ export function Layout() {
             <Link to="/properties?purpose=sale">Buy</Link>
             <Link to="/properties?purpose=rent">Rent</Link>
             <Link to="/stays">Stays</Link>
+            <Link to="/account">My account</Link>
             <Link to="/staff/login">Staff</Link>
             {staySite && (
               <a href={staySite} className="stay-link">

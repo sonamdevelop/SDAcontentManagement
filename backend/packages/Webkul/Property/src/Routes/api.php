@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Webkul\Property\Http\Controllers\AuthController;
+use Webkul\Property\Http\Controllers\CustomerAccountController;
+use Webkul\Property\Http\Controllers\CustomerStayBookingController;
 use Webkul\Property\Http\Controllers\EnquiryApiController;
 use Webkul\Property\Http\Controllers\FollowUpApiController;
 use Webkul\Property\Http\Controllers\LeadApiController;
@@ -16,6 +18,22 @@ use Webkul\Property\Http\Controllers\StayOperationsController;
 use Webkul\Property\Http\Controllers\StayPaymentController;
 use Webkul\Property\Http\Controllers\StayPaymentFollowUpController;
 use Webkul\Property\Http\Middleware\ApiAccess;
+use Webkul\Property\Http\Middleware\CustomerAccess;
+
+Route::prefix('customer')->name('customer.')->group(function () {
+    $account = CustomerAccountController::class;
+    $access = CustomerAccess::class;
+    Route::post('auth/register', [$account, 'register'])->middleware('throttle:customer-register')->name('register');
+    Route::post('auth/login', [$account, 'login'])->middleware('throttle:customer-login')->name('login');
+    Route::middleware($access)->group(function () use ($account) {
+        Route::get('me', [$account, 'me'])->name('me');
+        Route::patch('me', [$account, 'update'])->name('profile');
+        Route::post('auth/logout', [$account, 'logout'])->name('logout');
+        Route::post('password', [$account, 'password'])->middleware('throttle:customer-password')->name('password');
+    });
+    Route::get('bookings', [CustomerStayBookingController::class, 'index'])->middleware($access.':customer:bookings')->name('bookings.index');
+    Route::get('bookings/{id}', [CustomerStayBookingController::class, 'show'])->whereNumber('id')->middleware($access.':customer:bookings')->name('bookings.show');
+});
 
 Route::get('stays', [StayContentController::class, 'index'])->name('stays.index');
 Route::get('stays/{id}', [StayContentController::class, 'show'])->whereNumber('id')->name('stays.show');

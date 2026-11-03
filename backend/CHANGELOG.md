@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added separate customer signup/login/profile/password changes and read-only customer-owned booking views with independent tokens and no automatic legacy email linking.
+
 * [feature] Added stay/room marketing content, public photo galleries and publication controls with a scoped staff editor and anonymous stay catalogue/detail pages.
 
 * [feature] Added printable stay booking statements with complete correction history, exact current balances and scoped access while omitting internal contacts, references and notes.

@@ -1,3 +1,4 @@
+import { CustomerWorkspace } from './customer/CustomerWorkspace';
 import { StaysPage, StayDetailPage } from './pages/StaysPage';
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { StaffApp } from './staff/StaffApp';
@@ -10,6 +11,7 @@ export function App() {
       <Route path="staff/*" element={<StaffApp />} />
       <Route element={<Layout />}>
         <Route index element={<Navigate to="/properties" replace />} />
+        <Route path="account/*" element={<CustomerWorkspace />} />
         <Route path="stays" element={<StaysPage />} />
         <Route path="stays/:id" element={<StayDetailPage />} />
         <Route path="properties" element={<CatalogPage />} />

@@ -3,12 +3,17 @@
 API prefix: `/api/v1`. Send `Accept: application/json`. JSON bodies use
 `Content-Type: application/json`. The versioned API is stateless, including when
 an Origin/Referer header is present. Staff requests use Sanctum personal access
-tokens; web sessions are not accepted. No web/mobile frontend has been connected.
+tokens; web sessions are not accepted. Public/staff/customer web clients are connected; native mobile integration remains pending.
 
 For Postman imports, local/staging configuration and client wiring, see
 [INTEGRATION.md](INTEGRATION.md). Cross-origin browser access to `/api/v1` uses
 PROPERTY_API_ALLOWED_ORIGINS (exact comma-separated origins, empty by default);
 it does not enable cookie/session authentication.
+
+For stay catalogue/inventory, see [STAYS.md](STAYS.md); offline money rules are in
+[PAYMENTS.md](PAYMENTS.md). Customer signup/login/profile and read-only owned
+bookings use separate customer bearer tokens: see [CUSTOMERS.md](CUSTOMERS.md).
+The [OpenAPI contract](openapi.json) is the complete operation reference.
 
 ## Endpoints
 

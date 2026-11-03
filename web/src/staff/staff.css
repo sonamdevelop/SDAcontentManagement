@@ -408,3 +408,23 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.account-shell {
+  max-width: 900px;
+  padding: 2rem 1rem;
+  margin: auto;
+  overflow-wrap: anywhere;
+}
+.account-shell fieldset {
+  display: grid;
+  gap: 1rem;
+}
+.account-shell label {
+  display: grid;
+  gap: 0.35rem;
+}
+.account-shell input,
+.account-shell select {
+  max-width: 100%;
+  min-width: 0;
+}

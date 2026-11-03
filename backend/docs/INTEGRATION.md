@@ -34,7 +34,7 @@ mobile HTTP clients, but the demo's preflight assertion tests the configured ori
 Import these files from `docs/postman/`:
 
 - `SDA-workflow.postman_collection.json`: ordered, executable complete journey.
-- `SDA-reference.postman_collection.json`: all 67 documented operations; select
+- `SDA-reference.postman_collection.json`: all 75 documented operations; select
   individual requests after filling the relevant IDs. It is not an ordered runner.
 - `SDA-local.postman_environment.json` or `SDA-staging.postman_environment.json`.
 
@@ -198,8 +198,7 @@ This kit adds CORS/configuration only; it needs no new database migration.
 Do not assume the existing Firebase app's users have matching Laravel staff IDs,
 roles or ownership. Public catalogue/enquiry requests need no staff login. Before
 connecting private mobile operations, decide how those accounts map to the staff
-API or implement the required separate customer authentication workflow. No
-customer signup or Firebase-token exchange endpoint currently exists.
+API or implement the required separate customer authentication workflow. Customer signup now exists in a separate customer domain; no Firebase-token exchange endpoint exists.
 
 Public catalogue/detail/enquiry pages and the staff login, property editor,
 photos/publication, overview, enquiry/lead lists and lead detail/assignment/stage/notes/tasks are implemented in
@@ -220,3 +219,5 @@ permissions, validation and current feature limitations.
 See [the current feature/readiness audit](READINESS.md) for reference parity, native-app gaps and the remaining development sequence.
 
 Public stay discovery (`GET /stays`, `/stays/{id}`) and scoped staff content/publication are now implemented. Customer auth and public reservation remain separate pending work; see [stay content rules](STAYS.md#rich-stay-content-and-public-catalogue).
+
+Customer clients use the separate `/customer/*` account/owned-read APIs and customer bearer tokens; staff tokens are never substitutes. Postman customer requests use customer_access_token/customer credentials rather than staff variables. See [customer identity rules](CUSTOMERS.md). Public customer reservation creation and email recovery remain pending.

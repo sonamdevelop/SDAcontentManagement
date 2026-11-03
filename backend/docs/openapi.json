@@ -6910,6 +6910,474 @@
           }
         }
       }
+    },
+    "/customer/auth/register": {
+      "post": {
+        "operationId": "customerRegister",
+        "summary": "Create a separate customer account",
+        "description": "Email is trimmed/lowercased; unique account. Password hashed server-side. Returns a 30-day token with customer:account and customer:bookings abilities. No staff user/role creation, email verification or old booking association. 5 attempts/minute/IP. All responses/errors no-store.",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerToken"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerRegister"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/login": {
+      "post": {
+        "operationId": "customerLogin",
+        "summary": "Sign in a customer",
+        "description": "Customer email/password only, not staff credentials or Firebase token exchange. Generic 401 on invalid/inactive accounts. Rate limit 5/minute per IP+normalized email and 20/minute/IP, plus global API throttle. Token issuance/password changes serialize on customer row.",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerToken"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerLogin"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/me": {
+      "get": {
+        "operationId": "customerMe",
+        "summary": "Read own customer profile",
+        "description": "Customer bearer token and customer:account ability. No session-cookie or staff-token fallback. no-store.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "customerProfile",
+        "summary": "Update own customer name/phone",
+        "description": "Current authenticated customer only. Email immutable; ignores privilege/ownership fields. Does not rewrite historical booking snapshots.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerProfileWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/logout": {
+      "post": {
+        "operationId": "customerLogout",
+        "summary": "Revoke current customer token",
+        "description": "Customer:account ability. Other customer sessions and all staff tokens remain valid. No cookie-based auth.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/customer/password": {
+      "post": {
+        "operationId": "customerPassword",
+        "summary": "Change password and revoke all customer sessions",
+        "description": "Customer:account ability, current password required, 5 attempts/minute/IP. All customer tokens revoked atomically on success, including current one. Staff tokens unaffected. Password recovery/reset by email is not implemented.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerPasswordWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/bookings": {
+      "get": {
+        "operationId": "customerBookingsIndex",
+        "summary": "Read my explicitly owned bookings",
+        "description": "Requires customer:bookings ability. Explicit nullable customer_id FK only; ignores any client-supplied owner filters. Newest booking ID first; current ledger summaries in one read transaction. Inactive/unpublished sources remain readable by owner. Existing bookings default unlinked; no email-based claiming or reservation create endpoint.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CustomerStayBooking"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/customer/bookings/{id}": {
+      "get": {
+        "operationId": "customerBookingShow",
+        "summary": "Read my booking detail",
+        "description": "Requires customer:bookings ability and exact customer_id ownership. Missing/foreign/unlinked records all return 404. A booking/ledger lock gives a consistent financial snapshot; no staff history or payment references returned. Read-only.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerStayBooking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "404": {
+            "description": "Missing or not owned by the authenticated customer"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -6918,6 +7386,12 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "Sanctum personal access token"
+      },
+      "customerBearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum customer token",
+        "description": "Issued only by /customer/auth/register or /customer/auth/login. Not interchangeable with staff tokens or Firebase tokens."
       }
     },
     "schemas": {
@@ -10227,6 +10701,289 @@
             }
           }
         }
+      },
+      "CustomerProfile": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "phone"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          }
+        }
+      },
+      "CustomerLogin": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes and no null characters; new passwords also need 12+ characters, uppercase/lowercase letters and a number."
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 100
+          }
+        }
+      },
+      "CustomerRegister": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password",
+          "password_confirmation"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes and no null characters; new passwords also need 12+ characters, uppercase/lowercase letters and a number.",
+            "minLength": 12
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "password_confirmation": {
+            "type": "string",
+            "description": "Must match password."
+          }
+        }
+      },
+      "CustomerProfileWrite": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          }
+        },
+        "description": "Only name and phone editable. Omitted phone clears it. Email, status and staff privileges are never changed."
+      },
+      "CustomerPasswordWrite": {
+        "type": "object",
+        "required": [
+          "current_password",
+          "password",
+          "password_confirmation"
+        ],
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes and no null characters; new passwords also need 12+ characters, uppercase/lowercase letters and a number."
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes and no null characters; new passwords also need 12+ characters, uppercase/lowercase letters and a number.",
+            "minLength": 12
+          },
+          "password_confirmation": {
+            "type": "string"
+          }
+        },
+        "description": "New password must differ from current password. Success revokes all customer tokens and requires a new login."
+      },
+      "CustomerToken": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_at"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ]
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomerStayBooking": {
+        "type": "object",
+        "required": [
+          "id",
+          "stay_name",
+          "room_name",
+          "timezone",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "nightly_rate",
+          "total",
+          "advance",
+          "currency",
+          "status",
+          "attendance_status",
+          "checked_in_at",
+          "checked_out_at",
+          "guest_name",
+          "received_total",
+          "refunded_total",
+          "net_paid",
+          "amount_due",
+          "balance",
+          "refund_due"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "advance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "attendance_status": {
+            "type": "string",
+            "enum": [
+              "not_arrived",
+              "checked_in",
+              "checked_out"
+            ]
+          },
+          "checked_in_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checked_out_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "guest_name": {
+            "type": "string"
+          },
+          "received_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refunded_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "net_paid": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "amount_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "balance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refund_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          }
+        },
+        "description": "Explicit customer_id ownership only. No guest contacts, internal notes, bank references, staff IDs, request IDs, hashes or history events. Old email snapshots never grant ownership."
       }
     }
   }

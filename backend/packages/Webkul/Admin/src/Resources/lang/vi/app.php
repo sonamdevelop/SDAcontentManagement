@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'customer-api' => [
+        'password-format' => 'The :attribute must not contain null characters or exceed 72 UTF-8 bytes.',
+    ],
+
     'stay-api' => [
         'calendar-range' => 'Choose a valid calendar range of 1 to 62 nights.',
         'ledger' => 'Payment ledger',
