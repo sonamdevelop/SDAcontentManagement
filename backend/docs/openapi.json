@@ -7315,7 +7315,7 @@
       "post": {
         "operationId": "customerBookingsStore",
         "summary": "Create my confirmed reservation without online payment",
-        "description": "Requires both customer:bookings and customer:bookings:create. Older customer sessions must sign in again. Five creations per minute per IP. Uses shared staff inventory locks and price calculation; insufficient inventory returns 422. UUID binds normalized payload and authenticated owner: exact replay returns current owned booking with 200, fresh reservation 201, changed payload/other owner/staff UUID 409. Preserve UUID on uncertain network/server failure; check My bookings before starting again after reload. Creates zero advance, no payment receipt; created_by and staff actor_id are null with explicit customer_actor_id/customer_created history. Never trusts client ownership. New source must be active/published; replay remains possible after unpublication or cancellation.",
+        "description": "Requires both customer:bookings and customer:bookings:create. Older customer sessions must sign in again. Five creations per minute per IP. Uses shared staff inventory locks and price calculation; insufficient inventory returns 422. UUID binds normalized payload and authenticated owner: exact replay returns current owned booking with 200, fresh reservation 201, changed payload/other owner/staff UUID 409. Preserve UUID on uncertain network/server failure; check My bookings before starting again after reload. Creates zero advance, no payment receipt; created_by and staff actor_id are null with explicit customer_actor_id/customer_created history. Never trusts client ownership. New source must be active/published; replay remains possible after unpublication or cancellation. New reservations require email_verified_at; unverified accounts receive 422 email validation. Quotes, owned reads and exact prior UUID replay remain available.",
         "security": [
           {
             "customerBearerAuth": []
@@ -7551,6 +7551,167 @@
           },
           "429": {
             "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/customer/auth/forgot-password": {
+      "post": {
+        "operationId": "customerForgotPassword",
+        "summary": "Request customer password recovery",
+        "description": "Public; normalized email. Same 202 for missing, inactive and delivery failures. Limit 10/min/IP and 3/min/normalized email globally. Persisted per-account/purpose cooldown 60 seconds. Default mail transport captures locally; production SMTP configuration is separate.",
+        "security": [],
+        "responses": {
+          "202": {
+            "description": "Accepted; does not disclose account eligibility",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 255
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/reset-password": {
+      "post": {
+        "operationId": "customerResetPassword",
+        "summary": "Reset password using a single-use email token",
+        "description": "Public POST only. Email+purpose-bound SHA-256 token, 60-minute expiry; one successful consumer. Changes password, revokes all customer sessions and consumes all outstanding customer action links atomically. Does not sign in or mark email verified. Does not affect staff. Limit 10 completion attempts/min/IP shared with verification.",
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "Completed; no automatic sign-in",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerResetWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/verify-email": {
+      "post": {
+        "operationId": "customerVerifyEmail",
+        "summary": "Confirm customer email using a single-use token",
+        "description": "Public POST only, no GET mutation or automatic login. Same expiry, purpose binding and shared completion throttle as reset. Marks only matched active customer email verified; used links return 422. Email links carry token/email in a frontend fragment which must be removed before API calls.",
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "Completed; no automatic sign-in",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerActionWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/email/verification": {
+      "post": {
+        "operationId": "customerSendVerification",
+        "summary": "Request customer verification email",
+        "description": "Requires customer:account. Identity comes only from the token, ignores recipient overrides. Eligible active unverified accounts receive a link; already verified/cooldown returns same 202. Limit 5/min/IP plus persisted 60-second per-account cooldown. Configured trusted frontend origin only; ignores request Host and redirects.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted; does not disclose account eligibility",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          },
+          "401": {
+            "description": "Missing/invalid/wrong account token"
+          },
+          "403": {
+            "description": "Inactive customer or missing account ability"
+          },
+          "503": {
+            "description": "Delivery unavailable; retry later"
           }
         }
       }
@@ -10891,7 +11052,8 @@
           "id",
           "name",
           "email",
-          "phone"
+          "phone",
+          "email_verified_at"
         ],
         "properties": {
           "id": {
@@ -10910,6 +11072,11 @@
             "type": "string",
             "nullable": true,
             "maxLength": 30
+          },
+          "email_verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
@@ -11287,7 +11454,59 @@
             "pattern": "^\\d{1,13}\\.\\d{2}$"
           }
         },
-        "description": "Send the exact quoted nightly rate. Ownership, staff creator, totals, advance, currency, status, email and internal notes cannot be supplied."
+        "description": "Send the exact quoted nightly rate. Ownership, staff creator, totals, advance, currency, status, email and internal notes cannot be supplied. Verify customer email before new reservation."
+      },
+      "CustomerActionWrite": {
+        "type": "object",
+        "required": [
+          "email",
+          "token"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "CustomerResetWrite": {
+        "type": "object",
+        "required": [
+          "email",
+          "token",
+          "password",
+          "password_confirmation"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Uppercase, lowercase and a number; at most 72 UTF-8 bytes, no NUL."
+          },
+          "password_confirmation": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Uppercase, lowercase and a number; at most 72 UTF-8 bytes, no NUL."
+          }
+        }
       }
     }
   }

@@ -6,6 +6,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Webkul\Property\Repositories\CustomerActionRepository;
 use Webkul\Property\Repositories\CustomerRepository;
 
 class CustomerAccountService
@@ -65,6 +66,7 @@ class CustomerAccountService
             }
             $customer->update(['password' => Hash::make($data['password'])]);
             $customer->tokens()->delete();
+            app(CustomerActionRepository::class)->consume($id);
         });
     }
 }

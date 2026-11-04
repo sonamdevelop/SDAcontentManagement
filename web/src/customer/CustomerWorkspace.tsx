@@ -1,7 +1,16 @@
+import { AccountActions, VerificationPanel } from './AccountActions';
 import { CustomerFailure as Failure } from './CustomerUi';
 import { ReservationPage } from './ReservationPage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, NavLink, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  NavLink,
+  Route,
+  Routes,
+  useParams,
+  useSearchParams,
+  useLocation,
+} from 'react-router-dom';
 import { useResource } from '../api/useResource';
 import { formatPrice, label } from '../domain/property';
 import { Pagination, useMutation } from '../staff/StaffUi';
@@ -14,6 +23,18 @@ import {
   type CustomerBooking,
 } from './api';
 export function CustomerWorkspace() {
+  const { pathname } = useLocation();
+  const kind =
+    pathname === '/account/forgot'
+      ? 'forgot'
+      : pathname === '/account/reset'
+        ? 'reset'
+        : pathname === '/account/verify'
+          ? 'verify'
+          : null;
+  return kind ? <AccountActions key={kind} kind={kind} /> : <SignedInWorkspace />;
+}
+function SignedInWorkspace() {
   const [token, setToken] = useState(storedCustomerToken),
     [notice, setNotice] = useState('');
   const currentToken = useRef(token);
@@ -160,6 +181,7 @@ function CustomerLogin({ onToken }: { onToken: (token: string) => void }) {
           }, '');
         }}
       >
+        <Link to="/account/forgot">Forgot customer password?</Link>
         <h2>{register ? 'Create customer account' : 'Customer sign in'}</h2>
         <fieldset disabled={mutation.busy}>
           {register && (
@@ -221,6 +243,7 @@ function ProfilePage({
   return (
     <>
       <h2>My profile</h2>
+      <VerificationPanel api={api} customer={customer} onRefresh={onSaved} />
       <p>Account email: {customer.email}. Email cannot be changed here.</p>
       <form
         key={`${customer.name}:${customer.phone}`}

@@ -2861,7 +2861,7 @@
                 }
               ]
             },
-            "description": "Create my confirmed reservation without online payment\n\nRequires both customer:bookings and customer:bookings:create. Older customer sessions must sign in again. Five creations per minute per IP. Uses shared staff inventory locks and price calculation; insufficient inventory returns 422. UUID binds normalized payload and authenticated owner: exact replay returns current owned booking with 200, fresh reservation 201, changed payload/other owner/staff UUID 409. Preserve UUID on uncertain network/server failure; check My bookings before starting again after reload. Creates zero advance, no payment receipt; created_by and staff actor_id are null with explicit customer_actor_id/customer_created history. Never trusts client ownership. New source must be active/published; replay remains possible after unpublication or cancellation.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+            "description": "Create my confirmed reservation without online payment\n\nRequires both customer:bookings and customer:bookings:create. Older customer sessions must sign in again. Five creations per minute per IP. Uses shared staff inventory locks and price calculation; insufficient inventory returns 422. UUID binds normalized payload and authenticated owner: exact replay returns current owned booking with 200, fresh reservation 201, changed payload/other owner/staff UUID 409. Preserve UUID on uncertain network/server failure; check My bookings before starting again after reload. Creates zero advance, no payment receipt; created_by and staff actor_id are null with explicit customer_actor_id/customer_created history. Never trusts client ownership. New source must be active/published; replay remains possible after unpublication or cancellation. New reservations require email_verified_at; unverified accounts receive 422 email validation. Quotes, owned reads and exact prior UUID replay remain available.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {
@@ -2957,6 +2957,189 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /customer/auth/forgot-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/auth/forgot-password",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customer_email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Request customer password recovery\n\nPublic; normalized email. Same 202 for missing, inactive and delivery failures. Limit 10/min/IP and 3/min/normalized email globally. Persisted per-account/purpose cooldown 60 seconds. Default mail transport captures locally; production SMTP configuration is separate.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /customer/auth/reset-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/auth/reset-password",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customer_email}}\",\n  \"token\": \"{{customer_action_token}}\",\n  \"password\": \"{{customer_new_password}}\",\n  \"password_confirmation\": \"{{customer_new_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Reset password using a single-use email token\n\nPublic POST only. Email+purpose-bound SHA-256 token, 60-minute expiry; one successful consumer. Changes password, revokes all customer sessions and consumes all outstanding customer action links atomically. Does not sign in or mark email verified. Does not affect staff. Limit 10 completion attempts/min/IP shared with verification.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 204) pm.environment.unset('customer_access_token');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /customer/auth/verify-email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/auth/verify-email",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customer_email}}\",\n  \"token\": \"{{customer_action_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Confirm customer email using a single-use token\n\nPublic POST only, no GET mutation or automatic login. Same expiry, purpose binding and shared completion throttle as reset. Marks only matched active customer email verified; used links return 422. Email links carry token/email in a frontend fragment which must be removed before API calls.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /customer/email/verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/customer/email/verification",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Request customer verification email\n\nRequires customer:account. Identity comes only from the token, ignores recipient overrides. Eligible active unverified accounts receive a link; already verified/cooldown returns same 202. Limit 5/min/IP plus persisted 60-second per-account cooldown. Configured trusted frontend origin only; ignores request Host and redirects.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));"
                 ]
               }
             }

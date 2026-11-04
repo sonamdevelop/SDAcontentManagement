@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { capturedMailLink } from './mail';
 test('real customer reserve flow consumes shared inventory, owns its booking and preserves customer actor history', async ({
   page,
 }) => {
@@ -58,6 +59,19 @@ test('real customer reserve flow consumes shared inventory, owns its booking and
   await page.getByLabel('Customer password', { exact: true }).fill('CustomerPass123!');
   await page.getByLabel('Confirm customer password', { exact: true }).fill('CustomerPass123!');
   await page.getByRole('button', { name: 'Register customer', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'My customer account', exact: true }),
+  ).toBeVisible();
+  await page.goto('/account');
+  await page.getByRole('button', { name: 'Send verification email', exact: true }).click();
+  await page.goto(await capturedMailLink(email, 'verify'));
+  await page.getByRole('button', { name: 'Confirm email verification', exact: true }).click();
+  await expect(
+    page.getByText('Email verified. Return to your account to refresh its status.', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.goto(reserveUrl);
   const inDate = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
     outDate = new Date(Date.now() + 9 * 86400000).toISOString().slice(0, 10);
   async function quote() {

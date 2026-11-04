@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Webkul\Property\Http\Controllers\AuthController;
 use Webkul\Property\Http\Controllers\CustomerAccountController;
+use Webkul\Property\Http\Controllers\CustomerActionController;
 use Webkul\Property\Http\Controllers\CustomerStayBookingController;
 use Webkul\Property\Http\Controllers\EnquiryApiController;
 use Webkul\Property\Http\Controllers\FollowUpApiController;
@@ -21,6 +22,11 @@ use Webkul\Property\Http\Middleware\ApiAccess;
 use Webkul\Property\Http\Middleware\CustomerAccess;
 
 Route::prefix('customer')->name('customer.')->group(function () {
+    $actions = CustomerActionController::class;
+    Route::post('auth/forgot-password', [$actions, 'forgot'])->middleware('throttle:customer-recovery')->name('forgot-password');
+    Route::post('auth/reset-password', [$actions, 'reset'])->middleware('throttle:customer-action-complete')->name('reset-password');
+    Route::post('auth/verify-email', [$actions, 'verify'])->middleware('throttle:customer-action-complete')->name('verify-email');
+    Route::post('email/verification', [$actions, 'resend'])->middleware([CustomerAccess::class, 'throttle:customer-verification'])->name('verification-resend');
     $account = CustomerAccountController::class;
     $access = CustomerAccess::class;
     Route::post('auth/register', [$account, 'register'])->middleware('throttle:customer-register')->name('register');

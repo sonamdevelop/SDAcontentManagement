@@ -9,6 +9,8 @@ import { customer, customerBooking } from '../customer-fixtures';
 afterEach(() => sessionStorage.clear());
 it('validates customer profiles and exact booking balances independently of staff identities', () => {
   expect(isCustomer(customer)).toBe(true);
+  expect(isCustomer({ ...customer, email_verified_at: 'invalid' })).toBe(false);
+  expect(isCustomer({ ...customer, email_verified_at: null })).toBe(true);
   expect(isCustomer({ ...customer, phone: { value: '123' } })).toBe(false);
   expect(isCustomerBooking(customerBooking)).toBe(true);
   expect(isCustomerBooking({ ...customerBooking, balance: '3900.98' })).toBe(false);

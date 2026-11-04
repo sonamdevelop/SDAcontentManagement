@@ -15,6 +15,7 @@ function reservationFixture()
 {
     $staff = apiStaff([], all: true);
     $customer = Customer::create(['name' => 'Reservation customer', 'email' => Str::uuid().'@example.test', 'phone' => '+91 9000000000', 'password' => Hash::make('CustomerPass123!'), 'active' => true]);
+    $customer->forceFill(['email_verified_at' => now()])->save();
     $stay = Stay::create(['user_id' => $staff->id, 'name' => 'Reservable stay', 'city' => 'Dandeli', 'timezone' => 'Asia/Kolkata', 'active' => true, 'is_published' => true]);
     $room = $stay->rooms()->create(['name' => 'Reservable room', 'inventory' => 2, 'capacity' => 2, 'nightly_rate' => '1000.25', 'active' => true, 'is_published' => true]);
     $in = now($stay->timezone)->addDays(4)->format('Y-m-d');
@@ -96,4 +97,15 @@ it('does not reuse a staff-created request ID as a customer reservation', functi
     $staffResult = $this->postJson('/api/v1/admin/stay-bookings', $data + ['advance' => '0.00'], apiHeaders($staff, ['stays:read', 'bookings:write']))->assertCreated();
     $this->postJson('/api/v1/customer/bookings', $data, $h)->assertConflict();
     expect(StayBooking::findOrFail($staffResult->json('data.id'))->customer_id)->toBeNull();
+});
+
+it('requires verified email only for new reservation and keeps quotes and prior replay readable', function () {
+    $this->withoutMiddleware(ThrottleRequests::class);
+    [$staff,$customer,$stay,$room,$data,$h] = reservationFixture();
+    $customer->forceFill(['email_verified_at' => null])->save();
+    $this->postJson('/api/v1/customer/bookings', $data, $h)->assertUnprocessable()->assertJsonValidationErrors('email');
+    $customer->forceFill(['email_verified_at' => now()])->save();
+    $this->postJson('/api/v1/customer/bookings', $data, $h)->assertCreated();
+    $customer->forceFill(['email_verified_at' => null])->save();
+    $this->postJson('/api/v1/customer/bookings', $data, $h)->assertOk();
 });

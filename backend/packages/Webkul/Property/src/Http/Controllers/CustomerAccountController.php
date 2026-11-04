@@ -41,7 +41,7 @@ class CustomerAccountController
 
     private function profile($customer): array
     {
-        return ['id' => $customer->id, 'name' => $customer->name, 'email' => $customer->email, 'phone' => $customer->phone];
+        return ['id' => $customer->id, 'name' => $customer->name, 'email' => $customer->email, 'phone' => $customer->phone, 'email_verified_at' => $customer->email_verified_at?->toIso8601String()];
     }
 
     public function me(Request $request)

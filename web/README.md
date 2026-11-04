@@ -58,8 +58,8 @@ SDA now has its own public stay catalogue at `/stays`; the reference website
 remains separately labelled **Legacy stay website**. Its Laravel 11 backend was
 not copied wholesale into the Laravel 12 CRM. SDA's staff inventory, booking and
 finance workflows are implemented separately. Customer signup/login/profile and
-owned booking reads are available at `/account`; customer reservation creation,
-email verification/recovery, Firebase data/account migration and native mobile
+owned booking reads, email verification/recovery and reviewed reservations are
+available at `/account`. Firebase data/account migration and native mobile
 integration remain pending.
 
 ## Source provenance and import boundary
@@ -328,8 +328,10 @@ Use **Edit public stay content** on a staff stay card to edit stay/room descript
 
 ### Customer accounts and owned bookings
 
-**My account** (`/account`) supports separate customer signup/login, profile and password changes. **My bookings** (`/account/bookings`) shows only explicitly linked customer-owned booking snapshots and exact balances. New accounts normally start empty; no historical email-based linking or customer reservation creation occurs. Customer tokens are separate from staff tokens and public catalogue calls. Password recovery, email verification and native clients remain pending. Apply the additive customer migration and see [account rules/API](../backend/docs/CUSTOMERS.md).
+**My account** (`/account`) supports separate customer signup/login, profile and password changes. **My bookings** (`/account/bookings`) shows only explicitly linked customer-owned booking snapshots and exact balances. New accounts normally start empty; historical bookings are not automatically linked by email. Customer tokens are separate from staff tokens and public catalogue calls. Native clients and email-change verification remain pending. Apply the additive customer migration and see [account rules/API](../backend/docs/CUSTOMERS.md).
 
 Customer dated reservations are now available from public stay room cards: sign in,
 check availability, review and confirm, then read the owned booking. No online money
 is collected. See [reservation rules](../backend/docs/RESERVATIONS.md).
+
+Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](../backend/docs/CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.

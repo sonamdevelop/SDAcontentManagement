@@ -52,6 +52,9 @@ class CustomerReservationService
                 if ($existing) {
                     return [$this->replay($existing, $customerId, $hash), false];
                 }
+                if ($customer->email_verified_at === null) {
+                    throw ValidationException::withMessages(['email' => trans('admin::app.customer-actions.verification-required')]);
+                }
                 abort_unless($room->active && $room->is_published && $room->stay->active && $room->stay->is_published, 404);
                 $nights = $this->schedule->window($room, $data);
                 try {

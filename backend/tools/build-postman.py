@@ -137,6 +137,9 @@ def reference(spec):
         ('put', '/admin/stays/{id}'): {'name': 'Example stay', 'city': 'Dandeli', 'timezone': 'Asia/Kolkata', 'active': True},
         ('post', '/admin/stays/{stayId}/rooms'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
         ('put', '/admin/stays/{stayId}/rooms/{id}'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
+        ('post', '/customer/auth/forgot-password'): {'email': '{{customer_email}}'},
+        ('post', '/customer/auth/verify-email'): {'email': '{{customer_email}}', 'token': '{{customer_action_token}}'},
+        ('post', '/customer/auth/reset-password'): {'email': '{{customer_email}}', 'token': '{{customer_action_token}}', 'password': '{{customer_new_password}}', 'password_confirmation': '{{customer_new_password}}'},
         ('post', '/customer/bookings'): {'request_id': '{{customer_reservation_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example customer', 'expected_rate': '1000.25'},
         ('post', '/admin/stay-bookings'): {'request_id': '{{stay_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example guest', 'guest_email': 'guest@example.test', 'expected_rate': '1000.25', 'advance': '100.01'},
         ('post', '/admin/stay-bookings/{id}/payments'): {'request_id': '{{ledger_request_id}}', 'amount': '100.01', 'method': 'cash', 'reference': 'Offline receipt', 'reason': 'Already received offline'},
@@ -159,7 +162,7 @@ def reference(spec):
             if path.endswith('/calendar'):url += '?from={{check_in}}&to={{check_out}}'
             if path.endswith('/payment-follow-ups'):url += '?view=collection'
             if path.endswith('/operations'):url += '?date={{check_in}}&view=arrivals'
-            public = path in ('/customer/auth/register', '/customer/auth/login') or path.startswith('/auth/login') or path.startswith('/properties') or path.startswith('/stays')
+            public = path in ('/customer/auth/register', '/customer/auth/login', '/customer/auth/forgot-password', '/customer/auth/reset-password', '/customer/auth/verify-email') or path.startswith('/auth/login') or path.startswith('/properties') or path.startswith('/stays')
             expected = min(int(c) for c in operation.get('responses', {}) if c.isdigit() and 200 <= int(c) < 300)
             if method == 'post' and path in ('/admin/property-deals', '/admin/stay-bookings'):expected = 201
             if method == 'post' and path.startswith('/admin/stay-bookings/') and ('/payments' in path or path.endswith('/refunds')):expected = 201
@@ -173,7 +176,7 @@ def reference(spec):
                 item['request']['auth'] = {'type': 'bearer', 'bearer': [{'key': 'token', 'value': '{{customer_access_token}}', 'type': 'string'}]}
             if path in ('/customer/auth/register', '/customer/auth/login'):
                 item['event'].append(event('test', capture('customer_access_token', 'pm.response.json().data.access_token')))
-            if path in ('/customer/password', '/customer/auth/logout'):
+            if path in ('/customer/password', '/customer/auth/logout', '/customer/auth/reset-password'):
                 item['event'].append(event('test', "if (pm.response.code === 204) pm.environment.unset('customer_access_token');"))
             item['request']['description'] = operation.get('summary', '')+'\n\n'+operation.get('description', '')+'\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives.'
             if method == 'post' and path == '/auth/login':item['event'].append(event('test', capture('access_token', 'pm.response.json().data.access_token')))
@@ -185,9 +188,9 @@ def reference(spec):
 def environment(staging):
     base = 'https://api-staging.example.com/api/v1' if staging else 'http://127.0.0.1:8081/api/v1'
     origin = 'https://web-staging.example.com' if staging else 'http://localhost:5173'
-    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
+    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'customer_action_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
     values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out', 'ledger_request_id', 'payment_entry_id'], ''))
-    return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token', 'customer_password', 'customer_new_password', 'customer_access_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
+    return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token', 'customer_password', 'customer_new_password', 'customer_access_token', 'customer_action_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
 
 
 def sample_pdf():

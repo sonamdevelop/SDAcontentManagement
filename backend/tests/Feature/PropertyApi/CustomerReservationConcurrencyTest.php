@@ -13,6 +13,7 @@ it('serializes customer/customer and customer/staff competition with identical r
     $stay = Stay::create(['user_id' => $actor->id, 'name' => 'Concurrent customer stay '.Str::uuid(), 'city' => 'Race city '.Str::uuid(), 'timezone' => 'Asia/Kolkata', 'active' => true, 'is_published' => true]);
     $room = $stay->rooms()->create(['name' => 'Last room', 'inventory' => 1, 'capacity' => 2, 'nightly_rate' => '1000.25', 'active' => true, 'is_published' => true]);
     $customer = Customer::create(['name' => 'Concurrent customer', 'email' => Str::uuid().'@example.test', 'password' => Hash::make('CustomerPass123!'), 'active' => true]);
+    $customer->forceFill(['email_verified_at' => now()])->save();
     $key = (string) Str::uuid();
     $fixture = json_encode(['database' => $database, 'actor' => $actor->id, 'customer' => $customer->id, 'mode' => $mode, 'keys' => [$key, $mode === 'same' ? $key : (string) Str::uuid()], 'payload' => ['room_type_id' => $room->id, 'check_in' => now('Asia/Kolkata')->addDays(5)->format('Y-m-d'), 'check_out' => now('Asia/Kolkata')->addDays(7)->format('Y-m-d'), 'rooms' => 1, 'guests' => 2, 'guest_name' => 'Concurrent guest', 'expected_rate' => '1000.25']]);
     $marker = tempnam(sys_get_temp_dir(), 'stay-race-');

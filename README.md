@@ -44,8 +44,10 @@ Staff can inspect nightly room allocation and remaining capacity through **Avail
 
 **Public stay catalogue** now lives at `/stays`, with stay/room descriptions, amenities, rules, galleries and exact nightly rates. Staff manage content/publication separately from inventory. Customer login, dated availability and zero-advance reservations are available.
 
-**Customer accounts** now have separate signup/login/profile/password-change screens and read-only owned booking list/detail at `/account`. Existing bookings are not auto-linked by email; password recovery/verification remain pending. See [customer identity and ownership rules](backend/docs/CUSTOMERS.md).
+**Customer accounts** now have separate signup/login/profile/password-change screens and read-only owned booking list/detail at `/account`. Existing bookings are not auto-linked by email; email-change verification and native migration remain pending. See [customer identity and ownership rules](backend/docs/CUSTOMERS.md).
 
 Customer dated reservations are now available from public stay room cards: sign in,
 check availability, review and confirm, then read the owned booking. No online money
 is collected. See [reservation rules](backend/docs/RESERVATIONS.md).
+
+Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](backend/docs/CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.

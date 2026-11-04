@@ -73,6 +73,12 @@ function ReservationForm({
         Confirmation reserves the selected rooms immediately. No payment is collected; the full
         balance remains due. Refreshing availability does not hold rooms.
       </p>
+      {!customer.email_verified_at && (
+        <p>
+          Verify your email in <Link to="/account">My profile</Link> before creating a reservation.
+          You can still check dates.
+        </p>
+      )}
       {!review && (
         <form
           className="staff-panel"
@@ -117,7 +123,7 @@ function ReservationForm({
           </p>
         </section>
       )}
-      {quote && !review && quote.available_rooms > 0 && (
+      {quote && !review && quote.available_rooms > 0 && customer.email_verified_at && (
         <form
           className="staff-panel"
           onSubmit={(e) => {

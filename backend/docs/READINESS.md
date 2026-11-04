@@ -187,3 +187,21 @@ validation, OpenAPI references and regenerated Postman artifacts passed. Synthet
 acceptance database and four uploaded files were backed up/restored with row-count
 and SHA-256 checks. Local development received only the pending additive actor
 migration; no staging or deployment occurred. Both reference repositories stayed clean.
+
+## Customer account lifecycle update — 4 November 2026
+
+Email verification, explicit single-use confirmation and password recovery are
+implemented locally with private mail capture. Password reset revokes customer
+sessions and pending links; new reservations require verified email. Native client
+integration, email-change verification, deletion and live SMTP deliverability remain
+unverified. Group 16 remains partial: **12 local-ready, 3 partial, 6 pending/unverified**
+groups; these are checklist counts, not completion/time percentages. No staging
+or deployment occurred. See [recovery rules](CUSTOMER_RECOVERY.md).
+
+Validation for this lifecycle update: 498 API tests (2567 assertions), 214 frontend
+unit/integration tests, 64 desktop/mobile browser checks and eight real API browser
+journeys passed. Production build/typecheck, changed-file PHP/web formatting,
+skills validation and all 81 OpenAPI/Postman operations passed. The isolated
+synthetic database (including account-action rows) and four upload files were
+backed up/restored with row-count and SHA-256 verification. Only the pending
+additive migration was applied locally; both reference repositories stayed clean.

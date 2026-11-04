@@ -2629,4 +2629,15 @@ return [
         'xls' => 'XLS',
         'xlsx' => 'XLSX',
     ],
+    'customer-actions' => [
+        'verify-title' => 'Verify your customer email',
+        'verify-intro' => 'Confirm this email address for your SDA customer account.',
+        'reset-title' => 'Reset your customer password',
+        'reset-intro' => 'You requested a password reset. If this was not you, ignore this email.',
+        'mail-expiry' => 'This link expires in 60 minutes and works once. Open it, then confirm the action.',
+        'invalid-link' => 'This link is invalid, expired or already used. Request a new link.',
+        'request-accepted' => 'If the account is eligible, an email link will be sent. Check your inbox.',
+        'delivery-unavailable' => 'Email delivery is unavailable. Please try again later.',
+        'verification-required' => 'Verify your customer email from My profile before creating a new reservation.',
+    ],
 ];

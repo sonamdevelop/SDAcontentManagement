@@ -99,3 +99,8 @@ The seventh real API journey creates/publishes a room, registers an independent
 customer, quotes/reviews/confirms a zero-advance reservation, reloads owned detail,
 checks inventory exhaustion and verifies customer actor history in the staff view.
 All mutations use a unique synthetic acceptance database; native apps are unverified.
+
+Customer reservation acceptance now first verifies its email using a local captured
+message. An eighth real journey confirms verification, resets a forgotten password,
+checks old-token rejection, signs in with the new password and rejects reused links.
+The mail capture and database are unique per run; no live email delivery is used.

@@ -5,6 +5,7 @@ export const customer: Customer = {
   name: 'Asha Customer',
   email: 'asha@example.test',
   phone: null,
+  email_verified_at: '2026-11-01T00:00:00Z',
 };
 export const customerBooking: CustomerBooking = {
   ...finance,

@@ -2,7 +2,13 @@ import { isCustomerAvailability, type ReservationDraft } from './reservation';
 import { publicApi } from '../api/client';
 import { isBooking, quotedTotal, type Booking } from '../staff/stays';
 import { isFinancialSummary, type FinancialSummary } from '../staff/payments';
-export type Customer = { id: number; name: string; email: string; phone: string | null };
+export type Customer = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  email_verified_at?: string | null;
+};
 export type CustomerBooking = Pick<
   Booking,
   | 'id'
@@ -52,7 +58,10 @@ export function isCustomer(v: unknown): v is Customer {
     typeof r.name === 'string' &&
     typeof r.email === 'string' &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email) &&
-    (r.phone === null || typeof r.phone === 'string')
+    (r.phone === null || typeof r.phone === 'string') &&
+    (r.email_verified_at === undefined ||
+      r.email_verified_at === null ||
+      (typeof r.email_verified_at === 'string' && Number.isFinite(Date.parse(r.email_verified_at))))
   );
 }
 export function isCustomerBooking(v: unknown): v is CustomerBooking {
@@ -108,6 +117,38 @@ export class CustomerApi {
       throw new CustomerError(response.status, fields);
     }
     return body;
+  }
+  async requestVerification() {
+    await this.request('/email/verification', { method: 'POST' }, true, 202);
+  }
+  async forgotPassword(email: string) {
+    await this.request(
+      '/auth/forgot-password',
+      { method: 'POST', body: JSON.stringify({ email }) },
+      false,
+      202,
+    );
+  }
+  async verifyEmail(data: { email: string; token: string }) {
+    await this.request(
+      '/auth/verify-email',
+      { method: 'POST', body: JSON.stringify(data) },
+      false,
+      204,
+    );
+  }
+  async resetPassword(data: {
+    email: string;
+    token: string;
+    password: string;
+    password_confirmation: string;
+  }) {
+    await this.request(
+      '/auth/reset-password',
+      { method: 'POST', body: JSON.stringify(data) },
+      false,
+      204,
+    );
   }
   async authenticate(action: 'login' | 'register', values: Record<string, string>) {
     const body = await this.request(

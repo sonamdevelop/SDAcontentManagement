@@ -97,7 +97,7 @@ Android/iOS readiness.
 
 ## Deliberate remaining work
 
-Email verification, email-change verification, forgotten-password recovery/delivery,
+Email-change verification and live SMTP delivery checks,
 customer account deletion, verified legacy
 booking linking and Firebase/native-client migration remain pending. No outbound
 email/SMS/push delivery or live data migration was enabled. Do not describe this
@@ -113,3 +113,5 @@ The sixth real-service browser journey registers a new synthetic customer,
 updates its profile, reads an empty owned list, changes password, proves the old
 token was revoked and then signs out while the existing staff session survives.
 Synthetic backup/restore checks now include stay_customers.
+
+Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.

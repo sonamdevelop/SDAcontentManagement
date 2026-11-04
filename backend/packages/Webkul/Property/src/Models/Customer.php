@@ -15,5 +15,5 @@ class Customer extends Authenticatable implements \Webkul\Property\Contracts\Cus
 
     protected $hidden = ['password'];
 
-    protected $casts = ['active' => 'boolean'];
+    protected $casts = ['active' => 'boolean', 'email_verified_at' => 'datetime'];
 }
