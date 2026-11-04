@@ -237,3 +237,5 @@ Agent performance now has a dedicated web report with calendar timezone/date/age
 Stay reporting uses the existing staff bearer client at `/admin/stays/{id}/report` and requires stay + booking list/detail + ledger access. Monetary totals are strings separated by currency; cash corrections may be negative. Dates use the stay timezone with an exclusive end (1–62 nights). See [STAY_REPORTS.md](STAY_REPORTS.md).
 
 Stay report CSV downloads use `/admin/stays/{id}/report/export?from=…&to=…`, with the same permissions and civil date range as JSON. Check attachment/MIME headers and distinguish summary/night/booked_value/cash_movement rows. See [CSV contract](STAY_REPORTS.md#csv-download).
+
+Customer device-session APIs use the existing `customer:account` ability. List curated active metadata, confirm password before DELETE, and accept only 204 as revocation confirmation. Use an owned listed session ID for individual requests. See [contract and concurrency limits](CUSTOMER_SESSIONS.md).

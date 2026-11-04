@@ -63,3 +63,5 @@ Agent performance now has a dedicated web report with calendar timezone/date/age
 Staff stay analytics at `/staff/stay-reports` compares scoped confirmed room-nights with current inventory and separates snapshot booked value from stay-local offline cash movements. See [report semantics](backend/docs/STAY_REPORTS.md).
 
 Stay report CSV exports are available on the staff report screen, using the same scope/date rules and a fresh snapshot; no private guest or ledger details are exported.
+
+Customer device sessions at `/account/sessions` provide password-confirmed sign-out of individual/all other devices while preserving separate staff access. See [session rules](backend/docs/CUSTOMER_SESSIONS.md).

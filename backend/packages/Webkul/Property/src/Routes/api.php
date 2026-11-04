@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Webkul\Property\Http\Controllers\AuthController;
 use Webkul\Property\Http\Controllers\CustomerAccountController;
 use Webkul\Property\Http\Controllers\CustomerActionController;
+use Webkul\Property\Http\Controllers\CustomerSessionController;
 use Webkul\Property\Http\Controllers\CustomerStayBookingController;
 use Webkul\Property\Http\Controllers\EnquiryApiController;
 use Webkul\Property\Http\Controllers\FollowUpApiController;
@@ -37,6 +38,9 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::post('auth/login', [$account, 'login'])->middleware('throttle:customer-login')->name('login');
     Route::middleware($access)->group(function () use ($account) {
         Route::get('me', [$account, 'me'])->name('me');
+        Route::get('sessions', [CustomerSessionController::class, 'index'])->name('sessions.index');
+        Route::delete('sessions/others', [CustomerSessionController::class, 'destroy'])->middleware('throttle:customer-session-revoke')->name('sessions.others');
+        Route::delete('sessions/{id}', [CustomerSessionController::class, 'destroy'])->whereNumber('id')->name('sessions.destroy')->middleware('throttle:customer-session-revoke');
         Route::patch('me', [$account, 'update'])->name('profile');
         Route::post('auth/logout', [$account, 'logout'])->name('logout');
         Route::post('password', [$account, 'password'])->middleware('throttle:customer-password')->name('password');

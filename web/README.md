@@ -347,3 +347,5 @@ Agent performance now has a dedicated web report with calendar timezone/date/age
 Staff stay occupancy/cash reporting: `/staff/stay-reports`, with stay-local exclusive date ranges (1–62 nights), daily room meters and exact currency-separated values/corrections. See [semantics](../backend/docs/STAY_REPORTS.md).
 
 The stay report screen exports the selected stay/date filters as a fresh CSV snapshot with currency-separated rows and no private customer/ledger fields.
+
+Customer account navigation includes `/account/sessions`: active sign-ins, timestamps, password-confirmed other-device revocation, refresh and pagination. No token values or IP/location data are displayed.

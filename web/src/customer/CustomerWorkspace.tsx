@@ -1,3 +1,4 @@
+import { CustomerSessionsPage } from './SessionsPage';
 import { MyFavourites } from './Favourites';
 import { CustomerCancellationPanel } from './CancellationPanel';
 import { AccountActions, VerificationPanel } from './AccountActions';
@@ -111,6 +112,7 @@ function SignedInWorkspace() {
         <NavLink to="/account/bookings">My bookings</NavLink>
         <NavLink to="/account/favourites">My saved properties</NavLink>
         <NavLink to="/account/password">Change password</NavLink>
+        <NavLink to="/account/sessions">Device sessions</NavLink>
         <button
           disabled={mutation.busy}
           onClick={() =>
@@ -157,6 +159,7 @@ function SignedInWorkspace() {
             />
           }
         />
+        <Route path="sessions" element={<CustomerSessionsPage key={token} api={api} />} />
         <Route path="bookings" element={<MyBookings api={api} />} />
         <Route path="bookings/:id" element={<MyBooking api={api} />} />
         <Route path="*" element={<Link to="/account">Go to my account</Link>} />

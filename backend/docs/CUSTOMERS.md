@@ -119,3 +119,5 @@ Customer email verification and password recovery are implemented. New reservati
 Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](CANCELLATIONS.md).
 
 Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](FAVOURITES.md).
+
+Customer active-device session listing and password-confirmed individual/all-other revocation are available. Current customer and staff sessions remain separate. See [session management](CUSTOMER_SESSIONS.md).

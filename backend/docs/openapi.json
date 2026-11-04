@@ -9028,6 +9028,218 @@
           }
         ]
       }
+    },
+    "/customer/sessions": {
+      "get": {
+        "operationId": "customerSessionsIndex",
+        "summary": "List own active customer device sessions",
+        "description": "Requires customer:account and active customer bearer identity. Curated metadata only: no plaintext/hash token, abilities, staff/other-account sessions, IP or location. Excludes effective expirations including global Sanctum window. Current session first, then descending session ID; paginated 20 by default, maximum 100. Customer lock and caller token/ability/expiry are rechecked before reading. No-store.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta",
+                    "links"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CustomerSession"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/customer/sessions/{id}": {
+      "delete": {
+        "operationId": "customerSessionRevoke",
+        "summary": "Sign out one other customer session",
+        "description": "Requires active customer:account bearer token and current password (maximum 72 UTF-8 bytes). Five revoke attempts/minute/IP shared by both actions. Customer lock serializes with login/password changes; caller token ownership/ability/expiry is rechecked under lock before password verification and mutation. Current browser stays signed in; attempting to revoke it explicitly returns 422 errors.session (use existing logout). A target outside the caller account or already revoked returns the same idempotent 204 and touches nothing. All-other action removes every other own token including expired/not displayed ones. Staff/other-account tokens, password, pending action links, bookings and favourites are unchanged. Does not undo already-authorized in-flight work; a fresh login after revocation can create a session. No-store.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "204": {
+            "description": "Confirmed; current session preserved. No response body.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid or overflowing session ID"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_password"
+                ],
+                "properties": {
+                  "current_password": {
+                    "type": "string",
+                    "format": "password",
+                    "maxLength": 72
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "format": "int64"
+            }
+          }
+        ]
+      }
+    },
+    "/customer/sessions/others": {
+      "delete": {
+        "operationId": "customerSessionsRevokeOthers",
+        "summary": "Sign out all other customer sessions",
+        "description": "Requires active customer:account bearer token and current password (maximum 72 UTF-8 bytes). Five revoke attempts/minute/IP shared by both actions. Customer lock serializes with login/password changes; caller token ownership/ability/expiry is rechecked under lock before password verification and mutation. Current browser stays signed in; attempting to revoke it explicitly returns 422 errors.session (use existing logout). A target outside the caller account or already revoked returns the same idempotent 204 and touches nothing. All-other action removes every other own token including expired/not displayed ones. Staff/other-account tokens, password, pending action links, bookings and favourites are unchanged. Does not undo already-authorized in-flight work; a fresh login after revocation can create a session. No-store.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "204": {
+            "description": "Confirmed; current session preserved. No response body.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_password"
+                ],
+                "properties": {
+                  "current_password": {
+                    "type": "string",
+                    "format": "password",
+                    "maxLength": 72
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -13458,6 +13670,46 @@
                 }
               }
             }
+          }
+        }
+      },
+      "CustomerSession": {
+        "type": "object",
+        "required": [
+          "id",
+          "device_name",
+          "created_at",
+          "last_used_at",
+          "expires_at",
+          "is_current"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "User-supplied sign-in label, not verified device identity."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_used_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Earliest per-token/global Sanctum expiry; null only when neither is set."
+          },
+          "is_current": {
+            "type": "boolean"
           }
         }
       }

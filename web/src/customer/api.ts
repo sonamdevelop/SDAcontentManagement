@@ -1,3 +1,4 @@
+import { isCustomerSessionPage } from './sessions';
 import { isSavedProperty, isFavouriteStatus, type SavedProperty } from '../domain/favourites';
 import {
   isCancellation,
@@ -131,6 +132,22 @@ export class CustomerApi {
       throw new CustomerError(response.status, fields);
     }
     return body;
+  }
+  async sessions(page: number, signal?: AbortSignal) {
+    if (!Number.isSafeInteger(page) || page < 1) throw new CustomerError(422);
+    const body = await this.request(`/sessions?page=${page}`, { signal });
+    if (!isCustomerSessionPage(body, page)) throw new CustomerError(502);
+    return body;
+  }
+  async revokeSession(target: number | 'others', currentPassword: string) {
+    if (target !== 'others' && (!Number.isSafeInteger(target) || target < 1))
+      throw new CustomerError(422);
+    await this.request(
+      `/sessions/${target}`,
+      { method: 'DELETE', body: JSON.stringify({ current_password: currentPassword }) },
+      true,
+      204,
+    );
   }
   async requestVerification() {
     await this.request('/email/verification', { method: 'POST' }, true, 202);

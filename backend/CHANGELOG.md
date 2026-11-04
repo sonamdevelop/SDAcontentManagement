@@ -4,6 +4,10 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [fixed] Added required date filters to the generated stay-report Postman examples.
+
+* [feature] Added customer device session visibility and password-confirmed sign-out of individual or all other devices, preserving the current session and separate staff access.
+
 * [feature] Added safe scoped CSV downloads for stay occupancy, booked value and offline cash movement reports.
 
 * [feature] Added scoped stay occupancy, snapshot booked value and exact currency-separated offline cash movement reports with stay-local date filters.

@@ -324,3 +324,25 @@ skills validation, 96 OpenAPI operations/internal references and generated Postm
 checks passed. Synthetic backup/restore matched row counts and verified four
 uploads by SHA-256. Both reference repositories remained clean. No migration,
 staging, deployment or environment publication ran.
+
+## Customer device-session security update — 4 November 2026
+
+Customer account navigation now includes active device-session listing, effective
+expiry and password-confirmed individual/all-other sign-out with current/staff
+session preservation. Metadata is curated and token-free. Group 16 stays partial
+for remaining lifecycle work (email change/deletion and live delivery checks).
+Checklist stays **14 local-ready, 3 partial, 4 pending/unverified** groups; these
+are not effort/completion percentages. No migration, reference changes, outbound
+communications, staging or deployment ran. See [session rules](CUSTOMER_SESSIONS.md).
+
+Validation: 565 API tests (3145 assertions), 255 frontend unit/integration tests,
+84 desktop/mobile browser checks and thirteen real API browser journeys passed.
+Coverage includes effective expiry, token-free metadata, own/customer/staff type
+boundaries, password-confirmed individual/all-other revocation, current-session
+preservation, stale caller revalidation, invalid/overflow IDs, throttling, retry,
+Unicode device labels and customer-only session expiry. Real probes confirmed
+revoked tokens receive 401 while surviving customer/staff tokens receive 200.
+Build/typecheck, PHP/web formatting, skills validation, 99 OpenAPI operations/
+internal references and generated Postman artifacts passed. Synthetic backup/
+restore matched row counts and verified four uploaded files by SHA-256. No schema
+migration, reference changes, staging, deployment or environment publication ran.

@@ -54,6 +54,7 @@ class PropertyServiceProvider extends ServiceProvider
         });
         RateLimiter::for('customer-verification', fn ($request) => Limit::perMinute(5)->by('customer-verification:'.$request->ip()));
         RateLimiter::for('customer-action-complete', fn ($request) => Limit::perMinute(10)->by('customer-action-complete:'.$request->ip()));
+        RateLimiter::for('customer-session-revoke', fn ($request) => Limit::perMinute(5)->by('customer-session-revoke:'.$request->ip()));
         RateLimiter::for('customer-password', fn ($request) => Limit::perMinute(5)->by('customer-password:'.$request->ip()));
         RateLimiter::for('property-api-login', fn ($request) => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('property-api', fn ($request) => Limit::perMinute(120)->by($request->ip()));

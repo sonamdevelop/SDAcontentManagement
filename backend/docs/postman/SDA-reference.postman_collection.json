@@ -2743,7 +2743,7 @@
                 "value": "{{frontend_origin}}"
               }
             ],
-            "url": "{{base_url}}/admin/stays/{{stay_id}}/report",
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/report?from={{check_in}}&to={{check_out}}",
             "description": "Scoped stay booked occupancy, booked value and offline cash movement\n\nRequires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Both stay and booking visibility apply independently. Required from/to civil dates span 1–62 nights with an exclusive end in stay timezone. Current all-room-type inventory is a comparison baseline, not historical capacity. Confirmed bookings only for room nights and snapshot nightly_rate × rooms × clipped nights value; values stay separated by currency. This is not attendance or recognized revenue. Cash uses ledger created_at in the stay-local window, including cancelled bookings and opening advances. Reversals subtract on their own recording day, not the original day; receipts/refunds may be negative. No private guest/contact/notes/reference fields. No pagination, migration, collection, currency conversion or deployment. Cache-Control: no-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
@@ -2772,7 +2772,7 @@
                 "value": "{{frontend_origin}}"
               }
             ],
-            "url": "{{base_url}}/admin/stays/{{stay_id}}/report/export",
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/report/export?from={{check_in}}&to={{check_out}}",
             "description": "Export a scoped stay occupancy and cash report as CSV\n\nRequires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Both stay and booking visibility apply independently. Required from/to civil dates span 1–62 nights with an exclusive end in stay timezone. Current all-room-type inventory is a comparison baseline, not historical capacity. Confirmed bookings only for room nights and snapshot nightly_rate × rooms × clipped nights value; values stay separated by currency. This is not attendance or recognized revenue. Cash uses ledger created_at in the stay-local window, including cancelled bookings and opening advances. Reversals subtract on their own recording day, not the original day; receipts/refunds may be negative. No private guest/contact/notes/reference fields. No pagination, migration, collection, currency conversion or deployment. Cache-Control: no-store. Fresh transactional snapshot at download time, independent of earlier screen as_of. CSV contains fixed columns with summary/night/booked_value/cash_movement row_type; metadata repeated per row and unused columns empty. UTF-8 BOM and RFC4180 CRLF quoting; formula-leading stay names neutralized with an apostrophe. Signed numeric money remains exact decimal text. Maximum 5000 data rows; over-limit returns JSON 422 before attachment headers with errors.export, never truncates. No private booking/customer/ledger fields. Filename sda-stay-report-{id}-{from}-{to}.csv.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
@@ -3678,6 +3678,149 @@
               ]
             },
             "description": "Remove a property from my saved list\n\nRequires customer:favourites. Removes only authenticated membership, including hidden sources. Repeated removal and unknown IDs return 204; never edits the property or reveals another customer membership. Save/remove share 30 attempts/min/IP. Client should retry the same explicit action after uncertain outcomes rather than invert a toggle.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /customer/sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/customer/sessions",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "List own active customer device sessions\n\nRequires customer:account and active customer bearer identity. Curated metadata only: no plaintext/hash token, abilities, staff/other-account sessions, IP or location. Excludes effective expirations including global Sanctum window. Current session first, then descending session ID; paginated 20 by default, maximum 100. Customer lock and caller token/ability/expiry are rechecked before reading. No-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /customer/sessions/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/sessions/{{customer_session_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{customer_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Sign out one other customer session\n\nRequires active customer:account bearer token and current password (maximum 72 UTF-8 bytes). Five revoke attempts/minute/IP shared by both actions. Customer lock serializes with login/password changes; caller token ownership/ability/expiry is rechecked under lock before password verification and mutation. Current browser stays signed in; attempting to revoke it explicitly returns 422 errors.session (use existing logout). A target outside the caller account or already revoked returns the same idempotent 204 and touches nothing. All-other action removes every other own token including expired/not displayed ones. Staff/other-account tokens, password, pending action links, bookings and favourites are unchanged. Does not undo already-authorized in-flight work; a fresh login after revocation can create a session. No-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /customer/sessions/others",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/sessions/others",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{customer_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Sign out all other customer sessions\n\nRequires active customer:account bearer token and current password (maximum 72 UTF-8 bytes). Five revoke attempts/minute/IP shared by both actions. Customer lock serializes with login/password changes; caller token ownership/ability/expiry is rechecked under lock before password verification and mutation. Current browser stays signed in; attempting to revoke it explicitly returns 422 errors.session (use existing logout). A target outside the caller account or already revoked returns the same idempotent 204 and touches nothing. All-other action removes every other own token including expired/not displayed ones. Staff/other-account tokens, password, pending action links, bookings and favourites are unchanged. Does not undo already-authorized in-flight work; a fresh login after revocation can create a session. No-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {

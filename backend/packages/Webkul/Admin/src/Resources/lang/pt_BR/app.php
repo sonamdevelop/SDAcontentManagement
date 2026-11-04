@@ -5,6 +5,8 @@ return [
         'password-format' => 'The :attribute must not contain null characters or exceed 72 UTF-8 bytes.',
     ],
 
+    'customer-session' => ['current' => 'Use the account sign-out action to end this browser session.'],
+
     'stay-api' => [
         'report-export-limit' => 'This report exceeds the 5000-row export limit. Choose a smaller date range.',
         'report-range' => 'Choose a report range of 1–62 nights; the end date is exclusive.',

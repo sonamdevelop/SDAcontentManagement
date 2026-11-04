@@ -122,6 +122,8 @@ def reference(spec):
         ('patch', '/customer/me'): {'name': '{{customer_name}}', 'phone': '+91 9000000000'},
         ('post', '/customer/password'): {'current_password': '{{customer_password}}', 'password': '{{customer_new_password}}', 'password_confirmation': '{{customer_new_password}}'},
         ('post', '/customer/auth/logout'): {},
+        ('delete', '/customer/sessions/{id}'): {'current_password': '{{customer_password}}'},
+        ('delete', '/customer/sessions/others'): {'current_password': '{{customer_password}}'},
         ('post', '/admin/properties'): PROPERTY, ('put', '/admin/properties/{id}'): PROPERTY,
         ('post', '/properties/{id}/enquiries'): ENQUIRY,
         ('patch', '/admin/leads/{id}/assignment'): {'user_id': '{{user_id}}'},
@@ -163,10 +165,10 @@ def reference(spec):
             if method not in ('get', 'post', 'put', 'patch', 'delete'):
                 continue
             doc = '/documents' in path
-            ident = 'property_id' if path.startswith('/customer/favourites/') else 'cancellation_request_id' if path.startswith('/admin/stay-cancellation-requests/') else 'customer_booking_id' if path.startswith('/customer/bookings/') else 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
+            ident = 'customer_session_id' if path.startswith('/customer/sessions/') else 'property_id' if path.startswith('/customer/favourites/') else 'cancellation_request_id' if path.startswith('/admin/stay-cancellation-requests/') else 'customer_booking_id' if path.startswith('/customer/bookings/') else 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
             url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}').replace('{entryId}', '{{payment_entry_id}}')
             if path.endswith('/availability'):url += '?check_in={{check_in}}&check_out={{check_out}}'
-            if path.endswith('/calendar'):url += '?from={{check_in}}&to={{check_out}}'
+            if path.endswith('/calendar') or path.endswith('/report') or path.endswith('/report/export'):url += '?from={{check_in}}&to={{check_out}}'
             if path.endswith('/payment-follow-ups'):url += '?view=collection'
             if path.endswith('/operations'):url += '?date={{check_in}}&view=arrivals'
             public = path in ('/customer/auth/register', '/customer/auth/login', '/customer/auth/forgot-password', '/customer/auth/reset-password', '/customer/auth/verify-email') or path.startswith('/auth/login') or path.startswith('/properties') or path.startswith('/stays')
@@ -198,7 +200,7 @@ def reference(spec):
 def environment(staging):
     base = 'https://api-staging.example.com/api/v1' if staging else 'http://127.0.0.1:8081/api/v1'
     origin = 'https://web-staging.example.com' if staging else 'http://localhost:5173'
-    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'moderation_revision': '', 'customer_cancellation_request_id': '', 'cancellation_request_id': '', 'customer_action_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
+    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'moderation_revision': '', 'customer_cancellation_request_id': '', 'cancellation_request_id': '', 'customer_action_token': '', 'customer_booking_id': '', 'customer_session_id': '', 'customer_reservation_request_id': ''}
     values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out', 'ledger_request_id', 'payment_entry_id'], ''))
     return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token', 'customer_password', 'customer_new_password', 'customer_access_token', 'customer_action_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
 

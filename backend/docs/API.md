@@ -748,3 +748,5 @@ Agent performance now has a dedicated web report with calendar timezone/date/age
 Stay occupancy, booked value and offline cash movement: `GET /api/v1/admin/stays/{id}/report?from=2030-01-02&to=2030-01-04`. See [permissions/date/value rules](STAY_REPORTS.md).
 
 Stay report CSV: `GET /api/v1/admin/stays/{id}/report/export` with the same required `from`/exclusive `to` dates and finance permissions as JSON. See [CSV schema/limits](STAY_REPORTS.md#csv-download).
+
+Customer session security: `GET /customer/sessions`, `DELETE /customer/sessions/{id}` and `DELETE /customer/sessions/others`; DELETE requires `current_password` and preserves the current token. See [rules](CUSTOMER_SESSIONS.md).
