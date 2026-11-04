@@ -2639,6 +2639,12 @@ return [
         'xlsx' => 'XLSX',
     ],
     'customer-actions' => [
+        'change-email-title' => 'Confirm your new customer email',
+        'change-email-intro' => 'You requested a new email for your SDA customer account. Confirm only if you requested this change. All customer sessions will be signed out.',
+        'email-unavailable' => 'Choose a different available email address.',
+        'email-cooldown' => 'Wait at least one minute before requesting another email change.',
+        'email-requested' => 'A confirmation link was sent to the new email. Your current email is unchanged until confirmation.',
+
         'verify-title' => 'Verify your customer email',
         'verify-intro' => 'Confirm this email address for your SDA customer account.',
         'reset-title' => 'Reset your customer password',

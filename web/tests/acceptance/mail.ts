@@ -1,5 +1,8 @@
 import { readFileSync } from 'node:fs';
-export async function capturedMailLink(email: string, purpose: 'verify' | 'reset') {
+export async function capturedMailLink(
+  email: string,
+  purpose: 'verify' | 'reset' | 'change-email',
+) {
   const file = process.env.SDA_ACCEPTANCE_MAIL_LOG || '';
   if (!/\/\.runtime\/acceptance\/[0-9a-f]+-mail\.log$/.test(file))
     throw new Error('Isolated acceptance mail capture is required.');

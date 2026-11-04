@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added password-confirmed customer email changes with expiring new-address confirmation, cancellation and all-session revocation while preserving account ownership.
+
 * [fixed] Added required date filters to the generated stay-report Postman examples.
 
 * [feature] Added customer device session visibility and password-confirmed sign-out of individual or all other devices, preserving the current session and separate staff access.

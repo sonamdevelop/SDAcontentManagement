@@ -130,3 +130,5 @@ The real stay-report journey creates a stay/room and an advance-bearing booking,
 The stay-report real journey also downloads the actual CSV, verifies the stay/date-specific filename and exact booked amount, and checks private customer/hash data are absent. Mocked desktop/mobile journeys verify browser download behavior; integration tests cover MIME/filename rejection and retry.
 
 The real customer-session journey creates three independent customer tokens, revokes one through the browser, checks its API access is 401 while another still works, then signs out all others. It verifies current customer/staff API access remains 200 and reload retains the current-device marker.
+
+The real email-change journey requests a new address, reads its private link from isolated mail capture, verifies the old login remains active before explicit confirmation, then checks both old device tokens are revoked, staff access survives, the new verified login retains the same customer ID, and replay cannot change/revoke the fresh session.

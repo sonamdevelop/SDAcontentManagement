@@ -39,7 +39,7 @@ export function VerificationPanel({
     </section>
   );
 }
-export function AccountActions({ kind }: { kind: 'forgot' | 'reset' | 'verify' }) {
+export function AccountActions({ kind }: { kind: 'forgot' | 'reset' | 'verify' | 'change-email' }) {
   const location = useLocation(),
     navigate = useNavigate(),
     mutation = useMutation(),
@@ -48,28 +48,37 @@ export function AccountActions({ kind }: { kind: 'forgot' | 'reset' | 'verify' }
     api = new CustomerApi();
   const email = link.get('email') || '',
     token = link.get('token') || '',
-    valid = /^[a-f0-9]{64}$/.test(token) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    customerId = link.get('customer_id') || '',
+    valid =
+      /^[a-f0-9]{64}$/.test(token) &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+      (kind !== 'change-email' ||
+        (/^[1-9]\d*$/.test(customerId) && Number.isSafeInteger(Number(customerId))));
   // Consume fragments into memory before any API call; never place secrets in URLs or storage again.
   useEffect(() => {
     if (location.hash) navigate(location.pathname + location.search, { replace: true });
   }, []);
   const title =
-    kind === 'forgot'
-      ? 'Recover customer password'
-      : kind === 'reset'
-        ? 'Reset customer password'
-        : 'Verify customer email';
+    kind === 'change-email'
+      ? 'Confirm customer email change'
+      : kind === 'forgot'
+        ? 'Recover customer password'
+        : kind === 'reset'
+          ? 'Reset customer password'
+          : 'Verify customer email';
   return (
     <div className="account-shell">
       <h1>{title}</h1>
       <Link to="/account">Back to customer account</Link>
       {done ? (
         <p role="status">
-          {kind === 'forgot'
-            ? 'If the account is eligible, a reset link will be sent. Check your inbox.'
-            : kind === 'verify'
-              ? 'Email verified. Return to your account to refresh its status.'
-              : 'Password reset. Sign in again with your new password.'}
+          {kind === 'change-email'
+            ? 'Email changed and verified. Sign in again with your new email. All previous customer sessions have ended.'
+            : kind === 'forgot'
+              ? 'If the account is eligible, a reset link will be sent. Check your inbox.'
+              : kind === 'verify'
+                ? 'Email verified. Return to your account to refresh its status.'
+                : 'Password reset. Sign in again with your new password.'}
         </p>
       ) : kind !== 'forgot' && !valid ? (
         <p>
@@ -83,7 +92,10 @@ export function AccountActions({ kind }: { kind: 'forgot' | 'reset' | 'verify' }
             const form = new FormData(e.currentTarget);
             void mutation.run(async () => {
               if (kind === 'forgot') await api.forgotPassword(String(form.get('email') || ''));
-              else if (kind === 'verify') await api.verifyEmail({ email, token });
+              else if (kind === 'change-email') {
+                await api.completeEmailChange({ customer_id: Number(customerId), email, token });
+                saveCustomerToken('');
+              } else if (kind === 'verify') await api.verifyEmail({ email, token });
               else {
                 await api.resetPassword({
                   email,
@@ -105,6 +117,13 @@ export function AccountActions({ kind }: { kind: 'forgot' | 'reset' | 'verify' }
               </label>
             ) : (
               <p>Account email: {email}</p>
+            )}
+            {kind === 'change-email' && (
+              <p>
+                Confirm only if you requested this new email. All customer sessions and earlier
+                account-action links will be invalidated. Your bookings and saved properties remain
+                linked to the same account.
+              </p>
             )}
             {kind === 'reset' && (
               <>
@@ -139,11 +158,13 @@ export function AccountActions({ kind }: { kind: 'forgot' | 'reset' | 'verify' }
             <button>
               {mutation.busy
                 ? 'Please wait…'
-                : kind === 'forgot'
-                  ? 'Send password reset email'
-                  : kind === 'verify'
-                    ? 'Confirm email verification'
-                    : 'Save recovered password'}
+                : kind === 'change-email'
+                  ? 'Confirm customer email change'
+                  : kind === 'forgot'
+                    ? 'Send password reset email'
+                    : kind === 'verify'
+                      ? 'Confirm email verification'
+                      : 'Save recovered password'}
             </button>
           </fieldset>
         </form>
@@ -151,7 +172,9 @@ export function AccountActions({ kind }: { kind: 'forgot' | 'reset' | 'verify' }
       {mutation.error ? (
         <>
           <CustomerFailure error={mutation.error} />
-          {kind === 'verify' ? (
+          {kind === 'change-email' ? (
+            <Link to="/account/email">Request a new email change</Link>
+          ) : kind === 'verify' ? (
             <Link to="/account">Request a new verification email</Link>
           ) : (
             <Link to="/account/forgot">Request a new reset link</Link>

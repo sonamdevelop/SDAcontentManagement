@@ -9240,6 +9240,251 @@
           }
         }
       }
+    },
+    "/customer/email-change": {
+      "get": {
+        "operationId": "customerEmailChangePending",
+        "summary": "Read own pending new email",
+        "description": "Requires active customer:account bearer identity. Returns only pending new_email and expires_at, or null for absent/consumed/expired requests. No token/hash or other account details. No-store.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "required": [
+                        "new_email",
+                        "expires_at"
+                      ],
+                      "properties": {
+                        "new_email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "expires_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "post": {
+        "operationId": "customerEmailChangeRequest",
+        "summary": "Request password-confirmed email change",
+        "description": "Active customer:account bearer and current password required. Five request/cancel attempts per minute/IP. Rechecks caller token under the customer lock. Email normalized before validation. One pending change per account; request requires different available address, 60-second persisted cooldown and sends a 60-minute private-fragment link only to the new address. No current email/session/ownership change until explicit confirmation. Replacement invalidates old link; delivery failure rolls back the rotation and returns 503. Cancellation is idempotent, consumes only pending email-change links and preserves current email/sessions. No-store.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "202": {
+            "description": "Confirmation message sent; current email unchanged.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Delivery unavailable; previous pending link preserved."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_password",
+                  "new_email"
+                ],
+                "properties": {
+                  "current_password": {
+                    "type": "string",
+                    "format": "password",
+                    "maxLength": 72,
+                    "description": "Current password, maximum 72 UTF-8 bytes."
+                  },
+                  "new_email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 255
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "customerEmailChangeCancel",
+        "summary": "Cancel pending email change",
+        "description": "Active customer:account bearer and current password required. Five request/cancel attempts per minute/IP. Rechecks caller token under the customer lock. Email normalized before validation. One pending change per account; request requires different available address, 60-second persisted cooldown and sends a 60-minute private-fragment link only to the new address. No current email/session/ownership change until explicit confirmation. Replacement invalidates old link; delivery failure rolls back the rotation and returns 503. Cancellation is idempotent, consumes only pending email-change links and preserves current email/sessions. No-store.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "204": {
+            "description": "Pending change cancelled; no response body.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_password"
+                ],
+                "properties": {
+                  "current_password": {
+                    "type": "string",
+                    "format": "password",
+                    "maxLength": 72,
+                    "description": "Current password, maximum 72 UTF-8 bytes."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/change-email": {
+      "post": {
+        "operationId": "customerEmailChangeComplete",
+        "summary": "Explicitly confirm a new customer email",
+        "description": "Public single-use email-link confirmation. No bearer or cookie required. Validate customer_id/email/token from private URL fragment; never auto-confirm on page load. Locks the original customer, checks active/expiry/consumption/target/hash binding to original email and current target uniqueness. Invalid, expired, cancelled, replaced, changed-source or already-used links all return 422 errors.token, including absent/inactive accounts. On success updates email and verification timestamp atomically, revokes all of that customer’s tokens and consumes all pending verify/reset/email-change links. Password, customer ID, staff identities, booking ownership, booking email snapshots and favourites are unchanged. Never claims records by matching email. No-store. Concurrent uniqueness failures roll back as invalid link.",
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "Completed; no automatic sign-in",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "customer_id",
+                  "email",
+                  "token"
+                ],
+                "properties": {
+                  "customer_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 255
+                  },
+                  "token": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

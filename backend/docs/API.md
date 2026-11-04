@@ -750,3 +750,5 @@ Stay occupancy, booked value and offline cash movement: `GET /api/v1/admin/stays
 Stay report CSV: `GET /api/v1/admin/stays/{id}/report/export` with the same required `from`/exclusive `to` dates and finance permissions as JSON. See [CSV schema/limits](STAY_REPORTS.md#csv-download).
 
 Customer session security: `GET /customer/sessions`, `DELETE /customer/sessions/{id}` and `DELETE /customer/sessions/others`; DELETE requires `current_password` and preserves the current token. See [rules](CUSTOMER_SESSIONS.md).
+
+Customer email change uses GET/POST/DELETE `/customer/email-change` and public POST `/customer/auth/change-email`. See [password, link, ownership and session rules](CUSTOMER_EMAIL_CHANGE.md).

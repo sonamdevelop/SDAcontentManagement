@@ -97,8 +97,7 @@ Android/iOS readiness.
 
 ## Deliberate remaining work
 
-Email-change verification and live SMTP delivery checks,
-customer account deletion, verified legacy
+Live SMTP delivery checks, customer account deletion and verified legacy
 booking linking and Firebase/native-client migration remain pending. No outbound
 email/SMS/push delivery or live data migration was enabled. Do not describe this
 step as a complete customer booking product or a production launch.
@@ -121,3 +120,5 @@ Customer cancellation requests and staff approve/reject review are available, wi
 Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](FAVOURITES.md).
 
 Customer active-device session listing and password-confirmed individual/all-other revocation are available. Current customer and staff sessions remain separate. See [session management](CUSTOMER_SESSIONS.md).
+
+Password-confirmed email change and explicit new-address confirmation are implemented. See [email-change rules](CUSTOMER_EMAIL_CHANGE.md).

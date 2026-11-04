@@ -40,7 +40,7 @@ and consumes all outstanding account links. Authenticated password changes also
 consume outstanding links. Reset does not automatically verify email or sign in;
 verification does not grant a login token. Staff credentials/sessions are separate.
 No password, token or redirect is returned by these APIs. Email cannot be changed
-through the profile form; email-change verification remains separate work.
+through the profile form; use the separate [verified email-change flow](CUSTOMER_EMAIL_CHANGE.md).
 
 Apply the additive `2026_11_04_000002_add_customer_account_actions` migration; never
 reset/reseed. `PROPERTY_CUSTOMER_WEB_URL` must be the trusted frontend origin

@@ -149,6 +149,45 @@ export class CustomerApi {
       204,
     );
   }
+  async pendingEmailChange(
+    signal?: AbortSignal,
+  ): Promise<{ new_email: string; expires_at: string } | null> {
+    const body = await this.request('/email-change', { signal });
+    if (body?.data === null) return null;
+    if (
+      !body?.data ||
+      typeof body.data.new_email !== 'string' ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.data.new_email) ||
+      typeof body.data.expires_at !== 'string' ||
+      !Number.isFinite(Date.parse(body.data.expires_at))
+    )
+      throw new CustomerError(502);
+    return body.data;
+  }
+  async requestEmailChange(new_email: string, current_password: string) {
+    await this.request(
+      '/email-change',
+      { method: 'POST', body: JSON.stringify({ new_email, current_password }) },
+      true,
+      202,
+    );
+  }
+  async cancelEmailChange(current_password: string) {
+    await this.request(
+      '/email-change',
+      { method: 'DELETE', body: JSON.stringify({ current_password }) },
+      true,
+      204,
+    );
+  }
+  async completeEmailChange(data: { customer_id: number; email: string; token: string }) {
+    await this.request(
+      '/auth/change-email',
+      { method: 'POST', body: JSON.stringify(data) },
+      false,
+      204,
+    );
+  }
   async requestVerification() {
     await this.request('/email/verification', { method: 'POST' }, true, 202);
   }

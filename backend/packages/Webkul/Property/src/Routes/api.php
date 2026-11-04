@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Webkul\Property\Http\Controllers\AuthController;
 use Webkul\Property\Http\Controllers\CustomerAccountController;
 use Webkul\Property\Http\Controllers\CustomerActionController;
+use Webkul\Property\Http\Controllers\CustomerEmailChangeController;
 use Webkul\Property\Http\Controllers\CustomerSessionController;
 use Webkul\Property\Http\Controllers\CustomerStayBookingController;
 use Webkul\Property\Http\Controllers\EnquiryApiController;
@@ -32,12 +33,16 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::post('auth/reset-password', [$actions, 'reset'])->middleware('throttle:customer-action-complete')->name('reset-password');
     Route::post('auth/verify-email', [$actions, 'verify'])->middleware('throttle:customer-action-complete')->name('verify-email');
     Route::post('email/verification', [$actions, 'resend'])->middleware([CustomerAccess::class, 'throttle:customer-verification'])->name('verification-resend');
+    Route::post('auth/change-email', [CustomerEmailChangeController::class, 'complete'])->middleware('throttle:customer-action-complete')->name('email-change.complete');
     $account = CustomerAccountController::class;
     $access = CustomerAccess::class;
     Route::post('auth/register', [$account, 'register'])->middleware('throttle:customer-register')->name('register');
     Route::post('auth/login', [$account, 'login'])->middleware('throttle:customer-login')->name('login');
     Route::middleware($access)->group(function () use ($account) {
         Route::get('me', [$account, 'me'])->name('me');
+        Route::get('email-change', [CustomerEmailChangeController::class, 'index'])->name('email-change.index');
+        Route::post('email-change', [CustomerEmailChangeController::class, 'store'])->middleware('throttle:customer-email-change')->name('email-change.store');
+        Route::delete('email-change', [CustomerEmailChangeController::class, 'destroy'])->middleware('throttle:customer-email-change')->name('email-change.destroy');
         Route::get('sessions', [CustomerSessionController::class, 'index'])->name('sessions.index');
         Route::delete('sessions/others', [CustomerSessionController::class, 'destroy'])->middleware('throttle:customer-session-revoke')->name('sessions.others');
         Route::delete('sessions/{id}', [CustomerSessionController::class, 'destroy'])->whereNumber('id')->name('sessions.destroy')->middleware('throttle:customer-session-revoke');

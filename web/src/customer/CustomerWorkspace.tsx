@@ -1,3 +1,4 @@
+import { EmailChangePage } from './EmailChangePage';
 import { CustomerSessionsPage } from './SessionsPage';
 import { MyFavourites } from './Favourites';
 import { CustomerCancellationPanel } from './CancellationPanel';
@@ -28,13 +29,15 @@ import {
 export function CustomerWorkspace() {
   const { pathname } = useLocation();
   const kind =
-    pathname === '/account/forgot'
-      ? 'forgot'
-      : pathname === '/account/reset'
-        ? 'reset'
-        : pathname === '/account/verify'
-          ? 'verify'
-          : null;
+    pathname === '/account/change-email'
+      ? 'change-email'
+      : pathname === '/account/forgot'
+        ? 'forgot'
+        : pathname === '/account/reset'
+          ? 'reset'
+          : pathname === '/account/verify'
+            ? 'verify'
+            : null;
   return kind ? <AccountActions key={kind} kind={kind} /> : <SignedInWorkspace />;
 }
 function SignedInWorkspace() {
@@ -112,6 +115,7 @@ function SignedInWorkspace() {
         <NavLink to="/account/bookings">My bookings</NavLink>
         <NavLink to="/account/favourites">My saved properties</NavLink>
         <NavLink to="/account/password">Change password</NavLink>
+        <NavLink to="/account/email">Change email</NavLink>
         <NavLink to="/account/sessions">Device sessions</NavLink>
         <button
           disabled={mutation.busy}
@@ -158,6 +162,10 @@ function SignedInWorkspace() {
               onReauth={() => clear('Sign in again to use saved properties.')}
             />
           }
+        />
+        <Route
+          path="email"
+          element={<EmailChangePage key={token} api={api} customer={result.data} />}
         />
         <Route path="sessions" element={<CustomerSessionsPage key={token} api={api} />} />
         <Route path="bookings" element={<MyBookings api={api} />} />

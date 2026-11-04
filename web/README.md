@@ -349,3 +349,5 @@ Staff stay occupancy/cash reporting: `/staff/stay-reports`, with stay-local excl
 The stay report screen exports the selected stay/date filters as a fresh CSV snapshot with currency-separated rows and no private customer/ledger fields.
 
 Customer account navigation includes `/account/sessions`: active sign-ins, timestamps, password-confirmed other-device revocation, refresh and pagination. No token values or IP/location data are displayed.
+
+Customer email change: `/account/email` requests/cancels a pending address; `/account/change-email` confirms a private mail fragment with an explicit action and no bearer. Confirmation requires sign-in again with the new email.

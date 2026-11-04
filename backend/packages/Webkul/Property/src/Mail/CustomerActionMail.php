@@ -10,7 +10,9 @@ class CustomerActionMail extends Mailable
 
     public function build()
     {
-        $key = $this->purpose === 'verify' ? 'verify' : 'reset';
+        $key = match ($this->purpose) {
+            'verify' => 'verify', 'reset' => 'reset', 'change-email' => 'change-email', default => throw new \InvalidArgumentException('Unknown customer action.')
+        };
         $title = trans('admin::app.customer-actions.'.$key.'-title');
         $intro = trans('admin::app.customer-actions.'.$key.'-intro');
 

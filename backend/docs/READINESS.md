@@ -346,3 +346,27 @@ Build/typecheck, PHP/web formatting, skills validation, 99 OpenAPI operations/
 internal references and generated Postman artifacts passed. Synthetic backup/
 restore matched row counts and verified four uploaded files by SHA-256. No schema
 migration, reference changes, staging, deployment or environment publication ran.
+
+## Customer verified email-change update — 4 November 2026
+
+Group 16 now includes password-confirmed email-change request/status/cancellation
+and explicit new-address proof with one-time expiry, original-email binding and
+all-customer-session/action-link invalidation. Existing ID ownership and staff
+sessions are preserved. Account deletion, live mail checks and remaining lifecycle
+parity are separate, so group 16 stays partial. Checklist stays **14 local-ready,
+3 partial, 4 pending/unverified** groups, not a completion/effort percentage.
+No migration, reference changes, live outbound delivery, staging or deployment ran.
+See [email-change scope](CUSTOMER_EMAIL_CHANGE.md).
+
+Validation: 573 API tests (3238 assertions), 259 frontend unit/integration tests,
+86 desktop/mobile browser checks and fourteen real API browser journeys passed.
+Coverage includes source-email hash binding, expiry/replacement/cancellation,
+password and type/ability checks, rate limits, delivery rollback, target conflicts,
+single use, token/action revocation, unchanged ID ownership and exclusion of
+matching-email unowned bookings. Real local-mail confirmation verified old device
+revocation, surviving staff access and same-ID verified login at the new address.
+Build/typecheck, PHP/web formatting, skills validation, 103 OpenAPI operations/
+internal references and generated Postman artifacts passed. Synthetic database
+backup/restore matched row counts and verified four upload SHA-256 checks. Both
+reference repositories stayed clean. No schema migration, real outbound mail,
+staging, deployment or environment publication ran.

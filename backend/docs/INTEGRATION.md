@@ -239,3 +239,5 @@ Stay reporting uses the existing staff bearer client at `/admin/stays/{id}/repor
 Stay report CSV downloads use `/admin/stays/{id}/report/export?from=…&to=…`, with the same permissions and civil date range as JSON. Check attachment/MIME headers and distinguish summary/night/booked_value/cash_movement rows. See [CSV contract](STAY_REPORTS.md#csv-download).
 
 Customer device-session APIs use the existing `customer:account` ability. List curated active metadata, confirm password before DELETE, and accept only 204 as revocation confirmation. Use an owned listed session ID for individual requests. See [contract and concurrency limits](CUSTOMER_SESSIONS.md).
+
+Customer email-change requests use existing `customer:account`; confirmation is public and consumes a 60-minute private fragment. Set Postman `customer_id` from own profile, target `customer_new_email` and the locally captured `customer_action_token`. Do not copy links/tokens into public URLs. See [contract](CUSTOMER_EMAIL_CHANGE.md).

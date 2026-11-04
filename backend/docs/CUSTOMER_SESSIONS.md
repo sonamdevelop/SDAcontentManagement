@@ -68,6 +68,8 @@ session expiry. Real-service acceptance creates three customer sign-ins, revokes
 one and then all others, probes removed/surviving tokens against the actual API,
 and confirms staff access still works. Tests use synthetic isolated data only.
 
-Email-change verification/deletion, MFA, live mail delivery, native device builds
+Account deletion, MFA, live mail delivery, native device builds
 and legacy account linking remain separate work. No staging/deployment or outbound
 communications are part of this feature; reference repositories remain read-only.
+
+Email change is available through a separate password-confirmed request and new-address proof. Successful confirmation revokes all customer sessions. See [rules](CUSTOMER_EMAIL_CHANGE.md).

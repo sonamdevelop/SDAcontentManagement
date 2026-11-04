@@ -2936,6 +2936,15 @@
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
                 ]
               }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) pm.environment.set(\"customer_id\", String(pm.response.json().data.id));"
+                ]
+              }
             }
           ]
         },
@@ -3829,6 +3838,203 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /customer/email-change",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/customer/email-change",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Read own pending new email\n\nRequires active customer:account bearer identity. Returns only pending new_email and expires_at, or null for absent/consumed/expired requests. No token/hash or other account details. No-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /customer/email-change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/email-change",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_email\": \"{{customer_new_email}}\",\n  \"current_password\": \"{{customer_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Request password-confirmed email change\n\nActive customer:account bearer and current password required. Five request/cancel attempts per minute/IP. Rechecks caller token under the customer lock. Email normalized before validation. One pending change per account; request requires different available address, 60-second persisted cooldown and sends a 60-minute private-fragment link only to the new address. No current email/session/ownership change until explicit confirmation. Replacement invalidates old link; delivery failure rolls back the rotation and returns 503. Cancellation is idempotent, consumes only pending email-change links and preserves current email/sessions. No-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /customer/email-change",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/email-change",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{customer_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Cancel pending email change\n\nActive customer:account bearer and current password required. Five request/cancel attempts per minute/IP. Rechecks caller token under the customer lock. Email normalized before validation. One pending change per account; request requires different available address, 60-second persisted cooldown and sends a 60-minute private-fragment link only to the new address. No current email/session/ownership change until explicit confirmation. Replacement invalidates old link; delivery failure rolls back the rotation and returns 503. Cancellation is idempotent, consumes only pending email-change links and preserves current email/sessions. No-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /customer/auth/change-email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/auth/change-email",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"{{customer_id}}\",\n  \"email\": \"{{customer_new_email}}\",\n  \"token\": \"{{customer_action_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Explicitly confirm a new customer email\n\nPublic single-use email-link confirmation. No bearer or cookie required. Validate customer_id/email/token from private URL fragment; never auto-confirm on page load. Locks the original customer, checks active/expiry/consumption/target/hash binding to original email and current target uniqueness. Invalid, expired, cancelled, replaced, changed-source or already-used links all return 422 errors.token, including absent/inactive accounts. On success updates email and verification timestamp atomically, revokes all of that customer’s tokens and consumes all pending verify/reset/email-change links. Password, customer ID, staff identities, booking ownership, booking email snapshots and favourites are unchanged. Never claims records by matching email. No-store. Concurrent uniqueness failures roll back as invalid link.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 204) { pm.environment.unset('customer_access_token'); pm.environment.unset('customer_action_token'); pm.environment.set('customer_email', pm.environment.get('customer_new_email')); }"
                 ]
               }
             }

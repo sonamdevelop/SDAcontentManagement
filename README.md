@@ -65,3 +65,5 @@ Staff stay analytics at `/staff/stay-reports` compares scoped confirmed room-nig
 Stay report CSV exports are available on the staff report screen, using the same scope/date rules and a fresh snapshot; no private guest or ledger details are exported.
 
 Customer device sessions at `/account/sessions` provide password-confirmed sign-out of individual/all other devices while preserving separate staff access. See [session rules](backend/docs/CUSTOMER_SESSIONS.md).
+
+Customers can request/cancel a password-confirmed email change at `/account/email`, then explicitly verify the new address using its private confirmation link. See [identity/session rules](backend/docs/CUSTOMER_EMAIL_CHANGE.md).

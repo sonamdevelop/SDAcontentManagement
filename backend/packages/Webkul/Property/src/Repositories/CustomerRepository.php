@@ -17,6 +17,11 @@ class CustomerRepository extends Repository
         return $this->model->newQuery()->where('email', $email)->lockForUpdate()->first();
     }
 
+    public function optionalLocked(int $id)
+    {
+        return $this->model->newQuery()->whereKey($id)->lockForUpdate()->first();
+    }
+
     public function locked(int $id)
     {
         return $this->model->newQuery()->lockForUpdate()->findOrFail($id);
