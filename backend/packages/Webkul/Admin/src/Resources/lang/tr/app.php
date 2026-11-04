@@ -2647,4 +2647,7 @@ return [
         'created' => 'Listing created and awaiting moderation.',
         'changed' => 'Public listing content changed; review is required again.',
     ],
+    'agent-report' => [
+        'export-limit' => 'The export exceeds 5,000 agents. Narrow the dates or agent filter and try again.',
+    ],
 ];

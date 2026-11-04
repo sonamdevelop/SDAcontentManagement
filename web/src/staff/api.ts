@@ -123,6 +123,26 @@ export class StaffApi {
     if (!body) throw new StaffError(502);
     return body as T;
   }
+  async agentReportFile(params: URLSearchParams, signal?: AbortSignal) {
+    const query = new URLSearchParams();
+    for (const key of ['from', 'to', 'timezone', 'user_id'])
+      if (params.get(key)) query.set(key, params.get(key)!);
+    const response = await this.checked('/admin/reports/agents/export?' + query, { signal });
+    const mime = response.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase(),
+      disposition = response.headers.get('Content-Disposition') || '',
+      filename = disposition.match(/sda-agent-report-\d{4}-\d{2}-\d{2}\.csv/)?.[0];
+    if (
+      response.status !== 200 ||
+      mime !== 'text/csv' ||
+      !disposition.toLowerCase().startsWith('attachment;') ||
+      !filename ||
+      Number(response.headers.get('Content-Length')) > 10 * 1024 * 1024
+    )
+      throw new StaffError(502);
+    const blob = await response.blob();
+    if (blob.size > 10 * 1024 * 1024) throw new StaffError(502);
+    return { blob, filename };
+  }
   async documentFile(propertyId: number, documentId: number, signal?: AbortSignal): Promise<Blob> {
     if (![propertyId, documentId].every((id) => Number.isSafeInteger(id) && id > 0))
       throw new StaffError(404);

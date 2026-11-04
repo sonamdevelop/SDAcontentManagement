@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added staff agent performance reports with calendar-timezone filters, outcome charts and scoped spreadsheet-safe CSV exports.
+
 * [feature] Added customer saved properties with safe retries and hidden-listing redaction, plus scoped aggregate property popularity for staff.
 
 * [feature] Added scoped property publication moderation with reviewed content revisions, rejection/resubmission reasons, historical snapshots and stale-approval protection.

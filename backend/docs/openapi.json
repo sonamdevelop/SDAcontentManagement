@@ -3384,7 +3384,7 @@
       "get": {
         "operationId": "propertyReportOverview",
         "summary": "Dashboard overview",
-        "description": "Requires property-reports + reports:read; agents also requires property-reports.agents. Each source independently requires ACL + token ability: properties/properties:read, properties.enquiries/enquiries:read, leads/leads:read, leads.view/leads:read (follow-ups), visits/visits:read. All-permission roles still obey token and record scopes. Dates select created_at for properties/enquiries/leads, due date for tasks, starts_at for visits. Current ownership/status, not historical snapshots. No default date bound.",
+        "description": "Requires property-reports + reports:read; agents also requires property-reports.agents. Each source independently requires ACL + token ability: properties/properties:read, properties.enquiries/enquiries:read, leads/leads:read, leads.view/leads:read (follow-ups), visits/visits:read. All-permission roles still obey token and record scopes. Dates select created_at for properties/enquiries/leads, due date for tasks, starts_at for visits. Current ownership/status, not historical snapshots. No default date bound. Optional timezone interprets inclusive from/to calendar dates; the next local calendar date is the exclusive bound, converted to application storage time.",
         "security": [
           {
             "bearerAuth": []
@@ -3419,6 +3419,16 @@
             "schema": {
               "type": "integer",
               "minimum": 1
+            }
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "description": "IANA timezone for requested calendar dates. Defaults to application timezone. Bounds are converted to storage time, including DST/midnight/day skips.",
+            "schema": {
+              "type": "string",
+              "example": "Asia/Kolkata"
             }
           }
         ],
@@ -3500,7 +3510,7 @@
       "get": {
         "operationId": "propertyReportAgents",
         "summary": "Paginated agent lead and visit performance",
-        "description": "Requires property-reports + reports:read; agents also requires property-reports.agents. Each source independently requires ACL + token ability: properties/properties:read, properties.enquiries/enquiries:read, leads/leads:read, leads.view/leads:read (follow-ups), visits/visits:read. All-permission roles still obey token and record scopes. Dates select created_at for properties/enquiries/leads, due date for tasks, starts_at for visits. Current ownership/status, not historical snapshots. No default date bound. Only agents with matching accessible leads or visits are returned; inactive agents with history included. At least one lead/visit source is required. Metrics from inaccessible sources are null. Separate grouped subqueries prevent duplicated counts; ordered by user ID.",
+        "description": "Requires property-reports + reports:read; agents also requires property-reports.agents. Each source independently requires ACL + token ability: properties/properties:read, properties.enquiries/enquiries:read, leads/leads:read, leads.view/leads:read (follow-ups), visits/visits:read. All-permission roles still obey token and record scopes. Dates select created_at for properties/enquiries/leads, due date for tasks, starts_at for visits. Current ownership/status, not historical snapshots. No default date bound. Only agents with matching accessible leads or visits are returned; inactive agents with history included. At least one lead/visit source is required. Metrics from inaccessible sources are null. Separate grouped subqueries prevent duplicated counts; ordered by user ID. Optional timezone interprets inclusive from/to calendar dates; the next local calendar date is the exclusive bound, converted to application storage time.",
         "security": [
           {
             "bearerAuth": []
@@ -3556,6 +3566,16 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20
+            }
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "description": "IANA timezone for requested calendar dates. Defaults to application timezone. Bounds are converted to storage time, including DST/midnight/day skips.",
+            "schema": {
+              "type": "string",
+              "example": "Asia/Kolkata"
             }
           }
         ],
@@ -8744,6 +8764,105 @@
           }
         }
       }
+    },
+    "/admin/reports/agents/export": {
+      "get": {
+        "operationId": "agentReportsExport",
+        "summary": "Download filtered agent performance as a safe CSV attachment",
+        "description": "Same property-reports + property-reports.agents permissions, reports:read ability, source ACL/abilities and own/group/global scope as JSON agent report. All filtered matching agents exported, ignoring page/per_page, ordered by user ID. Cap 5000; larger exports return JSON 422 export validation before CSV headers, never truncate. Only permitted lead/visit columns; metadata includes period, timezone and as_of. Staff with zero matching permitted records are absent; inactive agents with history may appear. Snapshot captured before streaming; export is a fresh read and can differ from a prior JSON page. UTF-8 BOM/RFC4180 CSV quotes multiline cells and prefixes formula/control-leading names to prevent spreadsheet formula execution. No source titles, customer contacts, emails, private notes or financial amounts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Inclusive local calendar date, years 1000–9998; to must be >= from. Omit for no bound.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Inclusive local calendar date, years 1000–9998; to must be >= from. Omit for no bound.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "description": "Narrows existing own/group/global scope. Inaccessible and unknown IDs both return no matching records.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "description": "IANA timezone for requested calendar dates. Defaults to application timezone. Bounds are converted to storage time, including DST/midnight/day skips.",
+            "schema": {
+              "type": "string",
+              "example": "Asia/Kolkata"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UTF-8 CSV attachment, including a header-only file when no agents match",
+            "headers": {
+              "Content-Disposition": {
+                "description": "attachment; filename=sda-agent-report-YYYY-MM-DD.csv",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Content-Type-Options": {
+                "description": "nosniff",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/wrong account token"
+          },
+          "403": {
+            "description": "Missing report permission/ability or no permitted lead/visit source"
+          },
+          "422": {
+            "description": "Invalid filters/timezone or export exceeds 5000 agents"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9862,7 +9981,8 @@
           },
           "timezone": {
             "type": "string",
-            "example": "Asia/Kolkata"
+            "example": "Asia/Kolkata",
+            "description": "Requested calendar timezone, defaulting to application timezone; date bounds are converted to storage time."
           }
         },
         "description": "Inclusive calendar-day filters in the configured application timezone. Null bounds are unbounded."

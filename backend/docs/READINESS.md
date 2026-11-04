@@ -265,3 +265,22 @@ operations/internal references and generated Postman artifacts were checked.
 Synthetic database/upload backup and restore passed, including the favourites
 table and four SHA-256 file checks. Only the additive migration ran locally;
 both reference repositories stayed clean and no staging/deployment occurred.
+
+## Agent reporting/export update — 4 November 2026
+
+Group 11 now includes a dedicated React agent performance workspace with date/
+timezone/agent filters, source-aware outcome bars and safe scoped CSV exports.
+Current ownership/outcome semantics are retained. Stay occupancy/revenue analytics
+and remaining chart/report parity are still pending, so group 11 remains partial.
+Checklist stays **14 local-ready, 3 partial, 4 pending/unverified** groups; these are
+not effort/time percentages. No staging/deployment occurred.
+See [agent reports](AGENT_REPORTS.md).
+
+Validation for agent reports: 546 API tests (2983 assertions), 241 frontend
+unit/integration tests, 80 desktop/mobile browser checks and eleven real API
+browser journeys passed. CSV download, private-field exclusion, source/role/record
+scope, export row limits and UTC/DST/midnight/day-skip boundaries were verified.
+Build/typecheck, PHP/web formatting, skills validation, 94 OpenAPI operations/
+internal references and generated Postman artifacts were checked. Synthetic
+backup/restore passed with row-count and four SHA-256 file checks. No migration
+or deployment ran, and both reference repositories stayed clean.

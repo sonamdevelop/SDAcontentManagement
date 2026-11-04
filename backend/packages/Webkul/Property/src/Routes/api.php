@@ -107,6 +107,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 Route::get('admin/reports/overview', [ReportApiController::class, 'overview'])->middleware(ApiAccess::class.':property-reports,reports:read')->name('admin.reports.overview');
+Route::get('admin/reports/agents/export', [ReportApiController::class, 'export'])->middleware(ApiAccess::class.':property-reports.agents,reports:read,property-reports')->name('admin.reports.agents-export');
 Route::get('admin/reports/agents', [ReportApiController::class, 'agents'])->middleware(ApiAccess::class.':property-reports.agents,reports:read,property-reports')->name('admin.reports.agents');
 
 Route::prefix('admin/properties/{propertyId}/documents')->whereNumber('propertyId')->name('admin.properties.documents.')->group(function () {

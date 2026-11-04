@@ -4,17 +4,20 @@ namespace Webkul\Property\Support;
 
 use Carbon\CarbonImmutable;
 
-/** Calendar-day bounds in the application's storage timezone. The upper bound is exclusive. */
+/** Requested calendar-day bounds converted to the storage timezone. The upper bound is exclusive. */
 class ReportPeriod
 {
     public readonly ?CarbonImmutable $start;
 
     public readonly ?CarbonImmutable $endExclusive;
 
-    public function __construct(public readonly ?string $from, public readonly ?string $to, public readonly string $timezone)
+    public function __construct(public readonly ?string $from, public readonly ?string $to, public readonly string $timezone, ?string $storageTimezone = null)
     {
-        $this->start = $from === null ? null : CarbonImmutable::createFromFormat('!Y-m-d', $from, $timezone);
-        $this->endExclusive = $to === null ? null : CarbonImmutable::createFromFormat('!Y-m-d', $to, $timezone)->addDay();
+        $storageTimezone ??= $timezone;
+        $this->start = $from === null ? null : CarbonImmutable::createFromFormat('!Y-m-d', $from, $timezone)->setTimezone($storageTimezone);
+        // Advance the calendar date before localizing, including midnight or whole-day skips.
+        $nextDate = $to === null ? null : CarbonImmutable::createFromFormat('!Y-m-d', $to, 'UTC')->addDay()->format('Y-m-d');
+        $this->endExclusive = $nextDate === null ? null : CarbonImmutable::createFromFormat('!Y-m-d', $nextDate, $timezone)->setTimezone($storageTimezone);
     }
 
     public function apply($query, string $column)

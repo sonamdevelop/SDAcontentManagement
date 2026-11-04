@@ -382,8 +382,9 @@ own/group/global data visibility.
 | site_visits | `visits` | `visits:read` | visit starts_at |
 
 Both endpoints accept `from` and `to` as **calendar dates** (`YYYY-MM-DD`), unlike
-the timestamp filters on the visit/follow-up listing APIs. Dates use the configured
-application timezone (`Asia/Kolkata` locally). Either bound may be omitted; no
+the timestamp filters on the visit/follow-up listing APIs. Dates use the requested IANA timezone
+(default application timezone, `Asia/Kolkata` locally). Bounds are converted to
+storage time. Either bound may be omitted; no
 bounds means all dates. Days are inclusive: `to=2026-11-10` includes everything
 before the following local midnight. When both bounds exist, to must be at or
 after from. Supported date years are 1000–9998. Invalid filters return 422.
@@ -741,3 +742,5 @@ See [offline payment ledger](PAYMENTS.md) for additional receipts, refunds, reas
 Property publication now requires moderation approval. Public content/photo edits require a fresh review; private edits and deal status retain approval. Staff use the scoped Property moderation queue with reasons, snapshots and safe revision retries. Existing published listings retain legacy approval. See [moderation rules](MODERATION.md).
 
 Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](FAVOURITES.md).
+
+Agent performance now has a dedicated web report with calendar timezone/date/agent filters, source-aware outcome bars and scoped all-filtered-agent CSV export. See [agent report rules](AGENT_REPORTS.md).

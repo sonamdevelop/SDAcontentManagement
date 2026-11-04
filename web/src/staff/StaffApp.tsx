@@ -1,3 +1,4 @@
+import { AgentReportPage } from './AgentReportWorkspace';
 import { PopularityPage } from './PopularityWorkspace';
 import { ModerationQueue, ModerationPage } from './ModerationWorkspace';
 import { CancellationQueue } from './CancellationWorkspace';
@@ -133,6 +134,7 @@ export function StaffApp() {
         <Route element={<Shell />}>
           <Route index element={<Dashboard />} />
           <Route path="login" element={<Navigate to="/staff" replace />} />
+          <Route path="agent-reports" element={<AgentReportPage />} />
           <Route path="property-favourites" element={<PopularityPage />} />
           <Route path="property-moderation" element={<ModerationQueue />} />
           <Route path="properties/:id/moderation" element={<ModerationPage />} />
@@ -280,6 +282,9 @@ function Shell() {
                   {title}
                 </NavLink>
               ),
+          )}
+          {['property-reports', 'property-reports.agents'].every((p) => can(profile, p)) && (
+            <NavLink to="/staff/agent-reports">Agent performance</NavLink>
           )}
           {can(profile, 'properties') && (
             <NavLink to="/staff/property-favourites">Property popularity</NavLink>

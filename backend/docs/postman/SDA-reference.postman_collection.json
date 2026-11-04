@@ -1327,7 +1327,7 @@
               }
             ],
             "url": "{{base_url}}/admin/reports/overview",
-            "description": "Dashboard overview\n\nRequires property-reports + reports:read; agents also requires property-reports.agents. Each source independently requires ACL + token ability: properties/properties:read, properties.enquiries/enquiries:read, leads/leads:read, leads.view/leads:read (follow-ups), visits/visits:read. All-permission roles still obey token and record scopes. Dates select created_at for properties/enquiries/leads, due date for tasks, starts_at for visits. Current ownership/status, not historical snapshots. No default date bound.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+            "description": "Dashboard overview\n\nRequires property-reports + reports:read; agents also requires property-reports.agents. Each source independently requires ACL + token ability: properties/properties:read, properties.enquiries/enquiries:read, leads/leads:read, leads.view/leads:read (follow-ups), visits/visits:read. All-permission roles still obey token and record scopes. Dates select created_at for properties/enquiries/leads, due date for tasks, starts_at for visits. Current ownership/status, not historical snapshots. No default date bound. Optional timezone interprets inclusive from/to calendar dates; the next local calendar date is the exclusive bound, converted to application storage time.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {
@@ -1356,7 +1356,36 @@
               }
             ],
             "url": "{{base_url}}/admin/reports/agents",
-            "description": "Paginated agent lead and visit performance\n\nRequires property-reports + reports:read; agents also requires property-reports.agents. Each source independently requires ACL + token ability: properties/properties:read, properties.enquiries/enquiries:read, leads/leads:read, leads.view/leads:read (follow-ups), visits/visits:read. All-permission roles still obey token and record scopes. Dates select created_at for properties/enquiries/leads, due date for tasks, starts_at for visits. Current ownership/status, not historical snapshots. No default date bound. Only agents with matching accessible leads or visits are returned; inactive agents with history included. At least one lead/visit source is required. Metrics from inaccessible sources are null. Separate grouped subqueries prevent duplicated counts; ordered by user ID.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+            "description": "Paginated agent lead and visit performance\n\nRequires property-reports + reports:read; agents also requires property-reports.agents. Each source independently requires ACL + token ability: properties/properties:read, properties.enquiries/enquiries:read, leads/leads:read, leads.view/leads:read (follow-ups), visits/visits:read. All-permission roles still obey token and record scopes. Dates select created_at for properties/enquiries/leads, due date for tasks, starts_at for visits. Current ownership/status, not historical snapshots. No default date bound. Only agents with matching accessible leads or visits are returned; inactive agents with history included. At least one lead/visit source is required. Metrics from inaccessible sources are null. Separate grouped subqueries prevent duplicated counts; ordered by user ID. Optional timezone interprets inclusive from/to calendar dates; the next local calendar date is the exclusive bound, converted to application storage time.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/reports/agents/export",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/reports/agents/export",
+            "description": "Download filtered agent performance as a safe CSV attachment\n\nSame property-reports + property-reports.agents permissions, reports:read ability, source ACL/abilities and own/group/global scope as JSON agent report. All filtered matching agents exported, ignoring page/per_page, ordered by user ID. Cap 5000; larger exports return JSON 422 export validation before CSV headers, never truncate. Only permitted lead/visit columns; metadata includes period, timezone and as_of. Staff with zero matching permitted records are absent; inactive agents with history may appear. Snapshot captured before streaming; export is a fresh read and can differ from a prior JSON page. UTF-8 BOM/RFC4180 CSV quotes multiline cells and prefixes formula/control-leading names to prevent spreadsheet formula execution. No source titles, customer contacts, emails, private notes or financial amounts.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {

@@ -96,7 +96,11 @@ test('real staff/public journey: publish, enquire, follow up, visit, cancel and 
   expect((await enquiryRequest).headers().authorization).toBeUndefined();
   await expect(page.getByRole('heading', { name: 'Enquiry sent.', exact: true })).toBeVisible();
   await page.goto('/staff/enquiries');
-  await page.getByRole('link', { name: /Open lead #/ }).click();
+  await page
+    .getByRole('article')
+    .filter({ has: page.getByRole('heading', { name: 'Acceptance river home', exact: true }) })
+    .getByRole('link', { name: /Open lead #/ })
+    .click();
   const leadId = page.url().split('/').at(-1)!;
   await page.getByLabel('Note text', { exact: true }).fill('Acceptance customer requested a visit');
   await page.getByRole('button', { name: 'Add note', exact: true }).click();

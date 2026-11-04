@@ -119,3 +119,8 @@ A tenth real API journey creates/approves a listing, registers a customer, saves
 it, checks staff popularity, edits public content into pending moderation, confirms
 the saved card exposes no unreviewed title, removes it and checks refreshed counts.
 Synthetic backup/restore includes customer_property_favourites rows.
+
+An eleventh real API journey creates a property enquiry/lead and scheduled visit,
+opens the agent report with UTC calendar filters and owner ID, reloads filters,
+and downloads a CSV that includes aggregate metrics without private source contacts.
+The normal isolated database/upload backup and restore checks still run afterward.

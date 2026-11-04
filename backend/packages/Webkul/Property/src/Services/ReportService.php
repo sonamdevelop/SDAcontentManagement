@@ -8,6 +8,7 @@ use Webkul\Property\Repositories\EnquiryRepository;
 use Webkul\Property\Repositories\LeadApiRepository;
 use Webkul\Property\Repositories\PropertyRepository;
 use Webkul\Property\Repositories\SiteVisitRepository;
+use Webkul\Property\Support\AgentReportCsv;
 use Webkul\Property\Support\ReportPeriod;
 use Webkul\User\Repositories\UserRepository;
 
@@ -71,6 +72,16 @@ class ReportService
 
     public function agents(array $filters, ReportPeriod $period, array $sections, string $asOf)
     {
+        return $this->agentQuery($filters, $period, $sections, $asOf)->orderBy('users.id')->paginate($filters['per_page'] ?? 20)->withQueryString();
+    }
+
+    public function agentsExport(array $filters, ReportPeriod $period, array $sections, string $asOf)
+    {
+        return $this->agentQuery($filters, $period, $sections, $asOf)->orderBy('users.id')->limit(AgentReportCsv::MAX_ROWS + 1)->get();
+    }
+
+    protected function agentQuery(array $filters, ReportPeriod $period, array $sections, string $asOf)
+    {
         $hasLeads = in_array('leads', $sections, true);
         $hasVisits = in_array('site_visits', $sections, true);
         abort_unless($hasLeads || $hasVisits, 403);
@@ -97,7 +108,7 @@ class ReportService
             }
         });
 
-        return $query->orderBy('users.id')->paginate($filters['per_page'] ?? 20)->withQueryString();
+        return $query;
     }
 
     protected function scoped($repository, string $table, array $filters, string $owner = 'user_id')

@@ -34,7 +34,7 @@ mobile HTTP clients, but the demo's preflight assertion tests the configured ori
 Import these files from `docs/postman/`:
 
 - `SDA-workflow.postman_collection.json`: ordered, executable complete journey.
-- `SDA-reference.postman_collection.json`: all 93 documented operations; select
+- `SDA-reference.postman_collection.json`: all 94 documented operations; select
   individual requests after filling the relevant IDs. It is not an ordered runner.
 - `SDA-local.postman_environment.json` or `SDA-staging.postman_environment.json`.
 
@@ -231,3 +231,5 @@ Property publication now requires moderation approval. Public content/photo edit
 The ordered Postman workflow now includes explicit approval immediately after fixture creation. The selected staff role must grant properties.moderate; sign in again for the new properties:moderate token ability.
 
 Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](FAVOURITES.md).
+
+Agent performance now has a dedicated web report with calendar timezone/date/agent filters, source-aware outcome bars and scoped all-filtered-agent CSV export. See [agent report rules](AGENT_REPORTS.md).

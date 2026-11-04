@@ -22,7 +22,7 @@ return [
     ['key' => 'properties.documents.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.properties.documents.store', 'sort' => 1],
     ['key' => 'properties.documents.delete', 'name' => 'admin::app.acl.delete', 'route' => 'api.v1.admin.properties.documents.destroy', 'sort' => 2],
     ['key' => 'property-reports', 'name' => 'admin::app.property-api.reports', 'route' => 'api.v1.admin.reports.overview', 'sort' => 7],
-    ['key' => 'property-reports.agents', 'name' => 'admin::app.property-api.agent-reports', 'route' => 'api.v1.admin.reports.agents', 'sort' => 1],
+    ['key' => 'property-reports.agents', 'name' => 'admin::app.property-api.agent-reports', 'route' => ['api.v1.admin.reports.agents', 'api.v1.admin.reports.agents-export'], 'sort' => 1],
     ['key' => 'visits', 'name' => 'admin::app.property-api.visits', 'route' => 'api.v1.admin.visits.index', 'sort' => 6],
     ['key' => 'visits.view', 'name' => 'admin::app.acl.view', 'route' => ['api.v1.admin.visits.show', 'api.v1.admin.visits.agents'], 'sort' => 1],
     ['key' => 'visits.create', 'name' => 'admin::app.acl.create', 'route' => 'api.v1.admin.visits.store', 'sort' => 2],
