@@ -34,6 +34,15 @@ class StayBookingRepository extends Repository
         return $q->findOrFail($id);
     }
 
+    public function createForCustomer(array $data, int $customerId)
+    {
+        $booking = $this->model->newInstance();
+        $booking->fill($data);
+        $booking->forceFill(['customer_id' => $customerId])->save();
+
+        return $booking;
+    }
+
     public function forCustomer(int $id)
     {
         return $this->model->newQuery()->where('customer_id', $id);

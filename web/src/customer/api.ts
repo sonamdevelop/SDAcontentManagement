@@ -1,5 +1,6 @@
+import { isCustomerAvailability, type ReservationDraft } from './reservation';
 import { publicApi } from '../api/client';
-import { isBooking, type Booking } from '../staff/stays';
+import { isBooking, quotedTotal, type Booking } from '../staff/stays';
 import { isFinancialSummary, type FinancialSummary } from '../staff/payments';
 export type Customer = { id: number; name: string; email: string; phone: string | null };
 export type CustomerBooking = Pick<
@@ -17,7 +18,7 @@ export type CustomerBooking = Pick<
   | 'checked_in_at'
   | 'checked_out_at'
 > &
-  FinancialSummary & { guest_name: string };
+  FinancialSummary & { guest_name: string; room_type_id?: number };
 export type CustomerBookingPage = {
   data: CustomerBooking[];
   meta: { current_page: number; last_page: number; total: number };
@@ -60,7 +61,7 @@ export function isCustomerBooking(v: unknown): v is CustomerBooking {
     typeof v === 'object' &&
     typeof (v as CustomerBooking).guest_name === 'string' &&
     isFinancialSummary(v) &&
-    isBooking({ ...v, room_type_id: 1 })
+    isBooking({ ...v, room_type_id: (v as CustomerBooking).room_type_id ?? 1 })
   );
 }
 export class CustomerApi {
@@ -72,7 +73,7 @@ export class CustomerApi {
     path: string,
     options: RequestInit = {},
     authenticated = true,
-    expected = 200,
+    expected: number | number[] = 200,
   ) {
     if (authenticated && !this.token) throw new CustomerError(401);
     const response = await fetch(publicApi.baseUrl + '/customer' + path, {
@@ -85,7 +86,11 @@ export class CustomerApi {
       },
     });
     if (authenticated && response.status === 401) this.expired?.();
-    if (response.ok && response.status !== expected) throw new CustomerError(502);
+    if (
+      response.ok &&
+      !(Array.isArray(expected) ? expected.includes(response.status) : response.status === expected)
+    )
+      throw new CustomerError(502);
     if (response.ok && response.status === 204) return null;
     let body;
     try {
@@ -138,6 +143,46 @@ export class CustomerApi {
   }
   async logout() {
     await this.request('/auth/logout', { method: 'POST' }, true, 204);
+  }
+  async availability(
+    roomId: string,
+    dates: { check_in: string; check_out: string },
+    signal?: AbortSignal,
+  ) {
+    if (!/^[1-9]\d*$/.test(roomId) || !id(Number(roomId))) throw new CustomerError(404);
+    const body = await this.request(`/rooms/${roomId}/availability?${new URLSearchParams(dates)}`, {
+      signal,
+    });
+    if (!isCustomerAvailability(body?.data, Number(roomId), dates)) throw new CustomerError(502);
+    return body.data;
+  }
+  async reserve(data: ReservationDraft & { request_id: string }) {
+    const body = await this.request(
+      '/bookings',
+      { method: 'POST', body: JSON.stringify(data) },
+      true,
+      [200, 201],
+    );
+    if (
+      !isCustomerBooking(body?.data) ||
+      body.data.room_type_id !== data.room_type_id ||
+      body.data.check_in !== data.check_in ||
+      body.data.check_out !== data.check_out ||
+      body.data.rooms !== data.rooms ||
+      body.data.guests !== data.guests ||
+      body.data.guest_name !== data.guest_name ||
+      body.data.nightly_rate !== data.expected_rate
+    )
+      throw new CustomerError(502);
+    const nights =
+      (Date.parse(data.check_out + 'T00:00:00Z') - Date.parse(data.check_in + 'T00:00:00Z')) /
+      86400000;
+    if (
+      body.data.total !== quotedTotal(data.expected_rate, data.rooms, nights) ||
+      body.data.advance !== '0.00'
+    )
+      throw new CustomerError(502);
+    return body.data;
   }
   async bookings(params: URLSearchParams, signal?: AbortSignal): Promise<CustomerBookingPage> {
     const next = new URLSearchParams();

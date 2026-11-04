@@ -94,7 +94,7 @@ it('returns only explicitly owned bookings and never claims old bookings by matc
     $this->getJson('/api/v1/customer/bookings/'.$owned->id, $h)->assertOk()->assertJsonPath('data.refund_due', '100.01')->assertJsonPath('data.amount_due', '0.00');
     $this->getJson('/api/v1/customer/bookings?status=confirmed', $h)->assertOk()->assertJsonCount(0, 'data');
     $this->getJson('/api/v1/customer/bookings?per_page=101', $h)->assertUnprocessable();
-    $this->postJson('/api/v1/customer/bookings', ['customer_id' => $customer->id], $h)->assertStatus(405);
+    $this->postJson('/api/v1/customer/bookings', ['customer_id' => $customer->id], $h)->assertForbidden();
 });
 it('validates password strength and confirmations and rate-limits customer login independently', function () {
     $this->postJson('/api/v1/customer/auth/register', ['name' => 'Weak', 'email' => 'weak@example.test', 'password' => 'short', 'password_confirmation' => 'short'])->assertUnprocessable();

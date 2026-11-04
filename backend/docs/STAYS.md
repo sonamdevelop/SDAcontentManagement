@@ -2,8 +2,8 @@
 
 This first phase manages room-type inventory in SDA. The original Stay in Dandeli
 repository remains read-only: no customer accounts, bookings, uploaded identity
-proofs or payment records have been imported. There is no public booking or online
-payment endpoint. Exclusive property sale/rent deals remain a separate workflow.
+proofs or payment records have been imported. Customer reservation endpoints are documented in [reservation rules](RESERVATIONS.md);
+there is no online payment endpoint. Exclusive property sale/rent deals remain a separate workflow.
 
 Apply the additive migration with `php artisan migrate` (never migrate:fresh or
 krayin-crm:install). Log in again for `stays:read`, `stays:write`, `bookings:read`
@@ -260,7 +260,7 @@ stays return 404. Public requests need no token and expose only names, city,
 timezone, plain text descriptions/rules, amenity labels, public photo URLs,
 capacity and exact nightly prices/currency. They omit inventory quantities,
 ownership, guest/contact, booking/payment and internal metadata. All responses
-use no-store. There is no public dated availability or booking action yet.
+use no-store. Authenticated dated availability and reservations use separate customer endpoints.
 
 Staff reads/writes apply existing own/group/global scope. Cross-parent room IDs
 return 404; absent authentication returns 401, denied rights/abilities 403 and
@@ -293,4 +293,6 @@ URL. Prices are current flat per-room nightly prices, not dated quotes or proof
 of availability. The separate legacy website link is explicitly labelled. No
 reference repository, customer data, account or booking was migrated.
 
-Customer identity is now separate from staff identity. Read-only customer-owned bookings use a nullable explicit customer_id; no existing booking is linked automatically and customer reservation creation is still pending. See [customer accounts](CUSTOMERS.md).
+Customer identity is now separate from staff identity. Read-only customer-owned bookings use a nullable explicit customer_id; no existing booking is linked automatically and customer reservation creation is now available with zero advance. See [customer accounts](CUSTOMERS.md).
+
+Customer dated quote/review/create is implemented; see [reservation rules](RESERVATIONS.md).

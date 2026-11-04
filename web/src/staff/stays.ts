@@ -248,6 +248,9 @@ export class StayApi {
           typeof e.created_at === 'string' &&
           Number.isFinite(Date.parse(e.created_at)) &&
           (e.actor_id === null || validId(e.actor_id)) &&
+          (e.customer_actor_id === undefined ||
+            e.customer_actor_id === null ||
+            validId(e.customer_actor_id)) &&
           object(e.changes) &&
           !Array.isArray(e.changes),
       )

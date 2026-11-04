@@ -1,3 +1,5 @@
+import { CustomerFailure as Failure } from './CustomerUi';
+import { ReservationPage } from './ReservationPage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
 import { useResource } from '../api/useResource';
@@ -11,23 +13,6 @@ import {
   type Customer,
   type CustomerBooking,
 } from './api';
-function Failure({ error }: { error: unknown }) {
-  return (
-    <div role="alert">
-      <p>
-        {error instanceof Error
-          ? error.message
-          : 'Could not confirm the request. Please try again.'}
-      </p>
-      {error instanceof CustomerError &&
-        Object.entries(error.fields).map(([key, messages]) => (
-          <p key={key}>
-            {key}: {messages.join(' ')}
-          </p>
-        ))}
-    </div>
-  );
-}
 export function CustomerWorkspace() {
   const [token, setToken] = useState(storedCustomerToken),
     [notice, setNotice] = useState('');
@@ -116,6 +101,16 @@ export function CustomerWorkspace() {
       </nav>
       {mutation.error ? <Failure error={mutation.error} /> : null}
       <Routes>
+        <Route
+          path="reserve"
+          element={
+            <ReservationPage
+              api={api}
+              customer={result.data}
+              onReauth={() => clear('Please sign in again before reserving a stay.')}
+            />
+          }
+        />
         <Route
           index
           element={<ProfilePage api={api} customer={result.data} onSaved={result.retry} />}
@@ -422,7 +417,7 @@ function MyBookings({ api }: { api: CustomerApi }) {
         </>
       ) : null}
       <p>
-        Online reservation creation is not available yet. <Link to="/stays">Explore stays</Link>.
+        Choose a stay to check dates and reserve. <Link to="/stays">Explore stays</Link>.
       </p>
     </>
   );

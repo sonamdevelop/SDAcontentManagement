@@ -50,8 +50,8 @@ test('real content publication, public stay discovery/photos and unpublication w
   ).toBeVisible();
   await page.goto('/stays');
   await expect(
-    page.getByText('No published stays match your filters.', { exact: true }),
-  ).toBeVisible(); // Parent publication alone is insufficient.
+    page.getByRole('link', { name: 'Public catalogue acceptance stay', exact: true }),
+  ).toHaveCount(0); // Parent publication alone is insufficient.
   await page.goto(editorUrl);
   await page
     .getByLabel('Content target', { exact: true })

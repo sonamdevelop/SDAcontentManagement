@@ -837,7 +837,12 @@ function BookingContent({ initial }: { initial: Booking }) {
             <li key={e.id}>
               <strong>{label(e.action)}</strong>
               <p>
-                {new Date(e.created_at).toLocaleString()} · Staff #{e.actor_id ?? 'unknown'}
+                {new Date(e.created_at).toLocaleString()} ·{' '}
+                {e.customer_actor_id != null
+                  ? `Customer #${e.customer_actor_id}`
+                  : e.actor_id != null
+                    ? `Staff #${e.actor_id}`
+                    : 'Actor unavailable'}
               </p>
               <dl>
                 {Object.entries(e.changes).map(([k, v]) => (

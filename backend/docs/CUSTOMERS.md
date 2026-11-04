@@ -72,13 +72,11 @@ staff/customer ownership IDs, request IDs, hashes and staff history events.
 Cancelled bookings owe zero and retain any refund due. Read transactions keep
 booking/ledger snapshots consistent; detail uses the booking/ledger lock order.
 
-**No historical backfill, public reservation creation or customer claiming/linking
-endpoint is implemented.** New accounts will normally have an empty booking list
-until a later trusted reservation/verified migration workflow assigns ownership.
-Staff booking creation still ignores customer_id input. Staff creator foreign keys
-remain unchanged; future customer booking creation must model its actor correctly,
-not invent a staff creator. Customer booking/payment/cancellation writes are not
-available; unsupported methods return 405 (or 404 for unknown paths).
+Customer reservations now assign explicit ownership from the authenticated customer.
+No historical backfill or customer claiming/linking endpoint is implemented. Staff
+creation still ignores customer_id input. Customer reservations use nullable staff
+created_by and an explicit customer_actor_id audit event; no staff actor is invented.
+Customer payment/cancellation writes remain unavailable. See [reservation rules](RESERVATIONS.md).
 
 ## SDA web client
 
@@ -100,7 +98,7 @@ Android/iOS readiness.
 ## Deliberate remaining work
 
 Email verification, email-change verification, forgotten-password recovery/delivery,
-customer account deletion, public dated availability/reservation, verified legacy
+customer account deletion, verified legacy
 booking linking and Firebase/native-client migration remain pending. No outbound
 email/SMS/push delivery or live data migration was enabled. Do not describe this
 step as a complete customer booking product or a production launch.

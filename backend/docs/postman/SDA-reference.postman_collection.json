@@ -2809,7 +2809,7 @@
                 }
               ]
             },
-            "description": "Read my explicitly owned bookings\n\nRequires customer:bookings ability. Explicit nullable customer_id FK only; ignores any client-supplied owner filters. Newest booking ID first; current ledger summaries in one read transaction. Inactive/unpublished sources remain readable by owner. Existing bookings default unlinked; no email-based claiming or reservation create endpoint.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+            "description": "Read my explicitly owned bookings\n\nRequires customer:bookings ability. Explicit nullable customer_id FK only; ignores any client-supplied owner filters. Newest booking ID first; current ledger summaries in one read transaction. Inactive/unpublished sources remain readable by owner. Existing bookings default unlinked; no email-based claiming.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {
@@ -2818,6 +2818,67 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /customer/bookings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{customer_reservation_request_id}}\",\n  \"room_type_id\": \"{{room_type_id}}\",\n  \"check_in\": \"{{check_in}}\",\n  \"check_out\": \"{{check_out}}\",\n  \"rooms\": 1,\n  \"guests\": 2,\n  \"guest_name\": \"Example customer\",\n  \"expected_rate\": \"1000.25\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Create my confirmed reservation without online payment\n\nRequires both customer:bookings and customer:bookings:create. Older customer sessions must sign in again. Five creations per minute per IP. Uses shared staff inventory locks and price calculation; insufficient inventory returns 422. UUID binds normalized payload and authenticated owner: exact replay returns current owned booking with 200, fresh reservation 201, changed payload/other owner/staff UUID 409. Preserve UUID on uncertain network/server failure; check My bookings before starting again after reload. Creates zero advance, no payment receipt; created_by and staff actor_id are null with explicit customer_actor_id/customer_created history. Never trusts client ownership. New source must be active/published; replay remains possible after unpublication or cancellation.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created or replayed', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) pm.environment.set(\"customer_booking_id\", String(pm.response.json().data.id));"
                 ]
               }
             }
@@ -2849,6 +2910,45 @@
               ]
             },
             "description": "Read my booking detail\n\nRequires customer:bookings ability and exact customer_id ownership. Missing/foreign/unlinked records all return 404. A booking/ledger lock gives a consistent financial snapshot; no staff history or payment references returned. Read-only.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /customer/rooms/{id}/availability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/customer/rooms/{{room_type_id}}/availability?check_in={{check_in}}&check_out={{check_out}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Quote published room availability for a customer\n\nRequires customer:bookings. Active published room and parent only; checkout is exclusive, 1–365 nights in stay timezone. Availability is checked again atomically on reservation. No inventory hold or payment.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
           },
           "event": [
             {

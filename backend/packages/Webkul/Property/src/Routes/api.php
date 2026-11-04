@@ -31,6 +31,8 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::post('auth/logout', [$account, 'logout'])->name('logout');
         Route::post('password', [$account, 'password'])->middleware('throttle:customer-password')->name('password');
     });
+    Route::get('rooms/{id}/availability', [CustomerStayBookingController::class, 'availability'])->whereNumber('id')->middleware($access.':customer:bookings')->name('rooms.availability');
+    Route::post('bookings', [CustomerStayBookingController::class, 'store'])->middleware([$access.':customer:bookings', $access.':customer:bookings:create', 'throttle:customer-reservation'])->name('bookings.store');
     Route::get('bookings', [CustomerStayBookingController::class, 'index'])->middleware($access.':customer:bookings')->name('bookings.index');
     Route::get('bookings/{id}', [CustomerStayBookingController::class, 'show'])->whereNumber('id')->middleware($access.':customer:bookings')->name('bookings.show');
 });

@@ -15,7 +15,11 @@ test('real stay setup, room inventory, exact booking totals, rejection and cance
   await expect(
     page.getByRole('heading', { name: 'Acceptance forest stay', exact: true }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Add room type', exact: true }).click();
+  await page
+    .getByRole('article')
+    .filter({ has: page.getByRole('heading', { name: 'Acceptance forest stay', exact: true }) })
+    .getByRole('button', { name: 'Add room type', exact: true })
+    .click();
   await page.getByLabel('Room type name', { exact: true }).fill('Acceptance deluxe');
   await page.getByLabel('Room inventory', { exact: true }).fill('2');
   await page.getByLabel('Guests per room', { exact: true }).fill('2');

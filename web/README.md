@@ -324,8 +324,12 @@ Booking detail's ledger links to a print-friendly statement with complete chrono
 
 ### Rich stay content and public catalogue
 
-Use **Edit public stay content** on a staff stay card to edit stay/room descriptions, rules, amenities, gallery uploads/removals and publication. Both stay and room must be active/published to appear at `/stays` and `/stays/:id`. Anonymous catalogue requests never carry staff tokens. City/page filters persist in URLs; current nightly prices are not dated availability quotes. Customer booking is still pending. Apply the additive content migration; existing stays/rooms start unpublished. See [API, upload and publication rules](../backend/docs/STAYS.md#rich-stay-content-and-public-catalogue).
+Use **Edit public stay content** on a staff stay card to edit stay/room descriptions, rules, amenities, gallery uploads/removals and publication. Both stay and room must be active/published to appear at `/stays` and `/stays/:id`. Anonymous catalogue requests never carry staff tokens. City/page filters persist in URLs; current nightly prices are not dated availability quotes. Customer dated quote/review/reservation is available from each room card. Apply the additive content migration; existing stays/rooms start unpublished. See [API, upload and publication rules](../backend/docs/STAYS.md#rich-stay-content-and-public-catalogue).
 
 ### Customer accounts and owned bookings
 
 **My account** (`/account`) supports separate customer signup/login, profile and password changes. **My bookings** (`/account/bookings`) shows only explicitly linked customer-owned booking snapshots and exact balances. New accounts normally start empty; no historical email-based linking or customer reservation creation occurs. Customer tokens are separate from staff tokens and public catalogue calls. Password recovery, email verification and native clients remain pending. Apply the additive customer migration and see [account rules/API](../backend/docs/CUSTOMERS.md).
+
+Customer dated reservations are now available from public stay room cards: sign in,
+check availability, review and confirm, then read the owned booking. No online money
+is collected. See [reservation rules](../backend/docs/RESERVATIONS.md).

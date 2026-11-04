@@ -168,3 +168,22 @@ Laravel/MariaDB browser journeys and synthetic DB/upload recovery checks passed.
 The frontend additionally verifies customer-only session expiry and rejection of
 unexpected logout responses; historical booking ownership is covered by explicit
 synthetic API fixtures, not a production backfill.
+
+## Customer reservation update — 4 November 2026
+
+Group 17 now has locally tested catalogue, customer dated availability, reviewed
+reservation and owned booking detail, sharing staff inventory and exact prices.
+No online payment is collected. Group 17 moves from partial to local-ready for this
+scope: **12 local-ready, 3 partial, 6 pending/unverified** groups. These are checklist
+counts, not an effort or time percentage. Account verification/recovery, online
+payments, customer cancellation, moderation, extended guest onboarding and native
+Android/iOS verification remain. No staging or production deployment is authorized.
+See [reservation rules](RESERVATIONS.md).
+
+Validation for this update: 482 API tests (2476 assertions), 208 frontend
+unit/integration tests, 60 desktop/mobile browser checks and seven real API browser
+journeys passed. TypeScript/production build, changed-file formatting, skills
+validation, OpenAPI references and regenerated Postman artifacts passed. Synthetic
+acceptance database and four uploaded files were backed up/restored with row-count
+and SHA-256 checks. Local development received only the pending additive actor
+migration; no staging or deployment occurred. Both reference repositories stayed clean.

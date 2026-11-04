@@ -7227,7 +7227,7 @@
       "get": {
         "operationId": "customerBookingsIndex",
         "summary": "Read my explicitly owned bookings",
-        "description": "Requires customer:bookings ability. Explicit nullable customer_id FK only; ignores any client-supplied owner filters. Newest booking ID first; current ledger summaries in one read transaction. Inactive/unpublished sources remain readable by owner. Existing bookings default unlinked; no email-based claiming or reservation create endpoint.",
+        "description": "Requires customer:bookings ability. Explicit nullable customer_id FK only; ignores any client-supplied owner filters. Newest booking ID first; current ledger summaries in one read transaction. Inactive/unpublished sources remain readable by owner. Existing bookings default unlinked; no email-based claiming.",
         "security": [
           {
             "customerBearerAuth": []
@@ -7311,6 +7311,98 @@
             }
           }
         ]
+      },
+      "post": {
+        "operationId": "customerBookingsStore",
+        "summary": "Create my confirmed reservation without online payment",
+        "description": "Requires both customer:bookings and customer:bookings:create. Older customer sessions must sign in again. Five creations per minute per IP. Uses shared staff inventory locks and price calculation; insufficient inventory returns 422. UUID binds normalized payload and authenticated owner: exact replay returns current owned booking with 200, fresh reservation 201, changed payload/other owner/staff UUID 409. Preserve UUID on uncertain network/server failure; check My bookings before starting again after reload. Creates zero advance, no payment receipt; created_by and staff actor_id are null with explicit customer_actor_id/customer_created history. Never trusts client ownership. New source must be active/published; replay remains possible after unpublication or cancellation.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerReservationWrite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerStayBooking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Idempotent replay",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerStayBooking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing ability; older sessions must sign in again"
+          },
+          "404": {
+            "description": "Room unavailable or unpublished"
+          },
+          "422": {
+            "description": "Invalid dates, rate changed, capacity or prohibited fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "409": {
+            "description": "UUID conflicts with another payload/owner"
+          }
+        }
       }
     },
     "/customer/bookings/{id}": {
@@ -7377,6 +7469,90 @@
             }
           }
         ]
+      }
+    },
+    "/customer/rooms/{id}/availability": {
+      "get": {
+        "operationId": "customerRoomAvailability",
+        "summary": "Quote published room availability for a customer",
+        "description": "Requires customer:bookings. Active published room and parent only; checkout is exclusive, 1–365 nights in stay timezone. Availability is checked again atomically on reservation. No inventory hold or payment.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "check_in",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "check_out",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerAvailability"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing ability; older sessions must sign in again"
+          },
+          "404": {
+            "description": "Room unavailable or unpublished"
+          },
+          "422": {
+            "description": "Invalid dates, rate changed, capacity or prohibited fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
       }
     }
   },
@@ -9512,7 +9688,8 @@
           },
           "created_by": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "nullable": true
           },
           "guest_name": {
             "type": "string"
@@ -9563,7 +9740,8 @@
                     "checked_out",
                     "payment_recorded",
                     "refund_recorded",
-                    "payment_reversed"
+                    "payment_reversed",
+                    "customer_created"
                   ]
                 },
                 "changes": {
@@ -9577,6 +9755,10 @@
                 "updated_at": {
                   "type": "string",
                   "format": "date-time"
+                },
+                "customer_actor_id": {
+                  "type": "integer",
+                  "nullable": true
                 }
               },
               "required": [
@@ -9586,7 +9768,8 @@
                 "action",
                 "changes",
                 "created_at",
-                "updated_at"
+                "updated_at",
+                "customer_actor_id"
               ]
             }
           },
@@ -10883,7 +11066,8 @@
           "net_paid",
           "amount_due",
           "balance",
-          "refund_due"
+          "refund_due",
+          "room_type_id"
         ],
         "properties": {
           "id": {
@@ -10981,9 +11165,129 @@
           "refund_due": {
             "type": "string",
             "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
           }
         },
         "description": "Explicit customer_id ownership only. No guest contacts, internal notes, bank references, staff IDs, request IDs, hashes or history events. Old email snapshots never grant ownership."
+      },
+      "CustomerAvailability": {
+        "type": "object",
+        "properties": {
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "nights": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "available_rooms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_type_id",
+          "check_in",
+          "check_out",
+          "nights",
+          "timezone",
+          "nightly_rate",
+          "currency",
+          "capacity",
+          "available_rooms",
+          "stay_name",
+          "room_name"
+        ]
+      },
+      "CustomerReservationWrite": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "room_type_id",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "guest_name",
+          "expected_rate"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "guest_name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "guest_phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "expected_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          }
+        },
+        "description": "Send the exact quoted nightly rate. Ownership, staff creator, totals, advance, currency, status, email and internal notes cannot be supplied."
       }
     }
   }

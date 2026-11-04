@@ -72,8 +72,8 @@ export function StaysPage() {
     <div className="container detail-page">
       <h1>Explore stays</h1>
       <p>
-        Discover published stays and room types. Rates are per room per night; date-based
-        availability and online booking are not offered here yet.
+        Discover published stays and room types. Rates are per room per night; sign in to check date
+        availability and reserve.
       </p>
       <form
         key={query}
@@ -178,13 +178,16 @@ export function StayDetailPage() {
                 {formatPrice(r.nightly_rate, result.data!.currency)} per room per night · Up to{' '}
                 {r.capacity} guests per room
               </p>
+              <Link className="button" to={`/account/reserve?room_type_id=${r.id}`}>
+                Reserve this room
+              </Link>
               <Gallery content={r} />
               <Copy content={r} />
             </article>
           ))}
           <p>
-            Room rates shown are current flat nightly rates. Availability and booking must be
-            confirmed separately; this page does not reserve rooms or collect payments.
+            Room rates shown are current flat nightly rates. Sign in to check dates and review a
+            reservation. No payment is collected online.
           </p>
         </>
       ) : null}

@@ -137,6 +137,7 @@ def reference(spec):
         ('put', '/admin/stays/{id}'): {'name': 'Example stay', 'city': 'Dandeli', 'timezone': 'Asia/Kolkata', 'active': True},
         ('post', '/admin/stays/{stayId}/rooms'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
         ('put', '/admin/stays/{stayId}/rooms/{id}'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
+        ('post', '/customer/bookings'): {'request_id': '{{customer_reservation_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example customer', 'expected_rate': '1000.25'},
         ('post', '/admin/stay-bookings'): {'request_id': '{{stay_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example guest', 'guest_email': 'guest@example.test', 'expected_rate': '1000.25', 'advance': '100.01'},
         ('post', '/admin/stay-bookings/{id}/payments'): {'request_id': '{{ledger_request_id}}', 'amount': '100.01', 'method': 'cash', 'reference': 'Offline receipt', 'reason': 'Already received offline'},
         ('post', '/admin/stay-bookings/{id}/refunds'): {'request_id': '{{ledger_request_id}}', 'amount': '25.25', 'method': 'cash', 'reason': 'Already refunded offline'},
@@ -165,6 +166,9 @@ def reference(spec):
             item = request(method.upper()+' '+path, method.upper(), url, expected, bodies.get((method, path)), public, form=([{'key': 'description', 'value': 'Public marketing description', 'type': 'text'}, {'key': 'rules', 'value': 'Quiet hours after 10 pm', 'type': 'text'}, {'key': 'amenities[0]', 'value': 'Parking', 'type': 'text'}, {'key': 'is_published', 'value': '0', 'type': 'text'}] if path.endswith('/content') and method == 'post' else DOCUMENT if doc and method == 'post' else None))
             if operation.get('requestBody', {}).get('required') and item['request'].get('body') is None:
                 raise ValueError('Missing required request example: '+method.upper()+' '+path)
+            if method == 'post' and path == '/customer/bookings':
+                item['event'][0] = event('test', "pm.test('Created or replayed', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));")
+                item['event'].append(event('test', capture('customer_booking_id', 'pm.response.json().data.id')))
             if path.startswith('/customer/') and not public:
                 item['request']['auth'] = {'type': 'bearer', 'bearer': [{'key': 'token', 'value': '{{customer_access_token}}', 'type': 'string'}]}
             if path in ('/customer/auth/register', '/customer/auth/login'):
@@ -181,7 +185,7 @@ def reference(spec):
 def environment(staging):
     base = 'https://api-staging.example.com/api/v1' if staging else 'http://127.0.0.1:8081/api/v1'
     origin = 'https://web-staging.example.com' if staging else 'http://localhost:5173'
-    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'customer_booking_id': ''}
+    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
     values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out', 'ledger_request_id', 'payment_entry_id'], ''))
     return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token', 'customer_password', 'customer_new_password', 'customer_access_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
 

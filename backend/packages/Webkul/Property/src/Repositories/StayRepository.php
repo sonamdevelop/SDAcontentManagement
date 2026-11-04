@@ -41,6 +41,26 @@ class StayRepository extends Repository
         return $q->findOrFail($id);
     }
 
+    public function customerRoom(int $id, bool $lock = false, bool $published = true)
+    {
+        $parent = RoomType::query()->whereKey($id)->value('stay_id');
+        abort_unless($parent, 404);
+        $query = $this->model->newQuery();
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+        $stay = $query->findOrFail($parent);
+        $rooms = $stay->rooms();
+        if ($lock) {
+            $rooms->lockForUpdate();
+        }
+        $room = $rooms->findOrFail($id);
+        abort_if($published && (! $stay->active || ! $stay->is_published || ! $room->active || ! $room->is_published), 404);
+        $room->setRelation('stay', $stay);
+
+        return $room;
+    }
+
     public function room(int $id, bool $lock = false)
     {
         // All writes lock parent stay before room, including edits and cancellations.

@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added customer room quotes, reviewed zero-advance reservations and owned confirmation with shared inventory locks, idempotent retries and explicit customer audit actors.
+
 * [feature] Added separate customer signup/login/profile/password changes and read-only customer-owned booking views with independent tokens and no automatic legacy email linking.
 
 * [feature] Added stay/room marketing content, public photo galleries and publication controls with a scoped staff editor and anonymous stay catalogue/detail pages.

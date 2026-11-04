@@ -94,3 +94,8 @@ The real ledger journey opens a printable statement after payment/refund/reversa
 A fifth real-service journey publishes stay/room text and photos, verifies a parent alone is hidden, opens the public catalogue/detail without staff credentials, checks an actual uploaded image loads, then unpublishes the stay and confirms public detail returns unavailable. Stay/room photos join the synthetic file backup/restore checksum checks.
 
 A sixth real-service journey checks customer registration/profile, empty owned bookings, password revocation and logout while retaining a separately authenticated staff session. API fixtures separately verify positive owned reads and denial of foreign/unlinked matching-email bookings. Customer rows join synthetic DB restore-count checks.
+
+The seventh real API journey creates/publishes a room, registers an independent
+customer, quotes/reviews/confirms a zero-advance reservation, reloads owned detail,
+checks inventory exhaustion and verifies customer actor history in the staff view.
+All mutations use a unique synthetic acceptance database; native apps are unverified.
