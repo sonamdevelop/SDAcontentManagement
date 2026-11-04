@@ -1,3 +1,7 @@
+import { PopularityPage } from './PopularityWorkspace';
+import { ModerationQueue, ModerationPage } from './ModerationWorkspace';
+import { CancellationQueue } from './CancellationWorkspace';
+import { StayContentPage } from './StayContentWorkspace';
 import { StayStatementPage } from './StatementWorkspace';
 import { PaymentFollowUpPage } from './PaymentFollowUpWorkspace';
 import { StayOperationsPage } from './OperationsWorkspace';
@@ -129,6 +133,9 @@ export function StaffApp() {
         <Route element={<Shell />}>
           <Route index element={<Dashboard />} />
           <Route path="login" element={<Navigate to="/staff" replace />} />
+          <Route path="property-favourites" element={<PopularityPage />} />
+          <Route path="property-moderation" element={<ModerationQueue />} />
+          <Route path="properties/:id/moderation" element={<ModerationPage />} />
           <Route path="properties" element={<PropertyList />} />
           <Route path="properties/new" element={<PropertyEditor />} />
           <Route path="properties/:id/documents" element={<DocumentPage />} />
@@ -140,7 +147,9 @@ export function StaffApp() {
           <Route path="stay-payment-follow-ups" element={<PaymentFollowUpPage />} />
           <Route path="stay-operations" element={<StayOperationsPage />} />
           <Route path="stay-calendar" element={<StayCalendarPage />} />
+          <Route path="stays/:id/content" element={<StayContentPage />} />
           <Route path="stays" element={<StayList />} />
+          <Route path="stay-cancellation-requests" element={<CancellationQueue />} />
           <Route path="stay-bookings" element={<BookingList />} />
           <Route path="stay-bookings/new" element={<BookingCreate />} />
           <Route path="stay-bookings/:id/statement" element={<StayStatementPage />} />
@@ -272,6 +281,12 @@ function Shell() {
                 </NavLink>
               ),
           )}
+          {can(profile, 'properties') && (
+            <NavLink to="/staff/property-favourites">Property popularity</NavLink>
+          )}
+          {can(profile, 'properties') && (
+            <NavLink to="/staff/property-moderation">Property moderation</NavLink>
+          )}
           {can(profile, 'properties.create') && (
             <NavLink to="/staff/properties/new">Add property</NavLink>
           )}
@@ -295,6 +310,9 @@ function Shell() {
           ) && <NavLink to="/staff/stay-payment-follow-ups">Payment follow-up</NavLink>}
           {['stays', 'stay-bookings', 'stay-bookings.view'].every((p) => can(profile, p)) && (
             <NavLink to="/staff/stay-operations">Stay operations</NavLink>
+          )}
+          {['stay-bookings', 'stay-bookings.view'].every((p) => can(profile, p)) && (
+            <NavLink to="/staff/stay-cancellation-requests">Cancellation requests</NavLink>
           )}
           {can(profile, 'stay-bookings') && (
             <NavLink to="/staff/stay-bookings">Stay bookings</NavLink>
@@ -503,9 +521,14 @@ function PropertyList() {
                   {p.city} · {formatPrice(p.price, p.currency)} · {label(p.status)}
                 </p>
                 <p>
-                  {p.is_published ? 'Published' : 'Unpublished'} · Enquiries{' '}
+                  Publication {p.is_published ? 'requested' : 'off'} · Enquiries{' '}
                   {p.accepts_enquiries ? 'enabled' : 'disabled'}
                 </p>
+                <p>
+                  Moderation:{' '}
+                  {p.moderation_status ? label(p.moderation_status) : 'Status unavailable'}
+                </p>
+                <Link to={`/staff/properties/${p.id}/moderation`}>Review listing and history</Link>
                 {can(profile, 'properties.edit') && (
                   <Link to={`/staff/properties/${p.id}/edit`}>Edit property</Link>
                 )}
@@ -770,9 +793,17 @@ function PropertyFields({ property, id }: { property: AdminProperty | null; id?:
     <>
       <Link to="/staff/properties">← Properties</Link>
       <h1>{id ? 'Edit property' : 'Add property'}</h1>
+      {property && (
+        <p>
+          Moderation:{' '}
+          {property.moderation_status ? label(property.moderation_status) : 'Status unavailable'} ·{' '}
+          <Link to={`/staff/properties/${property.id}/moderation`}>Review listing and history</Link>
+        </p>
+      )}
       <p>
-        Publishing controls website visibility. Enquiries require both publication and an available
-        property.
+        New listings and public content/photo changes require moderation approval. The publication
+        toggle requests website visibility; approval, available status and active staff are also
+        required.
       </p>
       <form className="staff-property-form" onSubmit={submit}>
         <fieldset disabled={busy}>

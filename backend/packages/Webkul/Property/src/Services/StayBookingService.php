@@ -10,6 +10,7 @@ use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Repositories\StayRepository;
 use Webkul\Property\Support\DealMoney;
 use Webkul\Property\Support\StayAttendance;
+use Webkul\Property\Support\StayBookingQuote;
 use Webkul\Property\Support\StayCalendar;
 use Webkul\Property\Support\StayDates;
 
@@ -90,18 +91,14 @@ class StayBookingService
                 if (! $room->active || ! $room->stay->active) {
                     $this->invalid('room_type_id', 'inactive');
                 }
-                if ($data['guests'] > $data['rooms'] * $room->capacity) {
-                    $this->invalid('guests', 'capacity');
+                try {
+                    $total = StayBookingQuote::cents($room->nightly_rate, $data['expected_rate'], $data['rooms'], $data['guests'], $room->capacity, $nights);
+                } catch (\InvalidArgumentException $e) {
+                    $field = match ($e->getMessage()) {
+                        'capacity' => 'guests', 'rate-changed', 'positive' => 'expected_rate', default => 'rooms'
+                    };
+                    $this->invalid($field, $e->getMessage());
                 }
-                if ($data['expected_rate'] !== $room->nightly_rate) {
-                    $this->invalid('expected_rate', 'rate-changed');
-                }
-                $factor = $nights * $data['rooms'];
-                $rate = DealMoney::cents($room->nightly_rate);
-                if ($rate > intdiv(999999999999999, $factor)) {
-                    $this->invalid('rooms', 'amount-limit');
-                }
-                $total = $rate * $factor;
                 if (DealMoney::cents($data['advance']) > $total) {
                     $this->invalid('advance', 'advance');
                 }
@@ -134,9 +131,9 @@ class StayBookingService
         return $record->load('events');
     }
 
-    public function cancel(int $id, string $reason)
+    public function cancel(int $id, string $reason, ?int $approvedRequestId = null)
     {
-        return DB::transaction(function () use ($id, $reason) {
+        return DB::transaction(function () use ($id, $reason, $approvedRequestId) {
             $initial = $this->bookings->authorized($id);
             $this->stays->room($initial->room_type_id, true);
             $record = $this->bookings->authorized($id, true);
@@ -147,6 +144,7 @@ class StayBookingService
                 $this->invalid('status', 'started');
             }
             $record->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => $reason]);
+            app(StayCancellationService::class)->closePending($record, trans('admin::app.stay-cancellation.direct-cancel'), $approvedRequestId);
             $record->events()->create(['actor_id' => auth()->guard('user')->id(), 'action' => 'cancelled', 'changes' => ['status' => 'cancelled', 'cancellation_reason' => $reason]]);
 
             return $record->load('events');
@@ -176,6 +174,9 @@ class StayBookingService
                 $this->invalid('status', 'arrival-required');
             }
             $record->forceFill([$field => now()])->save();
+            if ($action === 'check-in') {
+                app(StayCancellationService::class)->closePending($record, trans('admin::app.stay-cancellation.arrived'));
+            }
             $record->events()->create([
                 'actor_id' => auth()->guard('user')->id(),
                 'action' => $action === 'check-in' ? 'checked_in' : 'checked_out',

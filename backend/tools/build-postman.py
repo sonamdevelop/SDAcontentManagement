@@ -107,6 +107,9 @@ if (pm.response.code === 200 && pm.response.json().data.length === 1) {
         request('36 Retained confirmed deal history', 'GET', '/admin/property-deals/{{deal_id}}', tests='pm.test("Property reference cleared, history preserved", () => pm.expect(pm.response.json().data.property_id).to.eql(null));'),
         request('37 Logout and clear token', 'POST', '/auth/logout', 204, body={}, tests="if (pm.response.code === 204) { pm.variables.set('revoked_token', pm.environment.get('access_token')); pm.environment.unset('access_token'); }"),
         request('38 Verify revoked token', 'GET', '/auth/me', 401, tests="pm.test('Revoked token was supplied', () => pm.expect(pm.variables.get('revoked_token')).to.be.a('string').and.not.empty); pm.variables.unset('revoked_token');")]
+    items.insert(4, request('05 Review publication', 'PATCH', '/admin/properties/{{property_id}}/moderation', body={'expected_revision': 1, 'decision': 'approved', 'reason': 'Reviewed integration listing'}))
+    for number, item in enumerate(items, 1):
+        item['name'] = f"{number:02d} " + item['name'].split(' ', 1)[1]
     items[-1]['request']['auth'] = {'type': 'bearer', 'bearer': [{'key': 'token', 'value': '{{revoked_token}}', 'type': 'string'}]}
     return collection('SDA — Complete integration workflow', 'Run on a disposable local/test or staging dataset with an explicitly authorized staff account. Creates fictional records and deletes only the captured fixture property/document; CRM contact/lead/enquiry/visit/deal audit history remains by API design. Choose the supplied environment, fill staff credentials and set document_file to the sample PDF for full coverage. No frontend or payment gateway is involved. See ../INTEGRATION.md.', [{'name': 'Complete workflow', 'item': items}], 'c4b17b47-cdbf-4dc8-82e4-f9dc4830718b')
 
@@ -114,6 +117,11 @@ if (pm.response.code === 200 && pm.response.json().data.length === 1) {
 def reference(spec):
     bodies = {
         ('post', '/auth/login'): LOGIN,
+        ('post', '/customer/auth/register'): {'name': '{{customer_name}}', 'email': '{{customer_email}}', 'password': '{{customer_password}}', 'password_confirmation': '{{customer_password}}'},
+        ('post', '/customer/auth/login'): {'email': '{{customer_email}}', 'password': '{{customer_password}}'},
+        ('patch', '/customer/me'): {'name': '{{customer_name}}', 'phone': '+91 9000000000'},
+        ('post', '/customer/password'): {'current_password': '{{customer_password}}', 'password': '{{customer_new_password}}', 'password_confirmation': '{{customer_new_password}}'},
+        ('post', '/customer/auth/logout'): {},
         ('post', '/admin/properties'): PROPERTY, ('put', '/admin/properties/{id}'): PROPERTY,
         ('post', '/properties/{id}/enquiries'): ENQUIRY,
         ('patch', '/admin/leads/{id}/assignment'): {'user_id': '{{user_id}}'},
@@ -132,6 +140,14 @@ def reference(spec):
         ('put', '/admin/stays/{id}'): {'name': 'Example stay', 'city': 'Dandeli', 'timezone': 'Asia/Kolkata', 'active': True},
         ('post', '/admin/stays/{stayId}/rooms'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
         ('put', '/admin/stays/{stayId}/rooms/{id}'): {'name': 'Deluxe', 'inventory': 2, 'capacity': 2, 'nightly_rate': '1000.25', 'active': True},
+        ('post', '/customer/auth/forgot-password'): {'email': '{{customer_email}}'},
+        ('post', '/customer/auth/verify-email'): {'email': '{{customer_email}}', 'token': '{{customer_action_token}}'},
+        ('post', '/customer/auth/reset-password'): {'email': '{{customer_email}}', 'token': '{{customer_action_token}}', 'password': '{{customer_new_password}}', 'password_confirmation': '{{customer_new_password}}'},
+        ('post', '/customer/bookings/{id}/cancellation-requests'): {'request_id': '{{customer_cancellation_request_id}}', 'reason': 'Travel plans changed'},
+        ('patch', '/admin/stay-cancellation-requests/{id}/decision'): {'decision': 'approve', 'decision_reason': 'Approved per guest request'},
+        ('patch', '/admin/properties/{id}/moderation'): {'expected_revision': '{{moderation_revision}}', 'decision': 'approved', 'reason': 'Reviewed listing'},
+        ('post', '/admin/properties/{id}/moderation/submit'): {'expected_revision': '{{moderation_revision}}', 'reason': 'Please reconsider this listing'},
+        ('post', '/customer/bookings'): {'request_id': '{{customer_reservation_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example customer', 'expected_rate': '1000.25'},
         ('post', '/admin/stay-bookings'): {'request_id': '{{stay_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example guest', 'guest_email': 'guest@example.test', 'expected_rate': '1000.25', 'advance': '100.01'},
         ('post', '/admin/stay-bookings/{id}/payments'): {'request_id': '{{ledger_request_id}}', 'amount': '100.01', 'method': 'cash', 'reference': 'Offline receipt', 'reason': 'Already received offline'},
         ('post', '/admin/stay-bookings/{id}/refunds'): {'request_id': '{{ledger_request_id}}', 'amount': '25.25', 'method': 'cash', 'reason': 'Already refunded offline'},
@@ -147,22 +163,34 @@ def reference(spec):
             if method not in ('get', 'post', 'put', 'patch', 'delete'):
                 continue
             doc = '/documents' in path
-            ident = 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith('/admin/stays/') else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
+            ident = 'property_id' if path.startswith('/customer/favourites/') else 'cancellation_request_id' if path.startswith('/admin/stay-cancellation-requests/') else 'customer_booking_id' if path.startswith('/customer/bookings/') else 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
             url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}').replace('{entryId}', '{{payment_entry_id}}')
             if path.endswith('/availability'):url += '?check_in={{check_in}}&check_out={{check_out}}'
             if path.endswith('/calendar'):url += '?from={{check_in}}&to={{check_out}}'
             if path.endswith('/payment-follow-ups'):url += '?view=collection'
             if path.endswith('/operations'):url += '?date={{check_in}}&view=arrivals'
-            public = path.startswith('/auth/login') or path.startswith('/properties')
+            public = path in ('/customer/auth/register', '/customer/auth/login', '/customer/auth/forgot-password', '/customer/auth/reset-password', '/customer/auth/verify-email') or path.startswith('/auth/login') or path.startswith('/properties') or path.startswith('/stays')
             expected = min(int(c) for c in operation.get('responses', {}) if c.isdigit() and 200 <= int(c) < 300)
             if method == 'post' and path in ('/admin/property-deals', '/admin/stay-bookings'):expected = 201
             if method == 'post' and path.startswith('/admin/stay-bookings/') and ('/payments' in path or path.endswith('/refunds')):expected = 201
-            item = request(method.upper()+' '+path, method.upper(), url, expected, bodies.get((method, path)), public, form=DOCUMENT if doc and method == 'post' else None)
+            item = request(method.upper()+' '+path, method.upper(), url, expected, bodies.get((method, path)), public, form=([{'key': 'description', 'value': 'Public marketing description', 'type': 'text'}, {'key': 'rules', 'value': 'Quiet hours after 10 pm', 'type': 'text'}, {'key': 'amenities[0]', 'value': 'Parking', 'type': 'text'}, {'key': 'is_published', 'value': '0', 'type': 'text'}] if path.endswith('/content') and method == 'post' else DOCUMENT if doc and method == 'post' else None))
             if operation.get('requestBody', {}).get('required') and item['request'].get('body') is None:
                 raise ValueError('Missing required request example: '+method.upper()+' '+path)
+            if method == 'post' and path == '/customer/bookings/{id}/cancellation-requests':
+                item['event'][0] = event('test', "pm.test('Created or replayed', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));")
+                item['event'].append(event('test', capture('cancellation_request_id')))
+            if method == 'post' and path == '/customer/bookings':
+                item['event'][0] = event('test', "pm.test('Created or replayed', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));")
+                item['event'].append(event('test', capture('customer_booking_id', 'pm.response.json().data.id')))
+            if path.startswith('/customer/') and not public:
+                item['request']['auth'] = {'type': 'bearer', 'bearer': [{'key': 'token', 'value': '{{customer_access_token}}', 'type': 'string'}]}
+            if path in ('/customer/auth/register', '/customer/auth/login'):
+                item['event'].append(event('test', capture('customer_access_token', 'pm.response.json().data.access_token')))
+            if path in ('/customer/password', '/customer/auth/logout', '/customer/auth/reset-password'):
+                item['event'].append(event('test', "if (pm.response.code === 204) pm.environment.unset('customer_access_token');"))
             item['request']['description'] = operation.get('summary', '')+'\n\n'+operation.get('description', '')+'\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives.'
             if method == 'post' and path == '/auth/login':item['event'].append(event('test', capture('access_token', 'pm.response.json().data.access_token')))
-            group = 'Stays and bookings' if path.startswith(('/admin/stays', '/admin/stay-')) else 'Auth' if path.startswith('/auth') else 'Documents' if doc else 'Deals' if 'property-deals' in path else 'Visits' if 'site-visit' in path else 'Reports' if '/reports/' in path else 'Leads and follow-ups' if any(x in path for x in ['lead', 'follow-up']) else 'Properties and enquiries'
+            group = 'Customer accounts and bookings' if path.startswith('/customer/') else 'Stays and bookings' if path.startswith(('/admin/stays', '/admin/stay-', '/stays')) else 'Auth' if path.startswith('/auth') else 'Documents' if doc else 'Deals' if 'property-deals' in path else 'Visits' if 'site-visit' in path else 'Reports' if '/reports/' in path else 'Leads and follow-ups' if any(x in path for x in ['lead', 'follow-up']) else 'Properties and enquiries'
             folders.setdefault(group, []).append(item)
     return collection('SDA — API reference', 'Every documented API operation, grouped by module. Select individual requests and supply valid current IDs/body fields; use the separate Complete integration workflow for ordered execution. Mutation/deletion requests operate on the records you supply. Credentials and token are environment variables, blank in checked-in examples.', [{'name': k, 'item': v} for k, v in folders.items()], '6e65aa01-c2b7-49fa-b544-c245712b48a3')
 
@@ -170,9 +198,9 @@ def reference(spec):
 def environment(staging):
     base = 'https://api-staging.example.com/api/v1' if staging else 'http://127.0.0.1:8081/api/v1'
     origin = 'https://web-staging.example.com' if staging else 'http://localhost:5173'
-    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': ''}
+    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'moderation_revision': '', 'customer_cancellation_request_id': '', 'cancellation_request_id': '', 'customer_action_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
     values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out', 'ledger_request_id', 'payment_entry_id'], ''))
-    return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
+    return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token', 'customer_password', 'customer_new_password', 'customer_access_token', 'customer_action_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
 
 
 def sample_pdf():

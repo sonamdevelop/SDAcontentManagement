@@ -15,7 +15,12 @@ class ApiExceptionHandler extends AdminHandler
             // Keep the API's HTTP statuses/headers and JSON errors independent of that UI policy.
             $request->headers->set('Accept', 'application/json');
 
-            return app(LaravelHandler::class)->render($request, $exception);
+            $response = app(LaravelHandler::class)->render($request, $exception);
+            if ($request->is('api/v1/customer/*')) {
+                $response->headers->set('Cache-Control', 'no-store');
+            }
+
+            return $response;
         }
 
         return parent::render($request, $exception);

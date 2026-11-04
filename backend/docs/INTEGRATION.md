@@ -1,7 +1,7 @@
 # Web and mobile API integration kit
 
 The public property website now lives in [web/](../../web/README.md) and connects
-to catalogue, detail and enquiry APIs. Staff/mobile integration remains separate.
+to catalogue, detail and enquiry APIs. The staff web workspace is integrated; native/mobile integration remains separate.
 The backend is ready for further client integration testing. This kit supplies requests,
 configuration examples and a repeatable journey. It does not deploy a staging
 server or migrate the existing Firebase/mobile accounts.
@@ -34,7 +34,7 @@ mobile HTTP clients, but the demo's preflight assertion tests the configured ori
 Import these files from `docs/postman/`:
 
 - `SDA-workflow.postman_collection.json`: ordered, executable complete journey.
-- `SDA-reference.postman_collection.json`: all 42 documented operations; select
+- `SDA-reference.postman_collection.json`: all 93 documented operations; select
   individual requests after filling the relevant IDs. It is not an ordered runner.
 - `SDA-local.postman_environment.json` or `SDA-staging.postman_environment.json`.
 
@@ -69,7 +69,7 @@ fictional property/customer enquiry. It then tests:
 8. Agent report, document/property deletion, retained deal audit history, logout
    and verification that the revoked token no longer works.
 
-Successful execution with the sample PDF sends 38 requests and checks 50
+Successful execution with the sample PDF sends 39 requests and checks 51
 assertions. Use a disposable local/test or staging dataset: the demo creates
 fictional records. It deletes only the property/document IDs captured during that
 run. CRM customer, enquiry, follow-up, visit and financial audit history remain by
@@ -198,17 +198,16 @@ This kit adds CORS/configuration only; it needs no new database migration.
 Do not assume the existing Firebase app's users have matching Laravel staff IDs,
 roles or ownership. Public catalogue/enquiry requests need no staff login. Before
 connecting private mobile operations, decide how those accounts map to the staff
-API or implement the required separate customer authentication workflow. No
-customer signup or Firebase-token exchange endpoint currently exists.
+API or implement the required separate customer authentication workflow. Customer signup now exists in a separate customer domain; no Firebase-token exchange endpoint exists.
 
 Public catalogue/detail/enquiry pages and the staff login, property editor,
-photos/publication, overview, enquiry/lead lists and lead detail/assignment/stage/notes/tasks are implemented in
+photos/publication/moderation, overview, enquiry/lead lists and lead detail/assignment/stage/notes/tasks are implemented in
 `web/`. Frontend unit/integration and desktop/mobile browser checks cover these
 flows, including real Laravel HTTP verification in an isolated test database.
 Site visit scheduling, filtered lists, rescheduling/assignment, outcomes, feedback
 and audit history are also connected in the staff frontend. Property document
 upload, authenticated download, filters and confirmed deletion are connected too.
-Deal management remains future UI work. Lead stages can change
+Deal management, staff stay bookings, attendance, calendar/operations, offline ledger, payment follow-up, booking finder and printable statements are now connected in the staff web workspace. Lead stages can change
 within the current pipeline; cross-pipeline moves and email/push follow-up
 notifications are not part of the frontend.
 Mobile wiring and device acceptance checks follow after its auth/account mapping
@@ -216,3 +215,19 @@ is defined.
 
 See [API.md](API.md) and [openapi.json](openapi.json) for complete request schemas,
 permissions, validation and current feature limitations.
+
+See [the current feature/readiness audit](READINESS.md) for reference parity, native-app gaps and the remaining development sequence.
+
+Public stay discovery (`GET /stays`, `/stays/{id}`) and scoped staff content/publication are now implemented. Customer auth and authenticated reservations are now implemented; see [stay content rules](STAYS.md#rich-stay-content-and-public-catalogue).
+
+Customer clients use the separate `/customer/*` account/owned-read APIs and customer bearer tokens; staff tokens are never substitutes. Postman customer requests use customer_access_token/customer credentials rather than staff variables. See [customer identity rules](CUSTOMERS.md). Customer reservation creation is implemented; live SMTP delivery verification remains pending. See [reservation rules](RESERVATIONS.md).
+
+Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
+
+Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](CANCELLATIONS.md).
+
+Property publication now requires moderation approval. Public content/photo edits require a fresh review; private edits and deal status retain approval. Staff use the scoped Property moderation queue with reasons, snapshots and safe revision retries. Existing published listings retain legacy approval. See [moderation rules](MODERATION.md).
+
+The ordered Postman workflow now includes explicit approval immediately after fixture creation. The selected staff role must grant properties.moderate; sign in again for the new properties:moderate token ability.
+
+Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](FAVOURITES.md).

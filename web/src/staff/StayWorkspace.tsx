@@ -157,6 +157,7 @@ function StayCard({
       </p>
       {manage && (
         <>
+          <Link to={`/staff/stays/${stay.id}/content`}>Edit public stay content</Link>{' '}
           <button onClick={onEdit}>Edit stay</button>{' '}
           <button onClick={() => setEdit(null)}>Add room type</button>
         </>
@@ -728,6 +729,23 @@ function BookingContent({ initial }: { initial: Booking }) {
   return (
     <>
       <h1>Stay booking #{booking.id}</h1>
+      {(booking.cancellation_requests || []).length > 0 && (
+        <section className="staff-panel">
+          <h2>Customer cancellation requests</h2>
+          {booking.cancellation_requests!.map((r) => (
+            <p key={r.id}>
+              Request #{r.id}: {label(r.status)} · {r.reason}
+              {r.decision_reason && ` · Response: ${r.decision_reason}`}
+            </p>
+          ))}
+          {can(profile, 'stay-bookings') && (
+            <Link to={`/staff/stay-cancellation-requests?booking_id=${booking.id}`}>
+              Review customer requests
+            </Link>
+          )}
+        </section>
+      )}
+
       <section className="staff-panel">
         <h2>
           {booking.stay_name} — {booking.room_name}
@@ -836,7 +854,12 @@ function BookingContent({ initial }: { initial: Booking }) {
             <li key={e.id}>
               <strong>{label(e.action)}</strong>
               <p>
-                {new Date(e.created_at).toLocaleString()} · Staff #{e.actor_id ?? 'unknown'}
+                {new Date(e.created_at).toLocaleString()} ·{' '}
+                {e.customer_actor_id != null
+                  ? `Customer #${e.customer_actor_id}`
+                  : e.actor_id != null
+                    ? `Staff #${e.actor_id}`
+                    : 'Actor unavailable'}
               </p>
               <dl>
                 {Object.entries(e.changes).map(([k, v]) => (

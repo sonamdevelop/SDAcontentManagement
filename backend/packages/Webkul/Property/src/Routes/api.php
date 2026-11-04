@@ -2,19 +2,61 @@
 
 use Illuminate\Support\Facades\Route;
 use Webkul\Property\Http\Controllers\AuthController;
+use Webkul\Property\Http\Controllers\CustomerAccountController;
+use Webkul\Property\Http\Controllers\CustomerActionController;
+use Webkul\Property\Http\Controllers\CustomerStayBookingController;
 use Webkul\Property\Http\Controllers\EnquiryApiController;
 use Webkul\Property\Http\Controllers\FollowUpApiController;
 use Webkul\Property\Http\Controllers\LeadApiController;
 use Webkul\Property\Http\Controllers\PropertyApiController;
 use Webkul\Property\Http\Controllers\PropertyDealApiController;
 use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
+use Webkul\Property\Http\Controllers\PropertyFavouriteController;
+use Webkul\Property\Http\Controllers\PropertyModerationController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
 use Webkul\Property\Http\Controllers\StayApiController;
+use Webkul\Property\Http\Controllers\StayCancellationController;
+use Webkul\Property\Http\Controllers\StayContentController;
 use Webkul\Property\Http\Controllers\StayOperationsController;
 use Webkul\Property\Http\Controllers\StayPaymentController;
 use Webkul\Property\Http\Controllers\StayPaymentFollowUpController;
 use Webkul\Property\Http\Middleware\ApiAccess;
+use Webkul\Property\Http\Middleware\CustomerAccess;
+
+Route::prefix('customer')->name('customer.')->group(function () {
+    $actions = CustomerActionController::class;
+    Route::post('auth/forgot-password', [$actions, 'forgot'])->middleware('throttle:customer-recovery')->name('forgot-password');
+    Route::post('auth/reset-password', [$actions, 'reset'])->middleware('throttle:customer-action-complete')->name('reset-password');
+    Route::post('auth/verify-email', [$actions, 'verify'])->middleware('throttle:customer-action-complete')->name('verify-email');
+    Route::post('email/verification', [$actions, 'resend'])->middleware([CustomerAccess::class, 'throttle:customer-verification'])->name('verification-resend');
+    $account = CustomerAccountController::class;
+    $access = CustomerAccess::class;
+    Route::post('auth/register', [$account, 'register'])->middleware('throttle:customer-register')->name('register');
+    Route::post('auth/login', [$account, 'login'])->middleware('throttle:customer-login')->name('login');
+    Route::middleware($access)->group(function () use ($account) {
+        Route::get('me', [$account, 'me'])->name('me');
+        Route::patch('me', [$account, 'update'])->name('profile');
+        Route::post('auth/logout', [$account, 'logout'])->name('logout');
+        Route::post('password', [$account, 'password'])->middleware('throttle:customer-password')->name('password');
+    });
+    $favourites = PropertyFavouriteController::class;
+    Route::get('favourites', [$favourites, 'index'])->middleware($access.':customer:favourites')->name('favourites.index');
+    Route::get('favourites/{id}', [$favourites, 'status'])->whereNumber('id')->middleware($access.':customer:favourites')->name('favourites.status');
+    Route::put('favourites/{id}', [$favourites, 'store'])->whereNumber('id')->middleware([$access.':customer:favourites', 'throttle:customer-favourites'])->name('favourites.store');
+    Route::delete('favourites/{id}', [$favourites, 'destroy'])->whereNumber('id')->middleware([$access.':customer:favourites', 'throttle:customer-favourites'])->name('favourites.destroy');
+    Route::get('rooms/{id}/availability', [CustomerStayBookingController::class, 'availability'])->whereNumber('id')->middleware($access.':customer:bookings')->name('rooms.availability');
+    Route::post('bookings', [CustomerStayBookingController::class, 'store'])->middleware([$access.':customer:bookings', $access.':customer:bookings:create', 'throttle:customer-reservation'])->name('bookings.store');
+    Route::get('bookings', [CustomerStayBookingController::class, 'index'])->middleware($access.':customer:bookings')->name('bookings.index');
+    Route::post('bookings/{id}/cancellation-requests', [StayCancellationController::class, 'store'])->whereNumber('id')->middleware([$access.':customer:bookings', $access.':customer:bookings:create', 'throttle:customer-cancellation'])->name('bookings.cancellation-request');
+    Route::get('bookings/{id}', [CustomerStayBookingController::class, 'show'])->whereNumber('id')->middleware($access.':customer:bookings')->name('bookings.show');
+});
+
+Route::get('stays', [StayContentController::class, 'index'])->name('stays.index');
+Route::get('stays/{id}', [StayContentController::class, 'show'])->whereNumber('id')->name('stays.show');
+Route::get('admin/stays/{id}/content', [StayContentController::class, 'edit'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('admin.stays.content');
+Route::post('admin/stays/{stayId}/content', [StayContentController::class, 'save'])->whereNumber('stayId')->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('admin.stays.content-save');
+Route::post('admin/stays/{stayId}/rooms/{id}/content', [StayContentController::class, 'save'])->whereNumber(['stayId', 'id'])->middleware(ApiAccess::class.':stays.manage,stays:write,stays')->name('admin.rooms.content-save');
 
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:property-api-login')->name('auth.login');
 Route::get('auth/me', [AuthController::class, 'me'])->middleware(ApiAccess::class)->name('auth.me');
@@ -23,6 +65,11 @@ Route::get('properties', [PropertyApiController::class, 'index'])->name('propert
 Route::get('properties/{id}', [PropertyApiController::class, 'show'])->whereNumber('id')->name('properties.show');
 Route::post('properties/{id}/enquiries', [EnquiryApiController::class, 'store'])->whereNumber('id')->middleware('throttle:property-api-enquiries')->name('enquiries.store');
 Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('property-favourites', [PropertyFavouriteController::class, 'popularity'])->middleware(ApiAccess::class.':properties,properties:read')->name('favourites.popularity');
+    Route::get('property-moderation', [PropertyModerationController::class, 'index'])->middleware(ApiAccess::class.':properties,properties:read')->name('moderation.index');
+    Route::get('properties/{id}/moderation', [PropertyModerationController::class, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':properties,properties:read')->name('moderation.show');
+    Route::patch('properties/{id}/moderation', [PropertyModerationController::class, 'decide'])->whereNumber('id')->middleware(ApiAccess::class.':properties.moderate,properties:moderate,properties')->name('moderation.decide');
+    Route::post('properties/{id}/moderation/submit', [PropertyModerationController::class, 'submit'])->whereNumber('id')->middleware(ApiAccess::class.':properties.edit,properties:write,properties')->name('moderation.submit');
     Route::get('properties', [PropertyApiController::class, 'adminIndex'])->middleware(ApiAccess::class.':properties,properties:read')->name('properties.index');
     Route::get('properties/{id}', [PropertyApiController::class, 'adminShow'])->whereNumber('id')->middleware(ApiAccess::class.':properties,properties:read')->name('properties.show');
     Route::post('properties', [PropertyApiController::class, 'store'])->middleware(ApiAccess::class.':properties.create,properties:write')->name('properties.store');
@@ -87,6 +134,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('stay-rooms/{id}/calendar', [$stays, 'calendar'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('rooms.calendar');
     Route::get('stay-rooms/{id}/availability', [$stays, 'availability'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('rooms.availability');
     Route::get('stay-bookings', [$stays, 'index'])->middleware(ApiAccess::class.':stay-bookings,bookings:read')->name('bookings.index');
+    Route::get('stay-cancellation-requests', [StayCancellationController::class, 'index'])->middleware(ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view')->name('cancellation-requests.index');
+    Route::patch('stay-cancellation-requests/{id}/decision', [StayCancellationController::class, 'decision'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.cancel,bookings:write,stay-bookings.view')->name('cancellation-requests.decision');
     Route::get('stay-bookings/{id}', [$stays, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.view,bookings:read')->name('bookings.show');
     Route::post('stay-bookings', [$stays, 'store'])->middleware([ApiAccess::class.':stay-bookings.create,bookings:write,stay-bookings.view', ApiAccess::class.':stays,stays:read'])->name('bookings.store');
     Route::patch('stay-bookings/{id}/check-in', [$stays, 'checkIn'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.check-in,bookings:write,stay-bookings.view')->name('bookings.check-in');

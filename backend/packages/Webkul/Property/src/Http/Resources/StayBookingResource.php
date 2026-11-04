@@ -3,6 +3,7 @@
 namespace Webkul\Property\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Webkul\Property\Repositories\StayCancellationRepository;
 use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Support\StayAttendance;
 
@@ -24,6 +25,9 @@ class StayBookingResource extends JsonResource
         $summary = $this->resource->getAttribute('ledger_snapshot') ?? app(StayPaymentRepository::class)->summary($this->resource);
         unset($data['ledger_snapshot']);
         $data = array_merge($data, $summary);
+        if ($this->relationLoaded('events')) {
+            $data['cancellation_requests'] = $this->customer_id !== null ? app(StayCancellationRepository::class)->history($this->id) : [];
+        }
         if (! $this->relationLoaded('events')) {
             foreach (['request_id', 'guest_name', 'guest_email', 'guest_phone', 'payment_reference', 'notes', 'cancellation_reason', 'created_by'] as $key) {
                 unset($data[$key]);

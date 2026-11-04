@@ -405,7 +405,8 @@
               "maximum": 100
             }
           }
-        ]
+        ],
+        "description": " Public listing/enquiry access requires approved moderation in addition to publication, available status and active agent. Review metadata/history are never public."
       }
     },
     "/properties/{id}": {
@@ -469,7 +470,8 @@
               "minimum": 1
             }
           }
-        ]
+        ],
+        "description": " Public listing/enquiry access requires approved moderation in addition to publication, available status and active agent. Review metadata/history are never public."
       }
     },
     "/properties/{id}/enquiries": {
@@ -553,7 +555,8 @@
               "minimum": 1
             }
           }
-        ]
+        ],
+        "description": " Public listing/enquiry access requires approved moderation in addition to publication, available status and active agent. Review metadata/history are never public."
       }
     },
     "/admin/properties": {
@@ -6564,6 +6567,2183 @@
           }
         }
       }
+    },
+    "/stays": {
+      "get": {
+        "operationId": "publicStaysIndex",
+        "summary": "List active published stays",
+        "description": "Anonymous. Exact city filter, ascending stay ID, only active published stays with at least one active published room. Starting rate/count consider only visible rooms. Omits inventory quantity, owners, booking/guest/payment metadata. No online booking or date availability.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicStay"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    },
+                    "links": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid payload or filters"
+          }
+        },
+        "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12
+            }
+          }
+        ]
+      }
+    },
+    "/stays/{id}": {
+      "get": {
+        "operationId": "publicStaysShow",
+        "summary": "Read public stay and visible room details",
+        "description": "Anonymous curated marketing content. Parent and rooms must both be active/published; no eligible rooms returns 404. No staff scope or fallback.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicStayDetail"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid payload or filters"
+          },
+          "404": {
+            "description": "Missing, unpublished or out-of-scope record"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/admin/stays/{id}/content": {
+      "get": {
+        "operationId": "adminStayContentShow",
+        "summary": "Read scoped stay content for editing",
+        "description": "Requires stays ACL and stays:read. Includes existing stay inventory/room records and unpublished content; no booking data.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Stay"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid payload or filters"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Denied permission/ability"
+          },
+          "404": {
+            "description": "Missing, unpublished or out-of-scope record"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "adminStayContentSave",
+        "summary": "Save stay marketing content",
+        "description": "Requires stays + stays.manage and stays:write. Source lock, own/group/global scope, maximum 10 gallery photos. Uploads cleaned on DB rollback; removed files deleted after commit on a best-effort basis. Public marketing files, not private documents.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Stay"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid payload or filters"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Denied permission/ability"
+          },
+          "404": {
+            "description": "Missing, unpublished or out-of-scope record"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/StayContentWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stays/{stayId}/rooms/{id}/content": {
+      "post": {
+        "operationId": "adminRoomContentSave",
+        "summary": "Save room marketing content",
+        "description": "Same content rules/permissions. Room must belong to the authorized stay. Parent then room lock order; inventory/rates/booking snapshots unchanged.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayRoom"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid payload or filters"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Denied permission/ability"
+          },
+          "404": {
+            "description": "Missing, unpublished or out-of-scope record"
+          }
+        },
+        "parameters": [
+          {
+            "name": "stayId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/StayContentWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/register": {
+      "post": {
+        "operationId": "customerRegister",
+        "summary": "Create a separate customer account",
+        "description": "Email is trimmed/lowercased; unique account. Password hashed server-side. Returns a 30-day token with customer:account and customer:bookings abilities. No staff user/role creation, email verification or old booking association. 5 attempts/minute/IP. All responses/errors no-store.",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerToken"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerRegister"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/login": {
+      "post": {
+        "operationId": "customerLogin",
+        "summary": "Sign in a customer",
+        "description": "Customer email/password only, not staff credentials or Firebase token exchange. Generic 401 on invalid/inactive accounts. Rate limit 5/minute per IP+normalized email and 20/minute/IP, plus global API throttle. Token issuance/password changes serialize on customer row.",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerToken"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerLogin"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/me": {
+      "get": {
+        "operationId": "customerMe",
+        "summary": "Read own customer profile",
+        "description": "Customer bearer token and customer:account ability. No session-cookie or staff-token fallback. no-store.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "customerProfile",
+        "summary": "Update own customer name/phone",
+        "description": "Current authenticated customer only. Email immutable; ignores privilege/ownership fields. Does not rewrite historical booking snapshots.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerProfileWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/logout": {
+      "post": {
+        "operationId": "customerLogout",
+        "summary": "Revoke current customer token",
+        "description": "Customer:account ability. Other customer sessions and all staff tokens remain valid. No cookie-based auth.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/customer/password": {
+      "post": {
+        "operationId": "customerPassword",
+        "summary": "Change password and revoke all customer sessions",
+        "description": "Customer:account ability, current password required, 5 attempts/minute/IP. All customer tokens revoked atomically on success, including current one. Staff tokens unaffected. Password recovery/reset by email is not implemented.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerPasswordWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/bookings": {
+      "get": {
+        "operationId": "customerBookingsIndex",
+        "summary": "Read my explicitly owned bookings",
+        "description": "Requires customer:bookings ability. Explicit nullable customer_id FK only; ignores any client-supplied owner filters. Newest booking ID first; current ledger summaries in one read transaction. Inactive/unpublished sources remain readable by owner. Existing bookings default unlinked; no email-based claiming.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CustomerStayBooking"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "customerBookingsStore",
+        "summary": "Create my confirmed reservation without online payment",
+        "description": "Requires both customer:bookings and customer:bookings:create. Older customer sessions must sign in again. Five creations per minute per IP. Uses shared staff inventory locks and price calculation; insufficient inventory returns 422. UUID binds normalized payload and authenticated owner: exact replay returns current owned booking with 200, fresh reservation 201, changed payload/other owner/staff UUID 409. Preserve UUID on uncertain network/server failure; check My bookings before starting again after reload. Creates zero advance, no payment receipt; created_by and staff actor_id are null with explicit customer_actor_id/customer_created history. Never trusts client ownership. New source must be active/published; replay remains possible after unpublication or cancellation. New reservations require email_verified_at; unverified accounts receive 422 email validation. Quotes, owned reads and exact prior UUID replay remain available.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerReservationWrite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerStayBooking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Idempotent replay",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerStayBooking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing ability; older sessions must sign in again"
+          },
+          "404": {
+            "description": "Room unavailable or unpublished"
+          },
+          "422": {
+            "description": "Invalid dates, rate changed, capacity or prohibited fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "409": {
+            "description": "UUID conflicts with another payload/owner"
+          }
+        }
+      }
+    },
+    "/customer/bookings/{id}": {
+      "get": {
+        "operationId": "customerBookingShow",
+        "summary": "Read my booking detail",
+        "description": "Requires customer:bookings ability and exact customer_id ownership. Missing/foreign/unlinked records all return 404. A booking/ledger lock gives a consistent financial snapshot; no staff history or payment references returned. Read-only.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerStayBooking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, revoked or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing customer ability"
+          },
+          "422": {
+            "description": "Invalid fields/filters"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "404": {
+            "description": "Missing or not owned by the authenticated customer"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/customer/rooms/{id}/availability": {
+      "get": {
+        "operationId": "customerRoomAvailability",
+        "summary": "Quote published room availability for a customer",
+        "description": "Requires customer:bookings. Active published room and parent only; checkout is exclusive, 1–365 nights in stay timezone. Availability is checked again atomically on reservation. No inventory hold or payment.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "check_in",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "check_out",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerAvailability"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or wrong token/account type"
+          },
+          "403": {
+            "description": "Inactive customer or missing ability; older sessions must sign in again"
+          },
+          "404": {
+            "description": "Room unavailable or unpublished"
+          },
+          "422": {
+            "description": "Invalid dates, rate changed, capacity or prohibited fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/customer/auth/forgot-password": {
+      "post": {
+        "operationId": "customerForgotPassword",
+        "summary": "Request customer password recovery",
+        "description": "Public; normalized email. Same 202 for missing, inactive and delivery failures. Limit 10/min/IP and 3/min/normalized email globally. Persisted per-account/purpose cooldown 60 seconds. Default mail transport captures locally; production SMTP configuration is separate.",
+        "security": [],
+        "responses": {
+          "202": {
+            "description": "Accepted; does not disclose account eligibility",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 255
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/reset-password": {
+      "post": {
+        "operationId": "customerResetPassword",
+        "summary": "Reset password using a single-use email token",
+        "description": "Public POST only. Email+purpose-bound SHA-256 token, 60-minute expiry; one successful consumer. Changes password, revokes all customer sessions and consumes all outstanding customer action links atomically. Does not sign in or mark email verified. Does not affect staff. Limit 10 completion attempts/min/IP shared with verification.",
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "Completed; no automatic sign-in",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerResetWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/auth/verify-email": {
+      "post": {
+        "operationId": "customerVerifyEmail",
+        "summary": "Confirm customer email using a single-use token",
+        "description": "Public POST only, no GET mutation or automatic login. Same expiry, purpose binding and shared completion throttle as reset. Marks only matched active customer email verified; used links return 422. Email links carry token/email in a frontend fragment which must be removed before API calls.",
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "Completed; no automatic sign-in",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerActionWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/email/verification": {
+      "post": {
+        "operationId": "customerSendVerification",
+        "summary": "Request customer verification email",
+        "description": "Requires customer:account. Identity comes only from the token, ignores recipient overrides. Eligible active unverified accounts receive a link; already verified/cooldown returns same 202. Limit 5/min/IP plus persisted 60-second per-account cooldown. Configured trusted frontend origin only; ignores request Host and redirects.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted; does not disclose account eligibility",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid fields or expired/used/invalid link"
+          },
+          "429": {
+            "description": "Too many attempts"
+          },
+          "401": {
+            "description": "Missing/invalid/wrong account token"
+          },
+          "403": {
+            "description": "Inactive customer or missing account ability"
+          },
+          "503": {
+            "description": "Delivery unavailable; retry later"
+          }
+        }
+      }
+    },
+    "/customer/bookings/{id}/cancellation-requests": {
+      "post": {
+        "operationId": "customerCancellationRequest",
+        "summary": "Request staff-reviewed cancellation of my booking",
+        "description": "Requires customer:bookings and customer:bookings:create. Explicit ownership only; no verified-email requirement. One pending request per booking, before its local arrival date and prior to check-in. New UUID/reason returns 201; same customer/booking/trimmed reason/key returns current request with 200 even after terminal decisions/source changes. Different payload/key while pending returns 409. Retain UUID after uncertain outcomes. Pending/rejected requests leave booking, money and allocation unchanged. Five submissions/min/IP. Read history in own booking detail; no automatic email or refund.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "request_id",
+                  "reason"
+                ],
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "description": "Ownership and decision fields cannot be supplied."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Request created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayCancellationRequest"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success or exact replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayCancellationRequest"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing permission/ability or inactive account"
+          },
+          "404": {
+            "description": "Booking/request outside authorized scope or missing"
+          },
+          "409": {
+            "description": "UUID payload conflict, another pending request, or terminal decision conflict"
+          },
+          "422": {
+            "description": "Invalid reason/fields or booking started; approval is not permitted from local arrival date"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        }
+      }
+    },
+    "/admin/stay-cancellation-requests": {
+      "get": {
+        "operationId": "staffCancellationQueue",
+        "summary": "List scoped customer cancellation requests",
+        "description": "Requires stay-bookings and stay-bookings.view plus bookings:read. Booking own/group/global scope applies independently. Newest request first; status defaults pending, per_page defaults 20 (max100). Curated reasons and booking names/dates only; no guest contacts, payment data or tokens.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "closed"
+              ],
+              "default": "pending"
+            }
+          },
+          {
+            "name": "booking_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scoped queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StayCancellationQueueRow"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing permission/ability or inactive account"
+          },
+          "422": {
+            "description": "Invalid reason/fields or booking started; approval is not permitted from local arrival date"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        }
+      }
+    },
+    "/admin/stay-cancellation-requests/{id}/decision": {
+      "patch": {
+        "operationId": "staffCancellationDecision",
+        "summary": "Approve or reject a cancellation request",
+        "description": "Requires stay-bookings.cancel, stay-bookings.view and bookings:write; scoped booking and source checks. Body decision approve/reject plus required customer-visible decision_reason. Exact same terminal decision/reason replays without duplicate events; any changed terminal decision/reason returns 409. Approval calls the same locked staff cancellation transition, releases scheduled inventory, makes amount due zero and preserves all ledger entries/refund due; it never refunds money. Rejection keeps confirmed booking and permits a fresh customer UUID request. Direct staff cancellation/check-in closes a pending request with history. Approval after local arrival date fails 422; staff can still reject. Parent/room/booking/request locks serialize competing decisions.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "decision",
+                  "decision_reason"
+                ],
+                "properties": {
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "approve",
+                      "reject"
+                    ]
+                  },
+                  "decision_reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success or exact replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayCancellationRequest"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing permission/ability or inactive account"
+          },
+          "404": {
+            "description": "Booking/request outside authorized scope or missing"
+          },
+          "409": {
+            "description": "UUID payload conflict, another pending request, or terminal decision conflict"
+          },
+          "422": {
+            "description": "Invalid reason/fields or booking started; approval is not permitted from local arrival date"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        }
+      }
+    },
+    "/admin/property-moderation": {
+      "get": {
+        "operationId": "propertyModerationIndex",
+        "summary": "List scoped property publication reviews",
+        "description": "Requires properties / properties:read. Newest property first; status defaults pending. Queue excludes owner contacts, addresses and private uploads. Publication toggle alone does not establish public visibility.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
+              "default": "pending"
+            }
+          },
+          {
+            "name": "property_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scoped review queue; no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PropertyModerationRow"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing role permission or token ability"
+          },
+          "404": {
+            "description": "Property missing or outside own/group/global scope"
+          },
+          "422": {
+            "description": "Invalid fields/reason/revision"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/admin/properties/{id}/moderation": {
+      "get": {
+        "operationId": "propertyModerationShow",
+        "summary": "Inspect current listing content and moderation history",
+        "description": "Requires properties / properties:read. Transactional current revision and complete chronological review snapshots; no private owner contacts/address. Legacy retained publication has null actor and snapshot with legacy_approved action.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current scoped review state; no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyModeration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing role permission or token ability"
+          },
+          "404": {
+            "description": "Property missing or outside own/group/global scope"
+          },
+          "409": {
+            "description": "Stale revision or different terminal decision/resubmission payload"
+          },
+          "422": {
+            "description": "Invalid fields/reason/revision"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "propertyModerationDecide",
+        "summary": "Approve or reject the inspected listing revision",
+        "description": "Requires properties.moderate + properties and properties:moderate ability (sign in again for older staff sessions). expected_revision must equal current content revision. Pending revision only; exact same decision/reason on same revision replays with 200 and no duplicate history; any stale revision, opposing decision or changed reason returns 409. A public content/photo edit increments revision and hides listing pending fresh review. Approval still requires publication intent, available status and active agent for public catalogue/enquiries. Does not change deal/status or transfer money.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expected_revision",
+                  "decision",
+                  "reason"
+                ],
+                "properties": {
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4294967294
+                  },
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "rejected"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current scoped review state; no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyModeration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing role permission or token ability"
+          },
+          "404": {
+            "description": "Property missing or outside own/group/global scope"
+          },
+          "409": {
+            "description": "Stale revision or different terminal decision/resubmission payload"
+          },
+          "422": {
+            "description": "Invalid fields/reason/revision"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/admin/properties/{id}/moderation/submit": {
+      "post": {
+        "operationId": "propertyModerationSubmit",
+        "summary": "Resubmit rejected content for another review",
+        "description": "Requires properties.edit + properties and properties:write; does not grant approval. Rejected expected_revision becomes a new pending revision with a resubmission note. Exact retry by same actor/reason returns current state for that new revision, even after it is decided. Other payload/actor, changed content or wrong status/revision returns 409. Reopening by editing public content is automatic.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expected_revision",
+                  "reason"
+                ],
+                "properties": {
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4294967294
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current scoped review state; no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyModeration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing role permission or token ability"
+          },
+          "404": {
+            "description": "Property missing or outside own/group/global scope"
+          },
+          "409": {
+            "description": "Stale revision or different terminal decision/resubmission payload"
+          },
+          "422": {
+            "description": "Invalid fields/reason/revision"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/customer/favourites": {
+      "get": {
+        "operationId": "customerFavouritesIndex",
+        "summary": "Read my saved properties",
+        "description": "Requires customer:favourites. Ignores owner filters. Newest membership first, per_page default12/max50. Left-joins current approved/published/available public properties from active agents. Hidden sources return property:null plus owned property_id/saved_at only; never caches prior/private/unreviewed details. Deleted properties cascade-remove membership.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current scoped page",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SavedProperty"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "422": {
+            "description": "Invalid filters or prohibited identity fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/customer/favourites/{id}": {
+      "get": {
+        "operationId": "customerFavouriteStatus",
+        "summary": "Read my saved state for a property ID",
+        "description": "Requires customer:favourites. Returns only own property_id/saved boolean. Unknown, hidden and unsaved IDs do not disclose current property existence or details. No staff token fallback.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; idempotent current saved state",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyFavouriteStatus"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "put": {
+        "operationId": "customerFavouriteSave",
+        "summary": "Save a public property to my account",
+        "description": "Requires customer:favourites. No request body or client owner ID. New saves require current approved/published/available source and active agent. Property/customer/owner locks and unique customer/property key serialize concurrent writes. Exact repeated PUT returns 200 saved:true without changing original saved_at/order, including after source becomes hidden if membership already exists. Save/remove share 30 attempts/min/IP. No email verification required and no outbound notifications.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; idempotent current saved state",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyFavouriteStatus"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "404": {
+            "description": "New save source is not public or no longer exists"
+          },
+          "422": {
+            "description": "Invalid filters or prohibited identity fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "customerFavouriteRemove",
+        "summary": "Remove a property from my saved list",
+        "description": "Requires customer:favourites. Removes only authenticated membership, including hidden sources. Repeated removal and unknown IDs return 204; never edits the property or reveals another customer membership. Save/remove share 30 attempts/min/IP. Client should retry the same explicit action after uncertain outcomes rather than invert a toggle.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Own membership removed or already absent",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/admin/property-favourites": {
+      "get": {
+        "operationId": "propertyPopularityIndex",
+        "summary": "Read scoped aggregate saved-property counts",
+        "description": "Requires properties role permission and properties:read. Counts current memberships from active customer accounts. Own/group/global property visibility applies. Includes private/inactive/unreviewed inventory only within authorized staff scope. No customer names/emails/IDs, owner contacts or individual save timestamps. Descending saved count, then descending property ID; min_count default1, per_page default20/max100.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "min_count",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000000,
+              "default": 1
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current scoped page",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PropertyPopularity"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "422": {
+            "description": "Invalid filters or prohibited identity fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6572,6 +8752,12 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "Sanctum personal access token"
+      },
+      "customerBearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum customer token",
+        "description": "Issued only by /customer/auth/register or /customer/auth/login. Not interchangeable with staff tokens or Firebase tokens."
       }
     },
     "schemas": {
@@ -6734,6 +8920,28 @@
               "updated_at": {
                 "type": "string",
                 "format": "date-time"
+              },
+              "moderation_status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "approved",
+                  "rejected"
+                ]
+              },
+              "moderation_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967294
+              },
+              "moderation_reason": {
+                "type": "string",
+                "nullable": true
+              },
+              "moderated_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
               }
             }
           }
@@ -6860,7 +9068,7 @@
           "owner_name",
           "status"
         ],
-        "description": " Reserved is managed by deal reservations. Active reserved/confirmed deals prevent ordinary PUT changing controlled status, purpose or rental period. Reserved cannot be set on property creation."
+        "description": " Reserved is managed by deal reservations. Active reserved/confirmed deals prevent ordinary PUT changing controlled status, purpose or rental period. Reserved cannot be set on property creation. New listings default pending moderation. Public content/photo changes increment moderation_revision and reset pending; private fields, publication/enquiry switches and deal status do not. Moderation fields cannot be assigned through property writes."
       },
       "EnquiryWrite": {
         "type": "object",
@@ -8265,6 +10473,37 @@
           },
           "active": {
             "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000
+          },
+          "rules": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 5000
+          },
+          "amenities": {
+            "type": "array",
+            "nullable": true,
+            "maxItems": 30,
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          "images": {
+            "type": "array",
+            "nullable": true,
+            "maxItems": 10,
+            "items": {
+              "type": "string"
+            }
+          },
+          "is_published": {
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
@@ -8308,6 +10547,37 @@
             "items": {
               "$ref": "#/components/schemas/StayRoom"
             }
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000
+          },
+          "rules": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 5000
+          },
+          "amenities": {
+            "type": "array",
+            "nullable": true,
+            "maxItems": 30,
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          "images": {
+            "type": "array",
+            "nullable": true,
+            "maxItems": 10,
+            "items": {
+              "type": "string"
+            }
+          },
+          "is_published": {
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
@@ -8630,7 +10900,8 @@
           },
           "created_by": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "nullable": true
           },
           "guest_name": {
             "type": "string"
@@ -8681,7 +10952,12 @@
                     "checked_out",
                     "payment_recorded",
                     "refund_recorded",
-                    "payment_reversed"
+                    "payment_reversed",
+                    "customer_created",
+                    "cancellation_requested",
+                    "cancellation_approved",
+                    "cancellation_rejected",
+                    "cancellation_closed"
                   ]
                 },
                 "changes": {
@@ -8695,6 +10971,10 @@
                 "updated_at": {
                   "type": "string",
                   "format": "date-time"
+                },
+                "customer_actor_id": {
+                  "type": "integer",
+                  "nullable": true
                 }
               },
               "required": [
@@ -8704,7 +10984,8 @@
                 "action",
                 "changes",
                 "created_at",
-                "updated_at"
+                "updated_at",
+                "customer_actor_id"
               ]
             }
           },
@@ -8745,6 +11026,13 @@
           "refund_due": {
             "type": "string",
             "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "cancellation_requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StayCancellationRequest"
+            },
+            "description": "Complete chronological history on detail/create responses; omitted on list summaries."
           }
         },
         "required": [
@@ -9598,6 +11886,1136 @@
             "items": {
               "$ref": "#/components/schemas/StayStatementEntry"
             }
+          }
+        }
+      },
+      "StayContentWrite": {
+        "type": "object",
+        "required": [
+          "is_published"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000
+          },
+          "rules": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 5000
+          },
+          "amenities": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          "is_published": {
+            "type": "boolean"
+          },
+          "photos": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "description": "JPEG, PNG or WebP, up to 5 MiB each."
+          },
+          "remove_images": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "string"
+            },
+            "description": "Only paths currently owned by this exact gallery."
+          }
+        },
+        "description": "Replaces text/amenities/publication; omitted text becomes empty and omitted amenities clears the list. Existing photos retained unless explicitly removed. No inventory, rate, owner or activation changes."
+      },
+      "PublicStayRoom": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "rules",
+          "amenities",
+          "photos",
+          "capacity",
+          "nightly_rate"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "string"
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          }
+        }
+      },
+      "PublicStay": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "rules",
+          "amenities",
+          "photos",
+          "city",
+          "timezone",
+          "currency",
+          "room_types_count",
+          "from_rate"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "string"
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "city": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "room_types_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "from_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          }
+        }
+      },
+      "PublicStayDetail": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "rules",
+          "amenities",
+          "photos",
+          "city",
+          "timezone",
+          "currency",
+          "room_types_count",
+          "from_rate",
+          "rooms"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "string"
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "city": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "room_types_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "from_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicStayRoom"
+            }
+          }
+        }
+      },
+      "CustomerProfile": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "phone",
+          "email_verified_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "email_verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "CustomerLogin": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes and no null characters; new passwords also need 12+ characters, uppercase/lowercase letters and a number."
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 100
+          }
+        }
+      },
+      "CustomerRegister": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password",
+          "password_confirmation"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes and no null characters; new passwords also need 12+ characters, uppercase/lowercase letters and a number.",
+            "minLength": 12
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "password_confirmation": {
+            "type": "string",
+            "description": "Must match password."
+          }
+        }
+      },
+      "CustomerProfileWrite": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          }
+        },
+        "description": "Only name and phone editable. Omitted phone clears it. Email, status and staff privileges are never changed."
+      },
+      "CustomerPasswordWrite": {
+        "type": "object",
+        "required": [
+          "current_password",
+          "password",
+          "password_confirmation"
+        ],
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes and no null characters; new passwords also need 12+ characters, uppercase/lowercase letters and a number."
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes and no null characters; new passwords also need 12+ characters, uppercase/lowercase letters and a number.",
+            "minLength": 12
+          },
+          "password_confirmation": {
+            "type": "string"
+          }
+        },
+        "description": "New password must differ from current password. Success revokes all customer tokens and requires a new login."
+      },
+      "CustomerToken": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_at"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ]
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomerStayBooking": {
+        "type": "object",
+        "required": [
+          "id",
+          "stay_name",
+          "room_name",
+          "timezone",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "nightly_rate",
+          "total",
+          "advance",
+          "currency",
+          "status",
+          "attendance_status",
+          "checked_in_at",
+          "checked_out_at",
+          "guest_name",
+          "received_total",
+          "refunded_total",
+          "net_paid",
+          "amount_due",
+          "balance",
+          "refund_due",
+          "room_type_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "advance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "attendance_status": {
+            "type": "string",
+            "enum": [
+              "not_arrived",
+              "checked_in",
+              "checked_out"
+            ]
+          },
+          "checked_in_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checked_out_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "guest_name": {
+            "type": "string"
+          },
+          "received_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refunded_total": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "net_paid": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "amount_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "balance": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "refund_due": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "cancellation_requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StayCancellationRequest"
+            },
+            "description": "Complete chronological history on detail/create responses; omitted on list summaries."
+          }
+        },
+        "description": "Explicit customer_id ownership only. No guest contacts, internal notes, bank references, staff IDs, request IDs, hashes or history events. Old email snapshots never grant ownership."
+      },
+      "CustomerAvailability": {
+        "type": "object",
+        "properties": {
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "nights": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "nightly_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "available_rooms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "stay_name": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_type_id",
+          "check_in",
+          "check_out",
+          "nights",
+          "timezone",
+          "nightly_rate",
+          "currency",
+          "capacity",
+          "available_rooms",
+          "stay_name",
+          "room_name"
+        ]
+      },
+      "CustomerReservationWrite": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "room_type_id",
+          "check_in",
+          "check_out",
+          "rooms",
+          "guests",
+          "guest_name",
+          "expected_rate"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "room_type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date"
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date"
+          },
+          "rooms": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "guest_name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "guest_phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "expected_rate": {
+            "type": "string",
+            "pattern": "^\\d{1,13}\\.\\d{2}$"
+          }
+        },
+        "description": "Send the exact quoted nightly rate. Ownership, staff creator, totals, advance, currency, status, email and internal notes cannot be supplied. Verify customer email before new reservation."
+      },
+      "CustomerActionWrite": {
+        "type": "object",
+        "required": [
+          "email",
+          "token"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "CustomerResetWrite": {
+        "type": "object",
+        "required": [
+          "email",
+          "token",
+          "password",
+          "password_confirmation"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Uppercase, lowercase and a number; at most 72 UTF-8 bytes, no NUL."
+          },
+          "password_confirmation": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Uppercase, lowercase and a number; at most 72 UTF-8 bytes, no NUL."
+          }
+        }
+      },
+      "StayCancellationRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "booking_id",
+          "status",
+          "reason",
+          "decision_reason",
+          "created_at",
+          "decided_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "booking_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "closed"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "decision_reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "description": "Curated customer-visible request and staff response. No ownership IDs, UUID, hash, staff identity, contacts or internal notes."
+      },
+      "StayCancellationQueueRow": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StayCancellationRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "stay_name",
+              "room_name",
+              "check_in",
+              "check_out",
+              "timezone"
+            ],
+            "properties": {
+              "stay_name": {
+                "type": "string"
+              },
+              "room_name": {
+                "type": "string"
+              },
+              "check_in": {
+                "type": "string",
+                "format": "date"
+              },
+              "check_out": {
+                "type": "string",
+                "format": "date"
+              },
+              "timezone": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ModerationListing": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "sale",
+              "rent"
+            ]
+          },
+          "property_type": {
+            "type": "string",
+            "enum": [
+              "apartment",
+              "house",
+              "villa",
+              "plot",
+              "commercial"
+            ]
+          },
+          "price": {
+            "type": "string",
+            "description": "Decimal with two places"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rent_period": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "monthly",
+              "yearly",
+              "daily"
+            ],
+            "description": "Required when purpose=rent; cleared for sale."
+          },
+          "area": {
+            "type": "string"
+          },
+          "area_unit": {
+            "type": "string",
+            "enum": [
+              "sqft",
+              "sqm",
+              "acre"
+            ]
+          },
+          "bedrooms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "bathrooms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "reserved",
+              "sold",
+              "rented",
+              "unavailable"
+            ]
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "accepts_enquiries": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "purpose",
+          "price",
+          "city"
+        ]
+      },
+      "PropertyModerationEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "action",
+          "actor_id",
+          "reason",
+          "snapshot",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967294
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "created",
+              "content_changed",
+              "submitted",
+              "approved",
+              "rejected",
+              "legacy_approved"
+            ]
+          },
+          "actor_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string"
+          },
+          "snapshot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModerationListing"
+              }
+            ],
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PropertyModeration": {
+        "type": "object",
+        "required": [
+          "id",
+          "moderation_status",
+          "moderation_revision",
+          "moderation_reason",
+          "moderated_at",
+          "is_published",
+          "accepts_enquiries",
+          "listing",
+          "history"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "moderation_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "moderation_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967294
+          },
+          "moderation_reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "moderated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "is_published": {
+            "type": "boolean"
+          },
+          "accepts_enquiries": {
+            "type": "boolean"
+          },
+          "listing": {
+            "$ref": "#/components/schemas/ModerationListing"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyModerationEvent"
+            }
+          }
+        }
+      },
+      "PropertyModerationRow": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "city",
+          "price",
+          "currency",
+          "status",
+          "is_published",
+          "moderation_status",
+          "moderation_revision",
+          "moderation_reason"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "price": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "is_published": {
+            "type": "boolean"
+          },
+          "moderation_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "moderation_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967294
+          },
+          "moderation_reason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PropertyFavouriteStatus": {
+        "type": "object",
+        "required": [
+          "property_id",
+          "saved"
+        ],
+        "properties": {
+          "property_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "saved": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SavedProperty": {
+        "type": "object",
+        "required": [
+          "property_id",
+          "saved_at",
+          "property"
+        ],
+        "properties": {
+          "property_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "saved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "property": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicProperty"
+              }
+            ],
+            "nullable": true,
+            "description": "Current public fields only when approved/published/available with active agent. Otherwise null; no cached or unreviewed title, price, photos or contacts."
+          }
+        }
+      },
+      "PropertyPopularity": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "city",
+          "status",
+          "moderation_status",
+          "is_published",
+          "favourites_count"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "moderation_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "is_published": {
+            "type": "boolean"
+          },
+          "favourites_count": {
+            "type": "integer",
+            "minimum": 1
           }
         }
       }

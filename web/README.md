@@ -54,10 +54,13 @@ also accept enquiries for the form to appear. Empty databases show an empty stat
 Create/publish records through the staff workspace or backend API/Postman kit.
 Existing Firebase listings and room bookings are not automatically migrated.
 
-The existing stay/booking website remains reachable through **Explore stays**.
-Its Laravel 11 room/booking backend was not copied into the Laravel 12 CRM. The
-SDA staff workspace covers property/lead management and site visits. Firebase
-account/data migration, customer authentication and mobile wiring are later work.
+SDA now has its own public stay catalogue at `/stays`; the reference website
+remains separately labelled **Legacy stay website**. Its Laravel 11 backend was
+not copied wholesale into the Laravel 12 CRM. SDA's staff inventory, booking and
+finance workflows are implemented separately. Customer signup/login/profile and
+owned booking reads, email verification/recovery and reviewed reservations are
+available at `/account`. Firebase data/account migration and native mobile
+integration remain pending.
 
 ## Source provenance and import boundary
 
@@ -164,7 +167,7 @@ browser. User IDs come from the authenticated backend account.
 
 Staff changes need no new migration. Use the existing API deployment, CORS
 allowlist and `/storage` routing described above. SPA fallback must cover
-`/staff/*`. Booking management and mobile migration remain future phases; their existing backend APIs are unchanged.
+`/staff/*`. Staff booking management is implemented in the later stay sections below; customer booking and mobile/account migration remain pending.
 
 Validation for this phase includes unit/integration tests, desktop/mobile browser
 checks, and a real browser against an isolated Laravel test database: login,
@@ -318,3 +321,23 @@ Stay booking details now include offline payments/refunds, explicit review, exac
 ### Printable stay statement
 
 Booking detail's ledger links to a print-friendly statement with complete chronological payment/correction history and exact balances. Refresh before printing to include recent changes. The browser print dialog supports printing or Save as PDF; staff navigation and controls are hidden. Requires booking-detail and ledger access. Internal notes/references/contacts are omitted. See [statement API and rules](../backend/docs/PAYMENTS.md#printable-booking-statement).
+
+### Rich stay content and public catalogue
+
+Use **Edit public stay content** on a staff stay card to edit stay/room descriptions, rules, amenities, gallery uploads/removals and publication. Both stay and room must be active/published to appear at `/stays` and `/stays/:id`. Anonymous catalogue requests never carry staff tokens. City/page filters persist in URLs; current nightly prices are not dated availability quotes. Customer dated quote/review/reservation is available from each room card. Apply the additive content migration; existing stays/rooms start unpublished. See [API, upload and publication rules](../backend/docs/STAYS.md#rich-stay-content-and-public-catalogue).
+
+### Customer accounts and owned bookings
+
+**My account** (`/account`) supports separate customer signup/login, profile and password changes. **My bookings** (`/account/bookings`) shows only explicitly linked customer-owned booking snapshots and exact balances. New accounts normally start empty; historical bookings are not automatically linked by email. Customer tokens are separate from staff tokens and public catalogue calls. Native clients and email-change verification remain pending. Apply the additive customer migration and see [account rules/API](../backend/docs/CUSTOMERS.md).
+
+Customer dated reservations are now available from public stay room cards: sign in,
+check availability, review and confirm, then read the owned booking. No online money
+is collected. See [reservation rules](../backend/docs/RESERVATIONS.md).
+
+Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](../backend/docs/CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
+
+Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](../backend/docs/CANCELLATIONS.md).
+
+Property publication now requires moderation approval. Public content/photo edits require a fresh review; private edits and deal status retain approval. Staff use the scoped Property moderation queue with reasons, snapshots and safe revision retries. Existing published listings retain legacy approval. See [moderation rules](../backend/docs/MODERATION.md).
+
+Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](../backend/docs/FAVOURITES.md).

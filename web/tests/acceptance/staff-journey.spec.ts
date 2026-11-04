@@ -41,6 +41,11 @@ test('real staff/public journey: publish, enquire, follow up, visit, cancel and 
   await expect(
     page.getByRole('heading', { name: 'Acceptance river home', exact: true }),
   ).toBeVisible();
+  await page.goto(`/staff/properties/${property.id}/moderation`);
+  await page.getByLabel('Moderation reason', { exact: true }).fill('Reviewed acceptance listing');
+  await page.getByRole('button', { name: 'Review moderation decision', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm moderation action', exact: true }).click();
+  await expect(page.getByText('Moderation: Approved · Revision 1', { exact: true })).toBeVisible();
   await page.goto(`/staff/properties/${property.id}/documents`);
   await page.getByLabel('Document title', { exact: true }).fill('Acceptance registry');
   const documentBytes = Buffer.from('%PDF-1.4\n%%EOF\n');

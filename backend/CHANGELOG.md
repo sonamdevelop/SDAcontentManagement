@@ -4,6 +4,20 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added customer saved properties with safe retries and hidden-listing redaction, plus scoped aggregate property popularity for staff.
+
+* [feature] Added scoped property publication moderation with reviewed content revisions, rejection/resubmission reasons, historical snapshots and stale-approval protection.
+
+* [feature] Added customer cancellation requests and scoped staff approval/rejection with reviewed reasons, safe retries, preserved financial records and audit history.
+
+* [feature] Added customer email verification and single-use password recovery with expiring links, full customer session revocation and verified-email checks for new reservations.
+
+* [feature] Added customer room quotes, reviewed zero-advance reservations and owned confirmation with shared inventory locks, idempotent retries and explicit customer audit actors.
+
+* [feature] Added separate customer signup/login/profile/password changes and read-only customer-owned booking views with independent tokens and no automatic legacy email linking.
+
+* [feature] Added stay/room marketing content, public photo galleries and publication controls with a scoped staff editor and anonymous stay catalogue/detail pages.
+
 * [feature] Added printable stay booking statements with complete correction history, exact current balances and scoped access while omitting internal contacts, references and notes.
 
 * [enhancement] Added combined stay booking ID and inclusive arrival-date filters, fixed ignored stay filters, and retained staff URL filters across pagination without exposing guest contacts.

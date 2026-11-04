@@ -8,7 +8,7 @@ class StayBookingEvent extends Model implements \Webkul\Property\Contracts\StayB
 {
     protected $table = 'stay_booking_events';
 
-    protected $fillable = ['booking_id', 'actor_id', 'action', 'changes'];
+    protected $fillable = ['booking_id', 'actor_id', 'customer_actor_id', 'action', 'changes'];
 
-    protected $casts = ['changes' => 'array'];
+    protected $casts = ['customer_actor_id' => 'integer', 'changes' => 'array'];
 }

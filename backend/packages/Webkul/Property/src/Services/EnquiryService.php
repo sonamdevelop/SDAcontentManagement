@@ -22,7 +22,7 @@ class EnquiryService
     {
         return DB::transaction(function () use ($id, $data) {
             $property = $this->properties->getModel()->newQuery()->lockForUpdate()->findOrFail($id);
-            abort_unless($property->is_published && $property->accepts_enquiries && $property->status === 'available', 404);
+            abort_unless($property->moderation_status === 'approved' && $property->is_published && $property->accepts_enquiries && $property->status === 'available', 404);
             // Lock the owner as well, so concurrent submissions across properties cannot duplicate a contact.
             $owner = $this->users->getModel()->newQuery()->whereKey($property->user_id)->lockForUpdate()->firstOrFail();
             abort_unless($owner->status, 404);

@@ -17,6 +17,7 @@ export type VisitSummary = {
   created_at: string;
 };
 export type VisitEvent = {
+  customer_actor_id?: number | null;
   id: number;
   actor_id: number | null;
   action: string;

@@ -8,6 +8,7 @@ use Illuminate\Validation\ValidationException;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Property\Contracts\Property;
 use Webkul\Property\Support\DealState;
+use Webkul\Property\Support\PropertyModeration;
 
 class PropertyRepository extends Repository
 {
@@ -18,7 +19,7 @@ class PropertyRepository extends Repository
 
     public function publicQuery()
     {
-        return $this->model->newQuery()->where('is_published', true)->where('status', 'available')->whereHas('agent', fn ($q) => $q->where('status', 1));
+        return $this->model->newQuery()->where('moderation_status', 'approved')->where('is_published', true)->where('status', 'available')->whereHas('agent', fn ($q) => $q->where('status', 1));
     }
 
     public function findPublic(int $id)
@@ -71,6 +72,7 @@ class PropertyRepository extends Repository
                     $property = $this->model->newQuery()->lockForUpdate()->findOrFail($property->id);
                 }
                 $this->guardDealChanges($data, $property);
+                $before = $property ? PropertyModeration::content($property) : null;
                 $existing = $property?->images ?? [];
                 if (array_diff($remove, $existing)) {
                     throw ValidationException::withMessages(['remove_images' => trans('admin::app.property-api.invalid-image')]);
@@ -89,6 +91,14 @@ class PropertyRepository extends Repository
                 $data['images'] = array_merge($remaining, $uploaded);
                 $data['rent_period'] = $data['purpose'] === 'rent' ? $data['rent_period'] : null;
                 $saved = $property ? tap($property)->update($data) : $this->create($data);
+                $saved->refresh();
+                $moderation = app(PropertyModerationRepository::class);
+                if (! $property) {
+                    $moderation->event($saved, 'created', trans('admin::app.property-moderation.created'));
+                } elseif ($before !== PropertyModeration::content($saved)) {
+                    $saved->forceFill(['moderation_status' => 'pending', 'moderation_revision' => $saved->moderation_revision + 1, 'moderation_reason' => null, 'moderated_by' => null, 'moderated_at' => null])->save();
+                    $moderation->event($saved, 'content_changed', trans('admin::app.property-moderation.changed'));
+                }
                 if ($remove) {
                     DB::afterCommit(fn () => Storage::disk('public')->delete($remove));
                 }

@@ -3,6 +3,7 @@
 The Laravel/Krayin backend lives in [`backend/`](backend/). The public property
 website lives in [`web/`](web/) and connects to its public APIs.
 
+- [Feature progress and web/mobile readiness audit](backend/docs/READINESS.md)
 - [Backend setup and tests](backend/SETUP.md)
 - [API v1 documentation](backend/docs/API.md) and [OpenAPI](backend/docs/openapi.json)
 - [Postman and client integration kit](backend/docs/INTEGRATION.md)
@@ -21,11 +22,11 @@ Both reference repositories remain read-only. This does not deploy changes to
 stayindandeli.in or migrate the Firebase app.
 
 Current staff workflow status: property/enquiry management, leads/follow-ups,
-site visits and private documents have web screens. **Property deal management** now includes staff reservation, recorded advance, confirmation/cancellation and history screens. Public stay booking, payment integration and
+site visits and private documents have web screens. **Property deal management** now includes staff reservation, recorded advance, confirmation/cancellation and history screens. Online payment integration and
 mobile/Firebase account/data migration are separate later phases; production
 rollout still needs deployment and acceptance checks.
 
-Staff stays and room bookings now have separate inventory, date-based availability, exact advance/balance records and cancellation history. See [stay booking documentation](backend/docs/STAYS.md). Public online booking/payment and migration remain later phases.
+Staff stays and room bookings now have separate inventory, date-based availability, exact advance/balance records and cancellation history. See [stay booking documentation](backend/docs/STAYS.md). Customer reservations are available; online payment and legacy migration remain later phases.
 
 Stay booking details also support staff check-in/check-out, attendance filters and actor/time history without changing booked charges or inventory dates.
 
@@ -40,3 +41,19 @@ Staff can inspect nightly room allocation and remaining capacity through **Avail
 **Stay bookings** can be filtered by booking/stay IDs and inclusive scheduled arrival dates, together with status, room and attendance filters.
 
 **Printable stay statements** present booking charges, complete offline payment/correction history and current balances with a print layout that omits staff controls and internal metadata.
+
+**Public stay catalogue** now lives at `/stays`, with stay/room descriptions, amenities, rules, galleries and exact nightly rates. Staff manage content/publication separately from inventory. Customer login, dated availability and zero-advance reservations are available.
+
+**Customer accounts** now have separate signup/login/profile/password-change screens and read-only owned booking list/detail at `/account`. Existing bookings are not auto-linked by email; email-change verification and native migration remain pending. See [customer identity and ownership rules](backend/docs/CUSTOMERS.md).
+
+Customer dated reservations are now available from public stay room cards: sign in,
+check availability, review and confirm, then read the owned booking. No online money
+is collected. See [reservation rules](backend/docs/RESERVATIONS.md).
+
+Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](backend/docs/CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
+
+Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](backend/docs/CANCELLATIONS.md).
+
+Property publication now requires moderation approval. Public content/photo edits require a fresh review; private edits and deal status retain approval. Staff use the scoped Property moderation queue with reasons, snapshots and safe revision retries. Existing published listings retain legacy approval. See [moderation rules](backend/docs/MODERATION.md).
+
+Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](backend/docs/FAVOURITES.md).

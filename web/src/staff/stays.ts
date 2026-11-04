@@ -1,3 +1,4 @@
+import { validCancellationHistory, type CancellationRequest } from '../domain/cancellations';
 import { operationDate } from './operations';
 import { StaffApi, StaffError } from './api';
 import { VisitApi, type VisitEvent } from './visits';
@@ -40,6 +41,7 @@ export type Stay = {
   rooms: Room[];
 };
 export type Booking = {
+  cancellation_requests?: CancellationRequest[];
   received_total?: string;
   refunded_total?: string;
   net_paid?: string;
@@ -232,6 +234,7 @@ export class StayApi {
   private detail(body: { data: unknown }) {
     if (
       !isBooking(body?.data) ||
+      !validCancellationHistory(body.data.cancellation_requests, body.data.id) ||
       typeof body.data.guest_name !== 'string' ||
       !['guest_email', 'guest_phone', 'payment_reference', 'notes', 'cancellation_reason'].every(
         (k) => {
@@ -248,6 +251,9 @@ export class StayApi {
           typeof e.created_at === 'string' &&
           Number.isFinite(Date.parse(e.created_at)) &&
           (e.actor_id === null || validId(e.actor_id)) &&
+          (e.customer_actor_id === undefined ||
+            e.customer_actor_id === null ||
+            validId(e.customer_actor_id)) &&
           object(e.changes) &&
           !Array.isArray(e.changes),
       )

@@ -4,6 +4,7 @@ cd "$(dirname "$0")/.."
 # Fresh synthetic database only. Never reset, refresh or drop a database.
 suffix="$(python3 -c 'import secrets; print(secrets.token_hex(6))')"
 export SDA_ACCEPTANCE_DATABASE="sda_acceptance_$suffix"
+export SDA_ACCEPTANCE_MAIL_LOG="$PWD/.runtime/acceptance/$suffix-mail.log"
 container="sda-acceptance-$suffix"
 restore="sda_restore_$suffix"
 mkdir -p .runtime/acceptance
@@ -16,7 +17,7 @@ docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}
 docker compose run --rm --no-deps -e DB_DATABASE="$SDA_ACCEPTANCE_DATABASE" app php tools/initialize.php >"$log" 2>&1
 # Verify the actual selected connection before launching any mutating browser requests.
 docker compose run --rm --no-deps -e DB_DATABASE="$SDA_ACCEPTANCE_DATABASE" app php -r 'require "vendor/autoload.php"; $app=require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); if (!preg_match("/^sda_acceptance_[0-9a-f]+$/", Illuminate\Support\Facades\DB::connection()->getDatabaseName())) {exit(1);} echo "Verified isolated acceptance database.\n";'
-docker compose run -d --no-deps --name "$container" -p 127.0.0.1:8082:8000 -e DB_DATABASE="$SDA_ACCEPTANCE_DATABASE" -e CACHE_DRIVER=array -e CACHE_STORE=array -e SESSION_DRIVER=array app php artisan serve --host=0.0.0.0 --port=8000 >/dev/null
+docker compose run -d --no-deps --name "$container" -p 127.0.0.1:8082:8000 -e DB_DATABASE="$SDA_ACCEPTANCE_DATABASE" -e CACHE_DRIVER=array -e CACHE_STORE=array -e SESSION_DRIVER=array -e PROPERTY_CUSTOMER_MAILER=customer_log -e PROPERTY_CUSTOMER_MAIL_LOG="/app/.runtime/acceptance/$suffix-mail.log" -e PROPERTY_CUSTOMER_WEB_URL=http://127.0.0.1:5174 app php artisan serve --host=0.0.0.0 --port=8000 >/dev/null
 python3 - <<'PY'
 import json,time,urllib.request
 op=urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -36,7 +37,7 @@ docker compose exec -T db mariadb-dump -uroot -p"${DB_ROOT_PASSWORD:-local_root_
 gzip -t "$backup"
 docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}" -e "CREATE DATABASE $restore;"
 gzip -dc "$backup" | docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}" "$restore"
-for table in properties property_deals property_deal_events leads persons property_documents stays stay_room_types stay_bookings stay_booking_events stay_payments; do
+for table in properties property_deals property_deal_events leads persons property_documents stays stay_room_types stay_bookings stay_booking_events stay_payments stay_customers stay_customer_actions stay_cancellation_requests property_moderation_events customer_property_favourites; do
   original="$(docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}" -N -e "SELECT COUNT(*) FROM $SDA_ACCEPTANCE_DATABASE.$table")"
   restored="$(docker compose exec -T db mariadb -uroot -p"${DB_ROOT_PASSWORD:-local_root_only}" -N -e "SELECT COUNT(*) FROM $restore.$table")"
   test "$original" = "$restored"

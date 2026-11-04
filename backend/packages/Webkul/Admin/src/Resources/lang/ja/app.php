@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'customer-api' => [
+        'password-format' => 'The :attribute must not contain null characters or exceed 72 UTF-8 bytes.',
+    ],
+
     'stay-api' => [
         'calendar-range' => 'Choose a valid calendar range of 1 to 62 nights.',
         'ledger' => 'Payment ledger',
@@ -2624,5 +2628,25 @@ return [
         'no-records' => 'エクスポートするものがありません',
         'xls' => 'XLS',
         'xlsx' => 'XLSX',
+    ],
+    'customer-actions' => [
+        'verify-title' => 'Verify your customer email',
+        'verify-intro' => 'Confirm this email address for your SDA customer account.',
+        'reset-title' => 'Reset your customer password',
+        'reset-intro' => 'You requested a password reset. If this was not you, ignore this email.',
+        'mail-expiry' => 'This link expires in 60 minutes and works once. Open it, then confirm the action.',
+        'invalid-link' => 'This link is invalid, expired or already used. Request a new link.',
+        'request-accepted' => 'If the account is eligible, an email link will be sent. Check your inbox.',
+        'delivery-unavailable' => 'Email delivery is unavailable. Please try again later.',
+        'verification-required' => 'Verify your customer email from My profile before creating a new reservation.',
+    ],
+    'stay-cancellation' => [
+        'direct-cancel' => 'Booking cancelled directly by staff.',
+        'arrived' => 'Guest check-in recorded; cancellation request closed.',
+    ],
+    'property-moderation' => [
+        'permission' => 'Review property publication',
+        'created' => 'Listing created and awaiting moderation.',
+        'changed' => 'Public listing content changed; review is required again.',
     ],
 ];

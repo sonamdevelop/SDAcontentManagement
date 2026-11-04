@@ -46,6 +46,9 @@ it('creates a private draft with server-owned assignment and supports full updat
     $id = $response->json('data.id');
     $this->getJson('/api/v1/properties/'.$id)->assertNotFound();
     $this->putJson('/api/v1/admin/properties/'.$id, apiPropertyPayload(['purpose' => 'rent', 'rent_period' => 'monthly', 'price' => '28000', 'is_published' => true]), $headers)->assertOk()->assertJsonPath('data.rent_period', 'monthly');
+    $this->getJson('/api/v1/properties/'.$id)->assertNotFound();
+    $revision = Property::findOrFail($id)->moderation_revision;
+    $this->patchJson('/api/v1/admin/properties/'.$id.'/moderation', ['expected_revision' => $revision, 'decision' => 'approved', 'reason' => 'Reviewed listing'], apiHeaders($user, ['properties:moderate']))->assertOk();
     $this->getJson('/api/v1/properties/'.$id)->assertOk();
     $this->putJson('/api/v1/admin/properties/'.$id, apiPropertyPayload(['rent_period' => 'monthly']), $headers)->assertOk()->assertJsonPath('data.rent_period', null);
     $this->deleteJson('/api/v1/admin/properties/'.$id, [], $headers)->assertNoContent();
@@ -76,8 +79,9 @@ it('scopes lists and direct record access to the agent', function () {
     expect($p->fresh()->title)->toBe('River view apartment');
 });
 it('validates property data before any writes', function ($changes, $field) {
+    $before = Property::count();
     $this->postJson('/api/v1/admin/properties', apiPropertyPayload($changes), apiHeaders(apiStaff([], all: true)))->assertUnprocessable()->assertJsonValidationErrors($field);
-    expect(Property::count())->toBe(0);
+    expect(Property::count())->toBe($before);
 })->with([
     [['title' => ''], 'title'], [['price' => -1], 'price'], [['price' => '1.234'], 'price'], [['area' => 0], 'area'], [['purpose' => ['sale']], 'purpose'],
     [['purpose' => 'other'], 'purpose'], [['status' => 'rented'], 'status'], [['purpose' => 'rent', 'status' => 'sold'], 'status'], [['purpose' => 'rent'], 'rent_period'],

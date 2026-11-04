@@ -90,3 +90,32 @@ The real ledger journey also checks payment follow-up: initial collection, cance
 The real stay booking journey also finds its booking by ID and inclusive arrival date, rejects a later nonmatching bound and confirms guest identity is absent from the list.
 
 The real ledger journey opens a printable statement after payment/refund/reversal/cancellation, checks all entries and settled totals, and verifies staff controls are hidden under print media.
+
+A fifth real-service journey publishes stay/room text and photos, verifies a parent alone is hidden, opens the public catalogue/detail without staff credentials, checks an actual uploaded image loads, then unpublishes the stay and confirms public detail returns unavailable. Stay/room photos join the synthetic file backup/restore checksum checks.
+
+A sixth real-service journey checks customer registration/profile, empty owned bookings, password revocation and logout while retaining a separately authenticated staff session. API fixtures separately verify positive owned reads and denial of foreign/unlinked matching-email bookings. Customer rows join synthetic DB restore-count checks.
+
+The seventh real API journey creates/publishes a room, registers an independent
+customer, quotes/reviews/confirms a zero-advance reservation, reloads owned detail,
+checks inventory exhaustion and verifies customer actor history in the staff view.
+All mutations use a unique synthetic acceptance database; native apps are unverified.
+
+Customer reservation acceptance now first verifies its email using a local captured
+message. An eighth real journey confirms verification, resets a forgotten password,
+checks old-token rejection, signs in with the new password and rejects reused links.
+The mail capture and database are unique per run; no live email delivery is used.
+
+The real customer reservation journey now requests cancellation, receives a staff
+rejection, sends a fresh request and receives approval. It checks customer-visible
+responses, cancelled owned detail, zero outstanding amount and released inventory.
+API tests separately verify paid bookings retain refund due without automatic refunds.
+
+The property enquiry/deal journey now explicitly approves the created listing.
+A ninth real journey rejects, resubmits and approves a property, edits its public
+title, verifies public hiding and stale-decision rejection, and approves the fresh
+revision before checking public detail. Backup/restore includes moderation audit rows.
+
+A tenth real API journey creates/approves a listing, registers a customer, saves
+it, checks staff popularity, edits public content into pending moderation, confirms
+the saved card exposes no unreviewed title, removes it and checks refreshed counts.
+Synthetic backup/restore includes customer_property_favourites rows.
