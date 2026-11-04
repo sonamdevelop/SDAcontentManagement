@@ -8,6 +8,10 @@ export type Profile = {
 };
 export type AdminProperty = Omit<Property, 'status'> & {
   status: string;
+  moderation_status?: 'pending' | 'approved' | 'rejected';
+  moderation_revision?: number;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
   address: string;
   postal_code: string | null;
   owner_name: string;
@@ -67,6 +71,10 @@ export function isAdminProperty(p: unknown): p is AdminProperty {
   return (
     isProperty({ ...v, status: 'available' }) &&
     ['available', 'reserved', 'sold', 'rented', 'unavailable'].includes(v.status) &&
+    (v.moderation_status === undefined ||
+      (['pending', 'approved', 'rejected'].includes(v.moderation_status) &&
+        Number.isSafeInteger(v.moderation_revision) &&
+        Number(v.moderation_revision) > 0)) &&
     typeof v.address === 'string' &&
     typeof v.owner_name === 'string' &&
     typeof v.is_published === 'boolean' &&

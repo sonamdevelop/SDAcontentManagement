@@ -11,6 +11,7 @@ use Webkul\Property\Http\Controllers\LeadApiController;
 use Webkul\Property\Http\Controllers\PropertyApiController;
 use Webkul\Property\Http\Controllers\PropertyDealApiController;
 use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
+use Webkul\Property\Http\Controllers\PropertyModerationController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
 use Webkul\Property\Http\Controllers\StayApiController;
@@ -58,6 +59,10 @@ Route::get('properties', [PropertyApiController::class, 'index'])->name('propert
 Route::get('properties/{id}', [PropertyApiController::class, 'show'])->whereNumber('id')->name('properties.show');
 Route::post('properties/{id}/enquiries', [EnquiryApiController::class, 'store'])->whereNumber('id')->middleware('throttle:property-api-enquiries')->name('enquiries.store');
 Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('property-moderation', [PropertyModerationController::class, 'index'])->middleware(ApiAccess::class.':properties,properties:read')->name('moderation.index');
+    Route::get('properties/{id}/moderation', [PropertyModerationController::class, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':properties,properties:read')->name('moderation.show');
+    Route::patch('properties/{id}/moderation', [PropertyModerationController::class, 'decide'])->whereNumber('id')->middleware(ApiAccess::class.':properties.moderate,properties:moderate,properties')->name('moderation.decide');
+    Route::post('properties/{id}/moderation/submit', [PropertyModerationController::class, 'submit'])->whereNumber('id')->middleware(ApiAccess::class.':properties.edit,properties:write,properties')->name('moderation.submit');
     Route::get('properties', [PropertyApiController::class, 'adminIndex'])->middleware(ApiAccess::class.':properties,properties:read')->name('properties.index');
     Route::get('properties/{id}', [PropertyApiController::class, 'adminShow'])->whereNumber('id')->middleware(ApiAccess::class.':properties,properties:read')->name('properties.show');
     Route::post('properties', [PropertyApiController::class, 'store'])->middleware(ApiAccess::class.':properties.create,properties:write')->name('properties.store');

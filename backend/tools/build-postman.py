@@ -107,6 +107,9 @@ if (pm.response.code === 200 && pm.response.json().data.length === 1) {
         request('36 Retained confirmed deal history', 'GET', '/admin/property-deals/{{deal_id}}', tests='pm.test("Property reference cleared, history preserved", () => pm.expect(pm.response.json().data.property_id).to.eql(null));'),
         request('37 Logout and clear token', 'POST', '/auth/logout', 204, body={}, tests="if (pm.response.code === 204) { pm.variables.set('revoked_token', pm.environment.get('access_token')); pm.environment.unset('access_token'); }"),
         request('38 Verify revoked token', 'GET', '/auth/me', 401, tests="pm.test('Revoked token was supplied', () => pm.expect(pm.variables.get('revoked_token')).to.be.a('string').and.not.empty); pm.variables.unset('revoked_token');")]
+    items.insert(4, request('05 Review publication', 'PATCH', '/admin/properties/{{property_id}}/moderation', body={'expected_revision': 1, 'decision': 'approved', 'reason': 'Reviewed integration listing'}))
+    for number, item in enumerate(items, 1):
+        item['name'] = f"{number:02d} " + item['name'].split(' ', 1)[1]
     items[-1]['request']['auth'] = {'type': 'bearer', 'bearer': [{'key': 'token', 'value': '{{revoked_token}}', 'type': 'string'}]}
     return collection('SDA — Complete integration workflow', 'Run on a disposable local/test or staging dataset with an explicitly authorized staff account. Creates fictional records and deletes only the captured fixture property/document; CRM contact/lead/enquiry/visit/deal audit history remains by API design. Choose the supplied environment, fill staff credentials and set document_file to the sample PDF for full coverage. No frontend or payment gateway is involved. See ../INTEGRATION.md.', [{'name': 'Complete workflow', 'item': items}], 'c4b17b47-cdbf-4dc8-82e4-f9dc4830718b')
 
@@ -142,6 +145,8 @@ def reference(spec):
         ('post', '/customer/auth/reset-password'): {'email': '{{customer_email}}', 'token': '{{customer_action_token}}', 'password': '{{customer_new_password}}', 'password_confirmation': '{{customer_new_password}}'},
         ('post', '/customer/bookings/{id}/cancellation-requests'): {'request_id': '{{customer_cancellation_request_id}}', 'reason': 'Travel plans changed'},
         ('patch', '/admin/stay-cancellation-requests/{id}/decision'): {'decision': 'approve', 'decision_reason': 'Approved per guest request'},
+        ('patch', '/admin/properties/{id}/moderation'): {'expected_revision': '{{moderation_revision}}', 'decision': 'approved', 'reason': 'Reviewed listing'},
+        ('post', '/admin/properties/{id}/moderation/submit'): {'expected_revision': '{{moderation_revision}}', 'reason': 'Please reconsider this listing'},
         ('post', '/customer/bookings'): {'request_id': '{{customer_reservation_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example customer', 'expected_rate': '1000.25'},
         ('post', '/admin/stay-bookings'): {'request_id': '{{stay_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example guest', 'guest_email': 'guest@example.test', 'expected_rate': '1000.25', 'advance': '100.01'},
         ('post', '/admin/stay-bookings/{id}/payments'): {'request_id': '{{ledger_request_id}}', 'amount': '100.01', 'method': 'cash', 'reference': 'Offline receipt', 'reason': 'Already received offline'},
@@ -193,7 +198,7 @@ def reference(spec):
 def environment(staging):
     base = 'https://api-staging.example.com/api/v1' if staging else 'http://127.0.0.1:8081/api/v1'
     origin = 'https://web-staging.example.com' if staging else 'http://localhost:5173'
-    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'customer_cancellation_request_id': '', 'cancellation_request_id': '', 'customer_action_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
+    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'moderation_revision': '', 'customer_cancellation_request_id': '', 'cancellation_request_id': '', 'customer_action_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
     values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out', 'ledger_request_id', 'payment_entry_id'], ''))
     return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token', 'customer_password', 'customer_new_password', 'customer_access_token', 'customer_action_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
 

@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added scoped property publication moderation with reviewed content revisions, rejection/resubmission reasons, historical snapshots and stale-approval protection.
+
 * [feature] Added customer cancellation requests and scoped staff approval/rejection with reviewed reasons, safe retries, preserved financial records and audit history.
 
 * [feature] Added customer email verification and single-use password recovery with expiring links, full customer session revocation and verified-email checks for new reservations.

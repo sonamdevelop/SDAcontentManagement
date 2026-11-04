@@ -34,7 +34,7 @@ mobile HTTP clients, but the demo's preflight assertion tests the configured ori
 Import these files from `docs/postman/`:
 
 - `SDA-workflow.postman_collection.json`: ordered, executable complete journey.
-- `SDA-reference.postman_collection.json`: all 84 documented operations; select
+- `SDA-reference.postman_collection.json`: all 88 documented operations; select
   individual requests after filling the relevant IDs. It is not an ordered runner.
 - `SDA-local.postman_environment.json` or `SDA-staging.postman_environment.json`.
 
@@ -69,7 +69,7 @@ fictional property/customer enquiry. It then tests:
 8. Agent report, document/property deletion, retained deal audit history, logout
    and verification that the revoked token no longer works.
 
-Successful execution with the sample PDF sends 38 requests and checks 50
+Successful execution with the sample PDF sends 39 requests and checks 51
 assertions. Use a disposable local/test or staging dataset: the demo creates
 fictional records. It deletes only the property/document IDs captured during that
 run. CRM customer, enquiry, follow-up, visit and financial audit history remain by
@@ -201,7 +201,7 @@ connecting private mobile operations, decide how those accounts map to the staff
 API or implement the required separate customer authentication workflow. Customer signup now exists in a separate customer domain; no Firebase-token exchange endpoint exists.
 
 Public catalogue/detail/enquiry pages and the staff login, property editor,
-photos/publication, overview, enquiry/lead lists and lead detail/assignment/stage/notes/tasks are implemented in
+photos/publication/moderation, overview, enquiry/lead lists and lead detail/assignment/stage/notes/tasks are implemented in
 `web/`. Frontend unit/integration and desktop/mobile browser checks cover these
 flows, including real Laravel HTTP verification in an isolated test database.
 Site visit scheduling, filtered lists, rescheduling/assignment, outcomes, feedback
@@ -225,3 +225,7 @@ Customer clients use the separate `/customer/*` account/owned-read APIs and cust
 Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
 
 Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](CANCELLATIONS.md).
+
+Property publication now requires moderation approval. Public content/photo edits require a fresh review; private edits and deal status retain approval. Staff use the scoped Property moderation queue with reasons, snapshots and safe revision retries. Existing published listings retain legacy approval. See [moderation rules](MODERATION.md).
+
+The ordered Postman workflow now includes explicit approval immediately after fixture creation. The selected staff role must grant properties.moderate; sign in again for the new properties:moderate token ability.

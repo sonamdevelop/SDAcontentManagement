@@ -405,7 +405,8 @@
               "maximum": 100
             }
           }
-        ]
+        ],
+        "description": " Public listing/enquiry access requires approved moderation in addition to publication, available status and active agent. Review metadata/history are never public."
       }
     },
     "/properties/{id}": {
@@ -469,7 +470,8 @@
               "minimum": 1
             }
           }
-        ]
+        ],
+        "description": " Public listing/enquiry access requires approved moderation in addition to publication, available status and active agent. Review metadata/history are never public."
       }
     },
     "/properties/{id}/enquiries": {
@@ -553,7 +555,8 @@
               "minimum": 1
             }
           }
-        ]
+        ],
+        "description": " Public listing/enquiry access requires approved moderation in addition to publication, available status and active agent. Review metadata/history are never public."
       }
     },
     "/admin/properties": {
@@ -8032,6 +8035,372 @@
           }
         }
       }
+    },
+    "/admin/property-moderation": {
+      "get": {
+        "operationId": "propertyModerationIndex",
+        "summary": "List scoped property publication reviews",
+        "description": "Requires properties / properties:read. Newest property first; status defaults pending. Queue excludes owner contacts, addresses and private uploads. Publication toggle alone does not establish public visibility.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
+              "default": "pending"
+            }
+          },
+          {
+            "name": "property_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scoped review queue; no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PropertyModerationRow"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing role permission or token ability"
+          },
+          "404": {
+            "description": "Property missing or outside own/group/global scope"
+          },
+          "422": {
+            "description": "Invalid fields/reason/revision"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/admin/properties/{id}/moderation": {
+      "get": {
+        "operationId": "propertyModerationShow",
+        "summary": "Inspect current listing content and moderation history",
+        "description": "Requires properties / properties:read. Transactional current revision and complete chronological review snapshots; no private owner contacts/address. Legacy retained publication has null actor and snapshot with legacy_approved action.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current scoped review state; no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyModeration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing role permission or token ability"
+          },
+          "404": {
+            "description": "Property missing or outside own/group/global scope"
+          },
+          "409": {
+            "description": "Stale revision or different terminal decision/resubmission payload"
+          },
+          "422": {
+            "description": "Invalid fields/reason/revision"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "propertyModerationDecide",
+        "summary": "Approve or reject the inspected listing revision",
+        "description": "Requires properties.moderate + properties and properties:moderate ability (sign in again for older staff sessions). expected_revision must equal current content revision. Pending revision only; exact same decision/reason on same revision replays with 200 and no duplicate history; any stale revision, opposing decision or changed reason returns 409. A public content/photo edit increments revision and hides listing pending fresh review. Approval still requires publication intent, available status and active agent for public catalogue/enquiries. Does not change deal/status or transfer money.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expected_revision",
+                  "decision",
+                  "reason"
+                ],
+                "properties": {
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4294967294
+                  },
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "rejected"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current scoped review state; no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyModeration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing role permission or token ability"
+          },
+          "404": {
+            "description": "Property missing or outside own/group/global scope"
+          },
+          "409": {
+            "description": "Stale revision or different terminal decision/resubmission payload"
+          },
+          "422": {
+            "description": "Invalid fields/reason/revision"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/admin/properties/{id}/moderation/submit": {
+      "post": {
+        "operationId": "propertyModerationSubmit",
+        "summary": "Resubmit rejected content for another review",
+        "description": "Requires properties.edit + properties and properties:write; does not grant approval. Rejected expected_revision becomes a new pending revision with a resubmission note. Exact retry by same actor/reason returns current state for that new revision, even after it is decided. Other payload/actor, changed content or wrong status/revision returns 409. Reopening by editing public content is automatic.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expected_revision",
+                  "reason"
+                ],
+                "properties": {
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4294967294
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current scoped review state; no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyModeration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing role permission or token ability"
+          },
+          "404": {
+            "description": "Property missing or outside own/group/global scope"
+          },
+          "409": {
+            "description": "Stale revision or different terminal decision/resubmission payload"
+          },
+          "422": {
+            "description": "Invalid fields/reason/revision"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8208,6 +8577,28 @@
               "updated_at": {
                 "type": "string",
                 "format": "date-time"
+              },
+              "moderation_status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "approved",
+                  "rejected"
+                ]
+              },
+              "moderation_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967294
+              },
+              "moderation_reason": {
+                "type": "string",
+                "nullable": true
+              },
+              "moderated_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
               }
             }
           }
@@ -8334,7 +8725,7 @@
           "owner_name",
           "status"
         ],
-        "description": " Reserved is managed by deal reservations. Active reserved/confirmed deals prevent ordinary PUT changing controlled status, purpose or rental period. Reserved cannot be set on property creation."
+        "description": " Reserved is managed by deal reservations. Active reserved/confirmed deals prevent ordinary PUT changing controlled status, purpose or rental period. Reserved cannot be set on property creation. New listings default pending moderation. Public content/photo changes increment moderation_revision and reset pending; private fields, publication/enquiry switches and deal status do not. Moderation fields cannot be assigned through property writes."
       },
       "EnquiryWrite": {
         "type": "object",
@@ -11928,6 +12319,277 @@
             }
           }
         ]
+      },
+      "ModerationListing": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "sale",
+              "rent"
+            ]
+          },
+          "property_type": {
+            "type": "string",
+            "enum": [
+              "apartment",
+              "house",
+              "villa",
+              "plot",
+              "commercial"
+            ]
+          },
+          "price": {
+            "type": "string",
+            "description": "Decimal with two places"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rent_period": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "monthly",
+              "yearly",
+              "daily"
+            ],
+            "description": "Required when purpose=rent; cleared for sale."
+          },
+          "area": {
+            "type": "string"
+          },
+          "area_unit": {
+            "type": "string",
+            "enum": [
+              "sqft",
+              "sqm",
+              "acre"
+            ]
+          },
+          "bedrooms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "bathrooms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "reserved",
+              "sold",
+              "rented",
+              "unavailable"
+            ]
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "accepts_enquiries": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "purpose",
+          "price",
+          "city"
+        ]
+      },
+      "PropertyModerationEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "action",
+          "actor_id",
+          "reason",
+          "snapshot",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967294
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "created",
+              "content_changed",
+              "submitted",
+              "approved",
+              "rejected",
+              "legacy_approved"
+            ]
+          },
+          "actor_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string"
+          },
+          "snapshot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModerationListing"
+              }
+            ],
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PropertyModeration": {
+        "type": "object",
+        "required": [
+          "id",
+          "moderation_status",
+          "moderation_revision",
+          "moderation_reason",
+          "moderated_at",
+          "is_published",
+          "accepts_enquiries",
+          "listing",
+          "history"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "moderation_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "moderation_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967294
+          },
+          "moderation_reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "moderated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "is_published": {
+            "type": "boolean"
+          },
+          "accepts_enquiries": {
+            "type": "boolean"
+          },
+          "listing": {
+            "$ref": "#/components/schemas/ModerationListing"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyModerationEvent"
+            }
+          }
+        }
+      },
+      "PropertyModerationRow": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "city",
+          "price",
+          "currency",
+          "status",
+          "is_published",
+          "moderation_status",
+          "moderation_revision",
+          "moderation_reason"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "price": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "is_published": {
+            "type": "boolean"
+          },
+          "moderation_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "moderation_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967294
+          },
+          "moderation_reason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       }
     }
   }

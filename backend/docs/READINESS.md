@@ -224,3 +224,24 @@ customer journey. Build/typecheck, PHP/web formatting, skills validation and all
 84 OpenAPI/Postman operations passed. Synthetic backup/restore matched request
 history rows and verified four uploaded files by SHA-256. Only the additive local
 migration ran; both reference repositories stayed clean, with no deployment.
+
+## Property moderation update — 4 November 2026
+
+Group 14 now has a locally implemented scoped moderation queue, current/public
+content review, approval/rejection reasons and versioned snapshots. Public content
+edits require fresh approval, and stale approval conflicts cannot publish changed
+content. Group 14 moves to local-ready: **13 local-ready, 3 partial, 5 pending/unverified**
+groups. These are checklist counts, not effort/time percentages. Native clients,
+legacy migration and remaining payment/account work are still separate. No staging
+or production deployment occurred. See [moderation scope](MODERATION.md).
+
+Validation for moderation: 519 API tests (2758 assertions), 227 frontend
+unit/integration tests, 72 desktop/mobile browser checks and nine real API browser
+journeys passed. Three two-worker race scenarios covered duplicate/opposing
+reviews and editing versus approval. Build/typecheck, PHP/web formatting and
+skills validation passed. OpenAPI's 88 operations/internal references and generated
+Postman artifacts were validated; the ordered workflow includes approval before
+public requests. Synthetic moderation audit rows and four uploaded files were
+backed up/restored with row-count and SHA-256 checks. The additive local migration
+preserved prior publication/visibility counts. Both reference repositories stayed
+clean, and no staging/deployment occurred.

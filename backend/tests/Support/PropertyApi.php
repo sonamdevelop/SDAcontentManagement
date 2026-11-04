@@ -26,7 +26,7 @@ function apiPropertyPayload(array $changes = []): array
 }
 function apiProperty(User $owner, array $changes = []): Property
 {
-    return Property::create(apiPropertyPayload(array_replace(['user_id' => $owner->id, 'is_published' => true, 'accepts_enquiries' => true], $changes)));
+    return tap(Property::create(apiPropertyPayload(array_replace(['user_id' => $owner->id, 'is_published' => true, 'accepts_enquiries' => true], $changes))), fn ($p) => $p->forceFill(['moderation_status' => 'approved', 'moderation_revision' => 1])->save());
 }
 function apiEnquiry(array $changes = []): array
 {

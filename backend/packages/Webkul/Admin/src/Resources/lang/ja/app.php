@@ -2644,4 +2644,9 @@ return [
         'direct-cancel' => 'Booking cancelled directly by staff.',
         'arrived' => 'Guest check-in recorded; cancellation request closed.',
     ],
+    'property-moderation' => [
+        'permission' => 'Review property publication',
+        'created' => 'Listing created and awaiting moderation.',
+        'changed' => 'Public listing content changed; review is required again.',
+    ],
 ];

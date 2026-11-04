@@ -6,6 +6,6 @@ class AdminPropertyResource extends PublicPropertyResource
 {
     public function toArray($request): array
     {
-        return array_merge(parent::toArray($request), ['address' => $this->address, 'postal_code' => $this->postal_code, 'owner_name' => $this->owner_name, 'owner_phone' => $this->owner_phone, 'user_id' => $this->user_id, 'is_published' => (bool) $this->is_published, 'image_paths' => $this->images ?? [], 'updated_at' => $this->updated_at?->toIso8601String()]);
+        return array_merge(parent::toArray($request), ['moderation_status' => $this->moderation_status, 'moderation_revision' => $this->moderation_revision, 'moderation_reason' => $this->moderation_reason, 'moderated_at' => $this->moderated_at?->toIso8601String(), 'address' => $this->address, 'postal_code' => $this->postal_code, 'owner_name' => $this->owner_name, 'owner_phone' => $this->owner_phone, 'user_id' => $this->user_id, 'is_published' => (bool) $this->is_published, 'image_paths' => $this->images ?? [], 'updated_at' => $this->updated_at?->toIso8601String()]);
     }
 }

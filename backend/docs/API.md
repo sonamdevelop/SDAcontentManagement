@@ -79,7 +79,7 @@ and use the configured application currency. Creator/agent IDs are assigned by
 the server; callers cannot overwrite assignment or raw stored image paths.
 
 New properties default to unpublished and enquiries disabled. Publication and
-enquiry acceptance are separate opt-ins. Only published, available properties
+enquiry acceptance are separate opt-ins. Only approved, published, available properties
 assigned to active staff appear publicly. Exact address, owner contact, staff ID,
 image storage paths, and other internal fields are omitted from public resources.
 Property photos are public assets; do not upload confidential documents as photos.
@@ -737,3 +737,5 @@ See [stay booking API and staff workflow](STAYS.md) for inventory setup, date-ba
 ## Staff stay booking payments
 
 See [offline payment ledger](PAYMENTS.md) for additional receipts, refunds, reasoned reversals, exact outstanding/refund totals, scoped permissions and idempotent/concurrent writes.
+
+Property publication now requires moderation approval. Public content/photo edits require a fresh review; private edits and deal status retain approval. Staff use the scoped Property moderation queue with reasons, snapshots and safe revision retries. Existing published listings retain legacy approval. See [moderation rules](MODERATION.md).

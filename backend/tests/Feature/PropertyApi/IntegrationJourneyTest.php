@@ -17,6 +17,7 @@ it('runs the browser-facing property enquiry follow-up visit document and deal j
     $login = $this->postJson('/api/v1/auth/login', ['email' => $actor->email, 'password' => 'Password123!', 'device_name' => 'Integration journey'], $origin)->assertCreated();
     $h = array_merge($origin, ['Authorization' => 'Bearer '.$login->json('data.access_token')]);
     $pid = $this->postJson('/api/v1/admin/properties', apiPropertyPayload(['is_published' => true, 'accepts_enquiries' => true]), $h)->assertCreated()->json('data.id');
+    $this->patchJson('/api/v1/admin/properties/'.$pid.'/moderation', ['expected_revision' => 1, 'decision' => 'approved', 'reason' => 'Reviewed integration listing'], $h)->assertOk();
     $this->getJson('/api/v1/properties/'.$pid, $origin)->assertOk()->assertJsonMissingPath('data.owner_phone');
     $enquiry = apiEnquiry();
     $this->postJson('/api/v1/properties/'.$pid.'/enquiries', $enquiry, $origin)->assertAccepted();

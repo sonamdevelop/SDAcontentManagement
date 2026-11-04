@@ -109,3 +109,8 @@ The real customer reservation journey now requests cancellation, receives a staf
 rejection, sends a fresh request and receives approval. It checks customer-visible
 responses, cancelled owned detail, zero outstanding amount and released inventory.
 API tests separately verify paid bookings retain refund due without automatic refunds.
+
+The property enquiry/deal journey now explicitly approves the created listing.
+A ninth real journey rejects, resubmits and approves a property, edits its public
+title, verifies public hiding and stale-decision rejection, and approves the fresh
+revision before checking public detail. Backup/restore includes moderation audit rows.
