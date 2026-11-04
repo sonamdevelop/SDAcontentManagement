@@ -304,3 +304,23 @@ typecheck, changed-file PHP/web formatting, skills validation, 95 OpenAPI operat
 and internal references, and generated Postman checks passed. Synthetic backup/
 restore matched row counts and four uploaded files by SHA-256. Both reference
 repositories stayed clean; no migration, staging or deployment ran.
+
+## Stay report CSV update — 4 November 2026
+
+Group 11 now also has a fresh-snapshot stay report CSV with fixed summary/night/
+booked-value/cash row types, the existing finance permissions and independent
+stay/booking record scope. Spreadsheet text protection, exact signed amounts and
+private-field exclusion are covered. Group 11 remains partial for historical
+capacity/recognized revenue and remaining agreed report parity. Checklist stays
+**14 local-ready, 3 partial, 4 pending/unverified** groups, not an effort percentage.
+No migration, reference edits, staging or deployment are part of this feature.
+
+Validation: 557 API tests (3072 assertions), 250 frontend unit/integration tests,
+82 desktop/mobile browser checks and twelve real API browser journeys passed.
+Coverage includes CSV quoting/formula protection, private-field exclusion,
+permissions/scopes, exact signed money, fresh cancellation state, export limits,
+MIME/filename rejection and safe retry. Build/typecheck, PHP/web formatting,
+skills validation, 96 OpenAPI operations/internal references and generated Postman
+checks passed. Synthetic backup/restore matched row counts and verified four
+uploads by SHA-256. Both reference repositories remained clean. No migration,
+staging, deployment or environment publication ran.

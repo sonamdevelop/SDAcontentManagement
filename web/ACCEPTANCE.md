@@ -126,3 +126,5 @@ and downloads a CSV that includes aggregate metrics without private source conta
 The normal isolated database/upload backup and restore checks still run afterward.
 
 The real stay-report journey creates a stay/room and an advance-bearing booking, verifies future reserved value independently of today’s recorded cash, then confirms cancellation removes reserved nights/value without changing ledger events.
+
+The stay-report real journey also downloads the actual CSV, verifies the stay/date-specific filename and exact booked amount, and checks private customer/hash data are absent. Mocked desktop/mobile journeys verify browser download behavior; integration tests cover MIME/filename rejection and retry.

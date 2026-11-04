@@ -1,7 +1,7 @@
 <?php
 
 return [
-    ['key' => 'stay-bookings.payments', 'name' => 'admin::app.stay-api.ledger', 'route' => ['api.v1.admin.booking-payments.index', 'api.v1.admin.stays.payment-follow-ups', 'api.v1.admin.stays.report', 'api.v1.admin.booking-payments.statement'], 'sort' => 6],
+    ['key' => 'stay-bookings.payments', 'name' => 'admin::app.stay-api.ledger', 'route' => ['api.v1.admin.booking-payments.index', 'api.v1.admin.stays.payment-follow-ups', 'api.v1.admin.stays.report', 'api.v1.admin.stays.report.export', 'api.v1.admin.booking-payments.statement'], 'sort' => 6],
     ['key' => 'stay-bookings.payments.create', 'name' => 'admin::app.stay-api.ledger-payment', 'route' => 'api.v1.admin.booking-payments.payment', 'sort' => 1],
     ['key' => 'stay-bookings.payments.refund', 'name' => 'admin::app.stay-api.ledger-refund', 'route' => 'api.v1.admin.booking-payments.refund', 'sort' => 2],
     ['key' => 'stay-bookings.payments.reverse', 'name' => 'admin::app.stay-api.ledger-reverse', 'route' => 'api.v1.admin.booking-payments.reverse', 'sort' => 3],

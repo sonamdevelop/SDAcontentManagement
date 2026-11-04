@@ -5,6 +5,7 @@ use Illuminate\Support\Str;
 use Webkul\Property\Models\Stay;
 use Webkul\Property\Models\StayBooking;
 use Webkul\Property\Models\StayPayment;
+use Webkul\Property\Repositories\StayReportRepository;
 use Webkul\User\Models\Group;
 
 uses(DatabaseTransactions::class);
@@ -91,4 +92,60 @@ it('includes team bookings but excludes outside-group records and cash', functio
     $this->getJson('/api/v1/admin/stays/'.$stay->id.'/report?from=2030-01-02&to=2030-01-04', apiHeaders($actor, ['stays:read', 'bookings:read']))->assertOk()
         ->assertJsonPath('summary.booked_room_nights', 2)->assertJsonPath('summary.confirmed_bookings', 1)
         ->assertJsonPath('cash_movement.0.receipts', '0.01');
+});
+
+it('downloads a fresh scoped CSV with safe names, exact corrections and no private record fields', function () {
+    config(['app.timezone' => 'UTC']);
+    $actor = apiStaff([], all: true);
+    $stay = Stay::create(['user_id' => $actor->id, 'name' => '=SUM(1,2)', 'city' => 'Dandeli', 'timezone' => 'UTC', 'active' => true]);
+    $room = $stay->rooms()->create(['name' => 'CSV room', 'inventory' => 3, 'capacity' => 2, 'nightly_rate' => '100.00', 'active' => true]);
+    $booking = reportStayBooking($actor, $room, ['rooms' => 1]);
+    $old = reportStayEntry($booking, 'payment', '10.01', '2030-01-01 12:00:00');
+    reportStayEntry($booking, 'reversal', '10.01', '2030-01-02 12:00:00', $old->id);
+    $h = apiHeaders($actor, ['stays:read', 'bookings:read']);
+    $url = '/api/v1/admin/stays/'.$stay->id.'/report/export?from=2030-01-02&to=2030-01-04';
+    $response = $this->getJson($url, $h)->assertOk();
+    expect($response->headers->get('Content-Type'))->toContain('text/csv');
+    expect($response->headers->get('Content-Disposition'))->toContain('attachment;', 'sda-stay-report-'.$stay->id.'-2030-01-02-2030-01-04.csv');
+    expect($response->headers->get('Cache-Control'))->toContain('no-store');
+    expect($response->headers->get('X-Content-Type-Options'))->toBe('nosniff');
+    $csv = $response->streamedContent();
+    expect($csv)->toStartWith("\xEF\xBB\xBF")->toContain('200.02', '-10.01');
+    expect($csv)->not->toContain('Secret guest', 'secret-report@example.test', 'private notes', 'private receipt', 'payload_hash');
+    $stream = fopen('php://temp', 'w+');
+    fwrite($stream, substr($csv, 3));
+    rewind($stream);
+    $header = fgetcsv($stream, escape: '');
+    $summary = array_combine($header, fgetcsv($stream, escape: ''));
+    expect($summary['stay_name'])->toBe("'=SUM(1,2)")->and($summary['booked_room_nights'])->toBe('2')->and($summary['to_exclusive'])->toBe('2030-01-04');
+    fclose($stream);
+    $booking->update(['status' => 'cancelled']);
+    $fresh = $this->getJson($url, $h)->assertOk()->streamedContent();
+    expect($fresh)->not->toContain("\r\nbooked_value,")->toContain('cash_movement,', '-10.01');
+});
+it('applies export authentication, token and role permissions and both ownership scopes', function () {
+    $actor = apiStaff([], all: true);
+    $stay = Stay::create(['user_id' => $actor->id, 'name' => 'Private CSV stay', 'city' => 'Dandeli', 'timezone' => 'UTC', 'active' => true]);
+    $room = $stay->rooms()->create(['name' => 'CSV scope room', 'inventory' => 3, 'capacity' => 2, 'nightly_rate' => '100.00', 'active' => true]);
+    reportStayBooking($actor, $room);
+    $url = '/api/v1/admin/stays/'.$stay->id.'/report/export?from=2030-01-02&to=2030-01-04';
+    $this->getJson($url)->assertUnauthorized();
+    $this->getJson($url, apiHeaders($actor, ['stays:read']))->assertForbidden();
+    $reader = apiStaff(['stays', 'stay-bookings', 'stay-bookings.view'], visibility: 'global');
+    $this->getJson($url, apiHeaders($reader, ['stays:read', 'bookings:read']))->assertForbidden();
+    $own = apiStaff([], all: true);
+    $h = apiHeaders($own, ['stays:read', 'bookings:read']);
+    $this->getJson($url, $h)->assertNotFound();
+    $stay->update(['user_id' => $own->id]);
+    $csv = $this->getJson($url, $h)->assertOk()->streamedContent();
+    expect($csv)->not->toContain('200.02', 'cash_movement,');
+    $this->getJson(strtok($url, '?').'?from=2030-01-01&to=2030-04-01', $h)->assertUnprocessable()->assertHeaderMissing('Content-Disposition');
+});
+it('rejects an oversized export as JSON before attachment headers or partial CSV', function () {
+    $actor = apiStaff([], all: true);
+    $stay = Stay::create(['user_id' => $actor->id, 'name' => 'Large CSV', 'city' => 'Dandeli', 'timezone' => 'UTC', 'active' => true]);
+    $mock = Mockery::mock(StayReportRepository::class);
+    $mock->shouldReceive('report')->once()->andReturn(['days' => [], 'booked_value' => array_fill(0, 5000, []), 'cash_movement' => []]);
+    app()->instance(StayReportRepository::class, $mock);
+    $this->getJson('/api/v1/admin/stays/'.$stay->id.'/report/export?from=2030-01-02&to=2030-01-04', apiHeaders($actor, ['stays:read', 'bookings:read']))->assertUnprocessable()->assertJsonValidationErrors('export')->assertHeaderMissing('Content-Disposition');
 });

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useResource } from '../api/useResource';
 import { can } from './api';
@@ -29,6 +29,55 @@ export function StayReportPage() {
     [api, allowed, stay, from, to],
   );
   const result = useResource(query, load);
+  const [downloadError, setDownloadError] = useState<unknown>();
+  const [downloading, setDownloading] = useState(false);
+  const controller = useRef<AbortController | null>(null);
+  const mounted = useRef(true);
+  const urls = useRef(new Map<string, number>());
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      controller.current?.abort();
+      for (const [url, timer] of urls.current) {
+        window.clearTimeout(timer);
+        URL.revokeObjectURL(url);
+      }
+      urls.current.clear();
+    };
+  }, []);
+  useEffect(() => {
+    controller.current?.abort();
+    setDownloadError(undefined);
+  }, [query, allowed, api]);
+  async function download() {
+    if (controller.current || !allowed || !result.data) return;
+    const active = new AbortController();
+    controller.current = active;
+    setDownloading(true);
+    setDownloadError(undefined);
+    try {
+      const { blob, filename } = await api.download(stay, from, to, active.signal);
+      if (active.signal.aborted || !mounted.current) return;
+      const url = URL.createObjectURL(blob),
+        anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      const timer = window.setTimeout(() => {
+        URL.revokeObjectURL(url);
+        urls.current.delete(url);
+      }, 1000);
+      urls.current.set(url, timer);
+    } catch (e) {
+      if (!active.signal.aborted && mounted.current) setDownloadError(e);
+    } finally {
+      if (controller.current === active) controller.current = null;
+      if (mounted.current) setDownloading(false);
+    }
+  }
   if (!allowed)
     return (
       <p role="alert">
@@ -118,6 +167,14 @@ export function StayReportPage() {
               {new Date(result.data.context.as_of).toLocaleString()}
             </p>
             <button onClick={result.retry}>Refresh stay report</button>
+            <button disabled={downloading} onClick={() => void download()}>
+              {downloading ? 'Preparing CSV…' : 'Export stay report CSV'}
+            </button>
+            <p>
+              Export creates a fresh snapshot for these filters; its as-of time may differ from this
+              screen.
+            </p>
+            {downloadError ? <Failure error={downloadError} /> : null}
             <p>
               Booked room-nights: {result.data.summary.booked_room_nights} · Current inventory
               room-nights: {result.data.summary.inventory_room_nights} · Confirmed bookings:{' '}

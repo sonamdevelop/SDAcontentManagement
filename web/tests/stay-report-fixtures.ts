@@ -32,3 +32,11 @@ export const stayReportStaff = {
   },
 };
 export const reportPath = '/staff/stay-reports?stay_id=1&from=2030-01-02&to=2030-01-04';
+
+export const stayReportCsv =
+  '\uFEFFrow_type,stay_id,stay_name,from,to_exclusive,booked_value,receipts,refunds\r\nbooked_value,1,River stay,2030-01-02,2030-01-04,400.04,,\r\ncash_movement,1,River stay,2030-01-02,2030-01-04,,-50.00,10.01\r\n';
+export const stayReportFilename = 'sda-stay-report-1-2030-01-02-2030-01-04.csv';
+export const stayReportCsvHeaders = {
+  'Content-Type': 'text/csv; charset=UTF-8',
+  'Content-Disposition': `attachment; filename="${stayReportFilename}"`,
+};

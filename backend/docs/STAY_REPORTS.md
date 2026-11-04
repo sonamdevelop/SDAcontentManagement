@@ -53,5 +53,37 @@ returned. Filters survive reload; stale requests are aborted and response contex
 contiguous dates, totals and decimal values are validated before displaying data.
 
 Historical capacity, recognized revenue, tax invoices, gateway settlement,
-booking/room-specific report drilldowns and stay CSV exports remain future work.
+booking/room-specific report drilldowns remain future work.
 No staging/deployment or reference-repository modifications are part of this feature.
+
+## CSV download
+
+`GET /api/v1/admin/stays/{id}/report/export?from=2030-01-02&to=2030-01-04`
+uses the exact same filters, independent scopes and permissions as the JSON
+report. The staff report screen provides **Export stay report CSV**. The export
+recomputes a fresh transactional snapshot; the repeated `as_of` column is its own
+snapshot time, which can differ from the screen. No historical report is stored.
+
+CSV uses UTF-8 BOM, comma delimiters, CRLF records and RFC4180 quoting, including
+multiline/quoted names. Formula-leading stay names are prefixed with an apostrophe.
+Fixed row types are `summary`, `night`, `booked_value`, `cash_movement`.
+Every row repeats stay ID/name, timezone, inclusive `from`, `to_exclusive`, `as_of`,
+inventory basis and booking scope. Summary fills count columns, nights fill date/
+room/capacity columns, booked-value rows fill currency/value, and cash rows fill
+currency/receipts/refunds. Unused columns are empty; zero counts remain zero.
+Money remains exact decimal text, including negative corrections. No cross-currency
+sum is included. Consumers must select the appropriate row type instead of
+summing different categories. Net cash is receipts minus refunds.
+
+The fixed columns are documented by `StayReportCsv::COLUMNS`. No guest identity,
+email/phone, individual booking IDs, notes, references or ledger IDs are included.
+The server materializes scoped aggregates before attachment headers and rejects
+more than 5000 data rows with JSON 422 `errors.export`; no partial/truncated file.
+An empty report still includes summary and nightly rows.
+
+The filename is `sda-stay-report-{id}-{from}-{to}.csv`, containing only numeric ID
+and validated dates. Browser download uses staff bearer credentials, omits cookies,
+rejects redirects, invalid content type/disposition/filename and files over 10 MiB.
+Changing filters, permissions or leaving the page aborts pending downloads; object
+URLs are revoked after use/unmount. Server errors retain the current report and
+allow retry. All existing date/inventory/value limitations above still apply.

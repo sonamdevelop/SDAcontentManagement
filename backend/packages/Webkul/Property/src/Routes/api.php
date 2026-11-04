@@ -160,5 +160,6 @@ Route::get('admin/stays/{id}/payment-follow-ups', [StayPaymentFollowUpController
 Route::get('admin/stays/{id}/operations', [StayOperationsController::class, 'index'])->whereNumber('id')->middleware([ApiAccess::class.':stays,stays:read', ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view'])->name('admin.stays.operations');
 
 Route::get('admin/stays/{id}/report', [StayReportController::class, 'index'])->whereNumber('id')->middleware([ApiAccess::class.':stays,stays:read', ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name('admin.stays.report');
+Route::get('admin/stays/{id}/report/export', [StayReportController::class, 'export'])->whereNumber('id')->middleware([ApiAccess::class.':stays,stays:read', ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name('admin.stays.report.export');
 
 Route::fallback(fn () => response()->json(['message' => 'Not found.'], 404));

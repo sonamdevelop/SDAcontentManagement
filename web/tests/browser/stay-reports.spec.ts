@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { stay, stayMeta } from '../stay-fixtures';
-import { stayReport, stayReportStaff, reportPath } from '../stay-report-fixtures';
+import {
+  stayReport,
+  stayReportStaff,
+  reportPath,
+  stayReportCsv,
+  stayReportCsvHeaders,
+  stayReportFilename,
+} from '../stay-report-fixtures';
 test('stay occupancy and cash report retains dates on reload and fits the screen', async ({
   page,
 }) => {
@@ -15,6 +22,10 @@ test('stay occupancy and cash report retains dates on reload and fits the screen
     if (u.pathname.endsWith('/auth/me')) return route.fulfill({ json: { data: stayReportStaff } });
     if (u.pathname.endsWith('/admin/stays'))
       return route.fulfill({ json: { data: [stay], meta: stayMeta } });
+    if (u.pathname.endsWith('/stays/1/report/export')) {
+      expect(u.searchParams.get('from')).toBe('2030-01-02');
+      return route.fulfill({ body: stayReportCsv, headers: stayReportCsvHeaders });
+    }
     if (u.pathname.endsWith('/stays/1/report')) {
       expect(u.searchParams.get('from')).toBe('2030-01-02');
       return route.fulfill({ json: stayReport });
@@ -27,5 +38,13 @@ test('stay occupancy and cash report retains dates on reload and fits the screen
   await page.reload();
   await expect(page.getByLabel('Report until (exclusive)')).toHaveValue('2030-01-04');
   await expect(page.getByRole('meter')).toHaveCount(2);
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export stay report CSV' }).click();
+  const file = await pending;
+  expect(file.suggestedFilename()).toBe(stayReportFilename);
+  const stream = await file.createReadStream(),
+    chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+  expect(Buffer.concat(chunks).toString('utf8')).toContain('400.04');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

@@ -44,6 +44,17 @@ test('real stay report separates reserved value from recorded cash and refreshes
   const url = `/staff/stay-reports?stay_id=${stay.id}&from=${from}&to=${to}`;
   await page.goto(url);
   await expect(page.getByText('INR 400.04', { exact: true })).toBeVisible();
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export stay report CSV' }).click();
+  const file = await pending;
+  expect(file.suggestedFilename()).toBe(`sda-stay-report-${stay.id}-${from}-${to}.csv`);
+  const stream = await file.createReadStream(),
+    chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+  const csv = Buffer.concat(chunks).toString('utf8');
+  expect(csv).toContain('400.04');
+  for (const secret of ['Private report guest', 'private-stay-report@example.test', 'payload_hash'])
+    expect(csv).not.toContain(secret);
   await expect(page.getByText(/Booked room-nights: 4/)).toBeVisible();
   await expect(page.getByText('No visible ledger movements in this range.')).toBeVisible();
   await expect(page.getByText('Private report guest', { exact: true })).toHaveCount(0);

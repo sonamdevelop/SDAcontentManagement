@@ -101,6 +101,11 @@ export function isStayReport(
 }
 export class StayReportApi {
   constructor(private api: StaffApi) {}
+  async download(stay: string, from: string, to: string, signal?: AbortSignal) {
+    if (!/^[1-9]\d*$/.test(stay) || !Number.isSafeInteger(Number(stay))) throw new StaffError(404);
+    reportDates(from, to);
+    return this.api.stayReportFile(Number(stay), from, to, signal);
+  }
   async get(stay: string, from: string, to: string, signal?: AbortSignal) {
     if (!/^[1-9]\d*$/.test(stay) || !Number.isSafeInteger(Number(stay))) throw new StaffError(404);
     reportDates(from, to);

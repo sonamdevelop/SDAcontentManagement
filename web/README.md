@@ -345,3 +345,5 @@ Customer saved properties and scoped staff popularity are available. Hidden/unre
 Agent performance now has a dedicated web report with calendar timezone/date/agent filters, source-aware outcome bars and scoped all-filtered-agent CSV export. See [agent report rules](../backend/docs/AGENT_REPORTS.md).
 
 Staff stay occupancy/cash reporting: `/staff/stay-reports`, with stay-local exclusive date ranges (1–62 nights), daily room meters and exact currency-separated values/corrections. See [semantics](../backend/docs/STAY_REPORTS.md).
+
+The stay report screen exports the selected stay/date filters as a fresh CSV snapshot with currency-separated rows and no private customer/ledger fields.

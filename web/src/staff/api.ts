@@ -128,9 +128,21 @@ export class StaffApi {
     for (const key of ['from', 'to', 'timezone', 'user_id'])
       if (params.get(key)) query.set(key, params.get(key)!);
     const response = await this.checked('/admin/reports/agents/export?' + query, { signal });
+    return this.csvResponse(response, /sda-agent-report-\d{4}-\d{2}-\d{2}\.csv/);
+  }
+  async stayReportFile(stayId: number, from: string, to: string, signal?: AbortSignal) {
+    if (!Number.isSafeInteger(stayId) || stayId < 1) throw new StaffError(404);
+    if (![from, to].every((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))) throw new StaffError(422);
+    const response = await this.checked(
+      `/admin/stays/${stayId}/report/export?${new URLSearchParams({ from, to })}`,
+      { signal },
+    );
+    return this.csvResponse(response, new RegExp(`sda-stay-report-${stayId}-${from}-${to}\\.csv`));
+  }
+  private async csvResponse(response: Response, pattern: RegExp) {
     const mime = response.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase(),
       disposition = response.headers.get('Content-Disposition') || '',
-      filename = disposition.match(/sda-agent-report-\d{4}-\d{2}-\d{2}\.csv/)?.[0];
+      filename = disposition.match(pattern)?.[0];
     if (
       response.status !== 200 ||
       mime !== 'text/csv' ||

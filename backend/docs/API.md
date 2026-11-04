@@ -746,3 +746,5 @@ Customer saved properties and scoped staff popularity are available. Hidden/unre
 Agent performance now has a dedicated web report with calendar timezone/date/agent filters, source-aware outcome bars and scoped all-filtered-agent CSV export. See [agent report rules](AGENT_REPORTS.md).
 
 Stay occupancy, booked value and offline cash movement: `GET /api/v1/admin/stays/{id}/report?from=2030-01-02&to=2030-01-04`. See [permissions/date/value rules](STAY_REPORTS.md).
+
+Stay report CSV: `GET /api/v1/admin/stays/{id}/report/export` with the same required `from`/exclusive `to` dates and finance permissions as JSON. See [CSV schema/limits](STAY_REPORTS.md#csv-download).

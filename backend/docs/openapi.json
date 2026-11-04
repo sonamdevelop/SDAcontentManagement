@@ -8938,6 +8938,96 @@
           }
         ]
       }
+    },
+    "/admin/stays/{id}/report/export": {
+      "get": {
+        "summary": "Export a scoped stay occupancy and cash report as CSV",
+        "operationId": "stayReportExport",
+        "description": "Requires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Both stay and booking visibility apply independently. Required from/to civil dates span 1–62 nights with an exclusive end in stay timezone. Current all-room-type inventory is a comparison baseline, not historical capacity. Confirmed bookings only for room nights and snapshot nightly_rate × rooms × clipped nights value; values stay separated by currency. This is not attendance or recognized revenue. Cash uses ledger created_at in the stay-local window, including cancelled bookings and opening advances. Reversals subtract on their own recording day, not the original day; receipts/refunds may be negative. No private guest/contact/notes/reference fields. No pagination, migration, collection, currency conversion or deployment. Cache-Control: no-store. Fresh transactional snapshot at download time, independent of earlier screen as_of. CSV contains fixed columns with summary/night/booked_value/cash_movement row_type; metadata repeated per row and unused columns empty. UTF-8 BOM and RFC4180 CRLF quoting; formula-leading stay names neutralized with an apostrophe. Signed numeric money remains exact decimal text. Maximum 5000 data rows; over-limit returns JSON 422 before attachment headers with errors.export, never truncates. No private booking/customer/ledger fields. Filename sda-stay-report-{id}-{from}-{to}.csv.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "attachment; filename=\"sda-stay-report-{id}-{from}-{to}.csv\""
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "nosniff"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive first night."
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Exclusive end date. Maximum 62 nights."
+          }
+        ]
+      }
     }
   },
   "components": {
