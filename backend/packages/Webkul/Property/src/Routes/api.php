@@ -14,6 +14,7 @@ use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
 use Webkul\Property\Http\Controllers\StayApiController;
+use Webkul\Property\Http\Controllers\StayCancellationController;
 use Webkul\Property\Http\Controllers\StayContentController;
 use Webkul\Property\Http\Controllers\StayOperationsController;
 use Webkul\Property\Http\Controllers\StayPaymentController;
@@ -40,6 +41,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('rooms/{id}/availability', [CustomerStayBookingController::class, 'availability'])->whereNumber('id')->middleware($access.':customer:bookings')->name('rooms.availability');
     Route::post('bookings', [CustomerStayBookingController::class, 'store'])->middleware([$access.':customer:bookings', $access.':customer:bookings:create', 'throttle:customer-reservation'])->name('bookings.store');
     Route::get('bookings', [CustomerStayBookingController::class, 'index'])->middleware($access.':customer:bookings')->name('bookings.index');
+    Route::post('bookings/{id}/cancellation-requests', [StayCancellationController::class, 'store'])->whereNumber('id')->middleware([$access.':customer:bookings', $access.':customer:bookings:create', 'throttle:customer-cancellation'])->name('bookings.cancellation-request');
     Route::get('bookings/{id}', [CustomerStayBookingController::class, 'show'])->whereNumber('id')->middleware($access.':customer:bookings')->name('bookings.show');
 });
 
@@ -120,6 +122,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('stay-rooms/{id}/calendar', [$stays, 'calendar'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('rooms.calendar');
     Route::get('stay-rooms/{id}/availability', [$stays, 'availability'])->whereNumber('id')->middleware(ApiAccess::class.':stays,stays:read')->name('rooms.availability');
     Route::get('stay-bookings', [$stays, 'index'])->middleware(ApiAccess::class.':stay-bookings,bookings:read')->name('bookings.index');
+    Route::get('stay-cancellation-requests', [StayCancellationController::class, 'index'])->middleware(ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view')->name('cancellation-requests.index');
+    Route::patch('stay-cancellation-requests/{id}/decision', [StayCancellationController::class, 'decision'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.cancel,bookings:write,stay-bookings.view')->name('cancellation-requests.decision');
     Route::get('stay-bookings/{id}', [$stays, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.view,bookings:read')->name('bookings.show');
     Route::post('stay-bookings', [$stays, 'store'])->middleware([ApiAccess::class.':stay-bookings.create,bookings:write,stay-bookings.view', ApiAccess::class.':stays,stays:read'])->name('bookings.store');
     Route::patch('stay-bookings/{id}/check-in', [$stays, 'checkIn'])->whereNumber('id')->middleware(ApiAccess::class.':stay-bookings.check-in,bookings:write,stay-bookings.view')->name('bookings.check-in');

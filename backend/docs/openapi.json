@@ -7715,6 +7715,323 @@
           }
         }
       }
+    },
+    "/customer/bookings/{id}/cancellation-requests": {
+      "post": {
+        "operationId": "customerCancellationRequest",
+        "summary": "Request staff-reviewed cancellation of my booking",
+        "description": "Requires customer:bookings and customer:bookings:create. Explicit ownership only; no verified-email requirement. One pending request per booking, before its local arrival date and prior to check-in. New UUID/reason returns 201; same customer/booking/trimmed reason/key returns current request with 200 even after terminal decisions/source changes. Different payload/key while pending returns 409. Retain UUID after uncertain outcomes. Pending/rejected requests leave booking, money and allocation unchanged. Five submissions/min/IP. Read history in own booking detail; no automatic email or refund.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "request_id",
+                  "reason"
+                ],
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "description": "Ownership and decision fields cannot be supplied."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Request created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayCancellationRequest"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success or exact replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayCancellationRequest"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing permission/ability or inactive account"
+          },
+          "404": {
+            "description": "Booking/request outside authorized scope or missing"
+          },
+          "409": {
+            "description": "UUID payload conflict, another pending request, or terminal decision conflict"
+          },
+          "422": {
+            "description": "Invalid reason/fields or booking started; approval is not permitted from local arrival date"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        }
+      }
+    },
+    "/admin/stay-cancellation-requests": {
+      "get": {
+        "operationId": "staffCancellationQueue",
+        "summary": "List scoped customer cancellation requests",
+        "description": "Requires stay-bookings and stay-bookings.view plus bookings:read. Booking own/group/global scope applies independently. Newest request first; status defaults pending, per_page defaults 20 (max100). Curated reasons and booking names/dates only; no guest contacts, payment data or tokens.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "closed"
+              ],
+              "default": "pending"
+            }
+          },
+          {
+            "name": "booking_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scoped queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StayCancellationQueueRow"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing permission/ability or inactive account"
+          },
+          "422": {
+            "description": "Invalid reason/fields or booking started; approval is not permitted from local arrival date"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        }
+      }
+    },
+    "/admin/stay-cancellation-requests/{id}/decision": {
+      "patch": {
+        "operationId": "staffCancellationDecision",
+        "summary": "Approve or reject a cancellation request",
+        "description": "Requires stay-bookings.cancel, stay-bookings.view and bookings:write; scoped booking and source checks. Body decision approve/reject plus required customer-visible decision_reason. Exact same terminal decision/reason replays without duplicate events; any changed terminal decision/reason returns 409. Approval calls the same locked staff cancellation transition, releases scheduled inventory, makes amount due zero and preserves all ledger entries/refund due; it never refunds money. Rejection keeps confirmed booking and permits a fresh customer UUID request. Direct staff cancellation/check-in closes a pending request with history. Approval after local arrival date fails 422; staff can still reject. Parent/room/booking/request locks serialize competing decisions.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "decision",
+                  "decision_reason"
+                ],
+                "properties": {
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "approve",
+                      "reject"
+                    ]
+                  },
+                  "decision_reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success or exact replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StayCancellationRequest"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid or wrong account token"
+          },
+          "403": {
+            "description": "Missing permission/ability or inactive account"
+          },
+          "404": {
+            "description": "Booking/request outside authorized scope or missing"
+          },
+          "409": {
+            "description": "UUID payload conflict, another pending request, or terminal decision conflict"
+          },
+          "422": {
+            "description": "Invalid reason/fields or booking started; approval is not permitted from local arrival date"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9902,7 +10219,11 @@
                     "payment_recorded",
                     "refund_recorded",
                     "payment_reversed",
-                    "customer_created"
+                    "customer_created",
+                    "cancellation_requested",
+                    "cancellation_approved",
+                    "cancellation_rejected",
+                    "cancellation_closed"
                   ]
                 },
                 "changes": {
@@ -9971,6 +10292,13 @@
           "refund_due": {
             "type": "string",
             "pattern": "^\\d{1,13}\\.\\d{2}$"
+          },
+          "cancellation_requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StayCancellationRequest"
+            },
+            "description": "Complete chronological history on detail/create responses; omitted on list summaries."
           }
         },
         "required": [
@@ -11336,6 +11664,13 @@
           "room_type_id": {
             "type": "integer",
             "minimum": 1
+          },
+          "cancellation_requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StayCancellationRequest"
+            },
+            "description": "Complete chronological history on detail/create responses; omitted on list summaries."
           }
         },
         "description": "Explicit customer_id ownership only. No guest contacts, internal notes, bank references, staff IDs, request IDs, hashes or history events. Old email snapshots never grant ownership."
@@ -11507,6 +11842,92 @@
             "description": "Uppercase, lowercase and a number; at most 72 UTF-8 bytes, no NUL."
           }
         }
+      },
+      "StayCancellationRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "booking_id",
+          "status",
+          "reason",
+          "decision_reason",
+          "created_at",
+          "decided_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "booking_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "closed"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "decision_reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "description": "Curated customer-visible request and staff response. No ownership IDs, UUID, hash, staff identity, contacts or internal notes."
+      },
+      "StayCancellationQueueRow": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StayCancellationRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "stay_name",
+              "room_name",
+              "check_in",
+              "check_out",
+              "timezone"
+            ],
+            "properties": {
+              "stay_name": {
+                "type": "string"
+              },
+              "room_name": {
+                "type": "string"
+              },
+              "check_in": {
+                "type": "string",
+                "format": "date"
+              },
+              "check_out": {
+                "type": "string",
+                "format": "date"
+              },
+              "timezone": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     }
   }

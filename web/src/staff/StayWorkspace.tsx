@@ -729,6 +729,23 @@ function BookingContent({ initial }: { initial: Booking }) {
   return (
     <>
       <h1>Stay booking #{booking.id}</h1>
+      {(booking.cancellation_requests || []).length > 0 && (
+        <section className="staff-panel">
+          <h2>Customer cancellation requests</h2>
+          {booking.cancellation_requests!.map((r) => (
+            <p key={r.id}>
+              Request #{r.id}: {label(r.status)} · {r.reason}
+              {r.decision_reason && ` · Response: ${r.decision_reason}`}
+            </p>
+          ))}
+          {can(profile, 'stay-bookings') && (
+            <Link to={`/staff/stay-cancellation-requests?booking_id=${booking.id}`}>
+              Review customer requests
+            </Link>
+          )}
+        </section>
+      )}
+
       <section className="staff-panel">
         <h2>
           {booking.stay_name} — {booking.room_name}

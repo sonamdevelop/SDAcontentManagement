@@ -1,3 +1,8 @@
+import {
+  isCancellation,
+  validCancellationHistory,
+  type CancellationRequest,
+} from '../domain/cancellations';
 import { isCustomerAvailability, type ReservationDraft } from './reservation';
 import { publicApi } from '../api/client';
 import { isBooking, quotedTotal, type Booking } from '../staff/stays';
@@ -24,7 +29,11 @@ export type CustomerBooking = Pick<
   | 'checked_in_at'
   | 'checked_out_at'
 > &
-  FinancialSummary & { guest_name: string; room_type_id?: number };
+  FinancialSummary & {
+    guest_name: string;
+    room_type_id?: number;
+    cancellation_requests?: CancellationRequest[];
+  };
 export type CustomerBookingPage = {
   data: CustomerBooking[];
   meta: { current_page: number; last_page: number; total: number };
@@ -70,6 +79,10 @@ export function isCustomerBooking(v: unknown): v is CustomerBooking {
     typeof v === 'object' &&
     typeof (v as CustomerBooking).guest_name === 'string' &&
     isFinancialSummary(v) &&
+    validCancellationHistory(
+      (v as CustomerBooking).cancellation_requests,
+      (v as CustomerBooking).id,
+    ) &&
     isBooking({ ...v, room_type_id: (v as CustomerBooking).room_type_id ?? 1 })
   );
 }
@@ -221,6 +234,21 @@ export class CustomerApi {
     if (
       body.data.total !== quotedTotal(data.expected_rate, data.rooms, nights) ||
       body.data.advance !== '0.00'
+    )
+      throw new CustomerError(502);
+    return body.data;
+  }
+  async requestCancellation(id: number, data: { request_id: string; reason: string }) {
+    const body = await this.request(
+      `/bookings/${id}/cancellation-requests`,
+      { method: 'POST', body: JSON.stringify(data) },
+      true,
+      [200, 201],
+    );
+    if (
+      !isCancellation(body?.data) ||
+      body.data.booking_id !== id ||
+      body.data.reason !== data.reason
     )
       throw new CustomerError(502);
     return body.data;

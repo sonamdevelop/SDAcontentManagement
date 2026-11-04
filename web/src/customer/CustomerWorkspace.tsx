@@ -1,3 +1,4 @@
+import { CustomerCancellationPanel } from './CancellationPanel';
 import { AccountActions, VerificationPanel } from './AccountActions';
 import { CustomerFailure as Failure } from './CustomerUi';
 import { ReservationPage } from './ReservationPage';
@@ -467,6 +468,7 @@ function MyBooking({ api }: { api: CustomerApi }) {
           </h3>
           <p>Guest: {result.data.guest_name}</p>
           <BookingSummary booking={result.data} />
+          <CustomerCancellationPanel api={api} booking={result.data} onRefresh={result.retry} />
           <button onClick={result.retry}>Refresh my booking</button>
         </article>
       ) : null}

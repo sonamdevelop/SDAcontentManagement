@@ -5,6 +5,7 @@ namespace Webkul\Property\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Webkul\Property\Repositories\StayBookingRepository;
+use Webkul\Property\Repositories\StayCancellationRepository;
 use Webkul\Property\Repositories\StayPaymentRepository;
 use Webkul\Property\Services\CustomerReservationService;
 use Webkul\Property\Support\CustomerStayBookingView;
@@ -36,7 +37,7 @@ class CustomerStayBookingController
         return DB::transaction(function () use ($record, $request, $created) {
             $booking = $this->bookings->forCustomer($request->user()->id)->lockForUpdate()->findOrFail($record->id);
 
-            return response()->json(['data' => CustomerStayBookingView::make($booking->toArray(), $this->payments->summary($booking, true))], $created ? 201 : 200);
+            return response()->json(['data' => CustomerStayBookingView::make($booking->toArray(), $this->payments->summary($booking, true)) + ['cancellation_requests' => app(StayCancellationRepository::class)->history($booking->id)]], $created ? 201 : 200);
         });
     }
 
@@ -62,7 +63,7 @@ class CustomerStayBookingController
         return DB::transaction(function () use ($request, $id) {
             $booking = $this->bookings->forCustomer($request->user()->id)->lockForUpdate()->findOrFail($id);
 
-            return response()->json(['data' => CustomerStayBookingView::make($booking->toArray(), $this->payments->summary($booking, true))]);
+            return response()->json(['data' => CustomerStayBookingView::make($booking->toArray(), $this->payments->summary($booking, true)) + ['cancellation_requests' => app(StayCancellationRepository::class)->history($booking->id)]]);
         });
     }
 }

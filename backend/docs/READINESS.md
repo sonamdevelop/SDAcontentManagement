@@ -205,3 +205,22 @@ skills validation and all 81 OpenAPI/Postman operations passed. The isolated
 synthetic database (including account-action rows) and four upload files were
 backed up/restored with row-count and SHA-256 verification. Only the pending
 additive migration was applied locally; both reference repositories stayed clean.
+
+## Customer cancellation review update — 4 November 2026
+
+Customer-owned booking cancellation requests and scoped staff review are locally
+implemented. Approval reuses staff cancellation/inventory rules and preserves
+ledger/refund-due amounts; no automatic refund or live notifications are enabled.
+Account deletion/email changes, online payments, migration and native apps remain
+separate. Checklist stays **12 local-ready, 3 partial, 6 pending/unverified** groups;
+these are not completion/time percentages. No staging/deployment occurred.
+See [cancellation scope](CANCELLATIONS.md).
+
+Validation for cancellation review: 507 API tests (2652 assertions), 220 frontend
+unit/integration tests, 68 desktop/mobile browser checks and eight real API browser
+journeys passed. This includes two real worker races for competing decisions,
+paid-booking refund-due preservation and rejection/re-request/approval in the real
+customer journey. Build/typecheck, PHP/web formatting, skills validation and all
+84 OpenAPI/Postman operations passed. Synthetic backup/restore matched request
+history rows and verified four uploaded files by SHA-256. Only the additive local
+migration ran; both reference repositories stayed clean, with no deployment.

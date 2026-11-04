@@ -76,7 +76,7 @@ Customer reservations now assign explicit ownership from the authenticated custo
 No historical backfill or customer claiming/linking endpoint is implemented. Staff
 creation still ignores customer_id input. Customer reservations use nullable staff
 created_by and an explicit customer_actor_id audit event; no staff actor is invented.
-Customer payment/cancellation writes remain unavailable. See [reservation rules](RESERVATIONS.md).
+Customer payment writes remain unavailable; cancellation requests now have a staff review workflow. See [reservation rules](RESERVATIONS.md).
 
 ## SDA web client
 
@@ -115,3 +115,5 @@ token was revoked and then signs out while the existing staff session survives.
 Synthetic backup/restore checks now include stay_customers.
 
 Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
+
+Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](CANCELLATIONS.md).

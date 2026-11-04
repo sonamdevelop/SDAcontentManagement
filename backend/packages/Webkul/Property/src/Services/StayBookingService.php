@@ -131,9 +131,9 @@ class StayBookingService
         return $record->load('events');
     }
 
-    public function cancel(int $id, string $reason)
+    public function cancel(int $id, string $reason, ?int $approvedRequestId = null)
     {
-        return DB::transaction(function () use ($id, $reason) {
+        return DB::transaction(function () use ($id, $reason, $approvedRequestId) {
             $initial = $this->bookings->authorized($id);
             $this->stays->room($initial->room_type_id, true);
             $record = $this->bookings->authorized($id, true);
@@ -144,6 +144,7 @@ class StayBookingService
                 $this->invalid('status', 'started');
             }
             $record->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => $reason]);
+            app(StayCancellationService::class)->closePending($record, trans('admin::app.stay-cancellation.direct-cancel'), $approvedRequestId);
             $record->events()->create(['actor_id' => auth()->guard('user')->id(), 'action' => 'cancelled', 'changes' => ['status' => 'cancelled', 'cancellation_reason' => $reason]]);
 
             return $record->load('events');
@@ -173,6 +174,9 @@ class StayBookingService
                 $this->invalid('status', 'arrival-required');
             }
             $record->forceFill([$field => now()])->save();
+            if ($action === 'check-in') {
+                app(StayCancellationService::class)->closePending($record, trans('admin::app.stay-cancellation.arrived'));
+            }
             $record->events()->create([
                 'actor_id' => auth()->guard('user')->id(),
                 'action' => $action === 'check-in' ? 'checked_in' : 'checked_out',

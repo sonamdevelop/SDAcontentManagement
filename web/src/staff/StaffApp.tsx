@@ -1,3 +1,4 @@
+import { CancellationQueue } from './CancellationWorkspace';
 import { StayContentPage } from './StayContentWorkspace';
 import { StayStatementPage } from './StatementWorkspace';
 import { PaymentFollowUpPage } from './PaymentFollowUpWorkspace';
@@ -143,6 +144,7 @@ export function StaffApp() {
           <Route path="stay-calendar" element={<StayCalendarPage />} />
           <Route path="stays/:id/content" element={<StayContentPage />} />
           <Route path="stays" element={<StayList />} />
+          <Route path="stay-cancellation-requests" element={<CancellationQueue />} />
           <Route path="stay-bookings" element={<BookingList />} />
           <Route path="stay-bookings/new" element={<BookingCreate />} />
           <Route path="stay-bookings/:id/statement" element={<StayStatementPage />} />
@@ -297,6 +299,9 @@ function Shell() {
           ) && <NavLink to="/staff/stay-payment-follow-ups">Payment follow-up</NavLink>}
           {['stays', 'stay-bookings', 'stay-bookings.view'].every((p) => can(profile, p)) && (
             <NavLink to="/staff/stay-operations">Stay operations</NavLink>
+          )}
+          {['stay-bookings', 'stay-bookings.view'].every((p) => can(profile, p)) && (
+            <NavLink to="/staff/stay-cancellation-requests">Cancellation requests</NavLink>
           )}
           {can(profile, 'stay-bookings') && (
             <NavLink to="/staff/stay-bookings">Stay bookings</NavLink>

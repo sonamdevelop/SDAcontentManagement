@@ -34,7 +34,7 @@ mobile HTTP clients, but the demo's preflight assertion tests the configured ori
 Import these files from `docs/postman/`:
 
 - `SDA-workflow.postman_collection.json`: ordered, executable complete journey.
-- `SDA-reference.postman_collection.json`: all 81 documented operations; select
+- `SDA-reference.postman_collection.json`: all 84 documented operations; select
   individual requests after filling the relevant IDs. It is not an ordered runner.
 - `SDA-local.postman_environment.json` or `SDA-staging.postman_environment.json`.
 
@@ -223,3 +223,5 @@ Public stay discovery (`GET /stays`, `/stays/{id}`) and scoped staff content/pub
 Customer clients use the separate `/customer/*` account/owned-read APIs and customer bearer tokens; staff tokens are never substitutes. Postman customer requests use customer_access_token/customer credentials rather than staff variables. See [customer identity rules](CUSTOMERS.md). Customer reservation creation is implemented; live SMTP delivery verification remains pending. See [reservation rules](RESERVATIONS.md).
 
 Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
+
+Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](CANCELLATIONS.md).

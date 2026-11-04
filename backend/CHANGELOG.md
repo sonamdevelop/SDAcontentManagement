@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added customer cancellation requests and scoped staff approval/rejection with reviewed reasons, safe retries, preserved financial records and audit history.
+
 * [feature] Added customer email verification and single-use password recovery with expiring links, full customer session revocation and verified-email checks for new reservations.
 
 * [feature] Added customer room quotes, reviewed zero-advance reservations and owned confirmation with shared inventory locks, idempotent retries and explicit customer audit actors.

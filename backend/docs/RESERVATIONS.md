@@ -33,7 +33,9 @@ Unit/integration tests cover exact totals, protected fields, ownership, replays,
 rollback, old-token rejection and throttling. Real two-process races cover customer
 versus customer and customer versus staff on the last room. Browser tests cover
 review, uncertain retry, sold-out dates and the real reservation/owned-detail/staff
-history flow. Customer cancellation, online payments and
+history flow. Online payments and
 native clients remain separate work. This feature does not establish production readiness.
 
 Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
+
+Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](CANCELLATIONS.md).

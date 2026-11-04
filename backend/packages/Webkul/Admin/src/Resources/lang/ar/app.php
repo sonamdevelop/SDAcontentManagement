@@ -2638,4 +2638,8 @@ return [
         'delivery-unavailable' => 'Email delivery is unavailable. Please try again later.',
         'verification-required' => 'Verify your customer email from My profile before creating a new reservation.',
     ],
+    'stay-cancellation' => [
+        'direct-cancel' => 'Booking cancelled directly by staff.',
+        'arrived' => 'Guest check-in recorded; cancellation request closed.',
+    ],
 ];

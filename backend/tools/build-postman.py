@@ -140,6 +140,8 @@ def reference(spec):
         ('post', '/customer/auth/forgot-password'): {'email': '{{customer_email}}'},
         ('post', '/customer/auth/verify-email'): {'email': '{{customer_email}}', 'token': '{{customer_action_token}}'},
         ('post', '/customer/auth/reset-password'): {'email': '{{customer_email}}', 'token': '{{customer_action_token}}', 'password': '{{customer_new_password}}', 'password_confirmation': '{{customer_new_password}}'},
+        ('post', '/customer/bookings/{id}/cancellation-requests'): {'request_id': '{{customer_cancellation_request_id}}', 'reason': 'Travel plans changed'},
+        ('patch', '/admin/stay-cancellation-requests/{id}/decision'): {'decision': 'approve', 'decision_reason': 'Approved per guest request'},
         ('post', '/customer/bookings'): {'request_id': '{{customer_reservation_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example customer', 'expected_rate': '1000.25'},
         ('post', '/admin/stay-bookings'): {'request_id': '{{stay_request_id}}', 'room_type_id': '{{room_type_id}}', 'check_in': '{{check_in}}', 'check_out': '{{check_out}}', 'rooms': 1, 'guests': 2, 'guest_name': 'Example guest', 'guest_email': 'guest@example.test', 'expected_rate': '1000.25', 'advance': '100.01'},
         ('post', '/admin/stay-bookings/{id}/payments'): {'request_id': '{{ledger_request_id}}', 'amount': '100.01', 'method': 'cash', 'reference': 'Offline receipt', 'reason': 'Already received offline'},
@@ -156,7 +158,7 @@ def reference(spec):
             if method not in ('get', 'post', 'put', 'patch', 'delete'):
                 continue
             doc = '/documents' in path
-            ident = 'customer_booking_id' if path.startswith('/customer/bookings/') else 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
+            ident = 'cancellation_request_id' if path.startswith('/admin/stay-cancellation-requests/') else 'customer_booking_id' if path.startswith('/customer/bookings/') else 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
             url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}').replace('{entryId}', '{{payment_entry_id}}')
             if path.endswith('/availability'):url += '?check_in={{check_in}}&check_out={{check_out}}'
             if path.endswith('/calendar'):url += '?from={{check_in}}&to={{check_out}}'
@@ -169,6 +171,9 @@ def reference(spec):
             item = request(method.upper()+' '+path, method.upper(), url, expected, bodies.get((method, path)), public, form=([{'key': 'description', 'value': 'Public marketing description', 'type': 'text'}, {'key': 'rules', 'value': 'Quiet hours after 10 pm', 'type': 'text'}, {'key': 'amenities[0]', 'value': 'Parking', 'type': 'text'}, {'key': 'is_published', 'value': '0', 'type': 'text'}] if path.endswith('/content') and method == 'post' else DOCUMENT if doc and method == 'post' else None))
             if operation.get('requestBody', {}).get('required') and item['request'].get('body') is None:
                 raise ValueError('Missing required request example: '+method.upper()+' '+path)
+            if method == 'post' and path == '/customer/bookings/{id}/cancellation-requests':
+                item['event'][0] = event('test', "pm.test('Created or replayed', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));")
+                item['event'].append(event('test', capture('cancellation_request_id')))
             if method == 'post' and path == '/customer/bookings':
                 item['event'][0] = event('test', "pm.test('Created or replayed', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));")
                 item['event'].append(event('test', capture('customer_booking_id', 'pm.response.json().data.id')))
@@ -188,7 +193,7 @@ def reference(spec):
 def environment(staging):
     base = 'https://api-staging.example.com/api/v1' if staging else 'http://127.0.0.1:8081/api/v1'
     origin = 'https://web-staging.example.com' if staging else 'http://localhost:5173'
-    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'customer_action_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
+    values = {'base_url': base, 'frontend_origin': origin, 'staff_email': '', 'staff_password': '', 'access_token': '', 'document_file': '', 'customer_name': '', 'customer_email': '', 'customer_password': '', 'customer_new_password': '', 'customer_access_token': '', 'customer_cancellation_request_id': '', 'cancellation_request_id': '', 'customer_action_token': '', 'customer_booking_id': '', 'customer_reservation_request_id': ''}
     values.update(dict.fromkeys(['run_id', 'property_title', 'submission_id', 'request_id', 'second_request_id', 'property_id', 'lead_id', 'user_id', 'enquiry_id', 'task_id', 'note_id', 'visit_id', 'document_id', 'deal_id', 'cancelled_deal_id', 'stage_id', 'visit_start', 'visit_end', 'visit_start_later', 'visit_end_later', 'task_due', 'stay_id', 'room_type_id', 'stay_booking_id', 'stay_request_id', 'check_in', 'check_out', 'ledger_request_id', 'payment_entry_id'], ''))
     return {'name': 'SDA staging template' if staging else 'SDA local', 'values': [{'key': k, 'value': v, 'enabled': True, 'type': 'secret' if k in ('staff_password', 'access_token', 'customer_password', 'customer_new_password', 'customer_access_token', 'customer_action_token') else 'default'} for k, v in values.items()], '_postman_variable_scope': 'environment'}
 

@@ -2457,6 +2457,77 @@
               }
             }
           ]
+        },
+        {
+          "name": "GET /admin/stay-cancellation-requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-cancellation-requests",
+            "description": "List scoped customer cancellation requests\n\nRequires stay-bookings and stay-bookings.view plus bookings:read. Booking own/group/global scope applies independently. Newest request first; status defaults pending, per_page defaults 20 (max100). Curated reasons and booking names/dates only; no guest contacts, payment data or tokens.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/stay-cancellation-requests/{id}/decision",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/stay-cancellation-requests/{{cancellation_request_id}}/decision",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"approve\",\n  \"decision_reason\": \"Approved per guest request\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Approve or reject a cancellation request\n\nRequires stay-bookings.cancel, stay-bookings.view and bookings:write; scoped booking and source checks. Body decision approve/reject plus required customer-visible decision_reason. Exact same terminal decision/reason replays without duplicate events; any changed terminal decision/reason returns 409. Approval calls the same locked staff cancellation transition, releases scheduled inventory, makes amount due zero and preserves all ledger entries/refund due; it never refunds money. Rejection keeps confirmed booking and permits a fresh customer UUID request. Direct staff cancellation/check-in closes a pending request with history. Approval after local arrival date fails 422; staff can still reject. Parent/room/booking/request locks serialize competing decisions.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -3140,6 +3211,67 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /customer/bookings/{id}/cancellation-requests",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/customer/bookings/{{customer_booking_id}}/cancellation-requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{customer_cancellation_request_id}}\",\n  \"reason\": \"Travel plans changed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Request staff-reviewed cancellation of my booking\n\nRequires customer:bookings and customer:bookings:create. Explicit ownership only; no verified-email requirement. One pending request per booking, before its local arrival date and prior to check-in. New UUID/reason returns 201; same customer/booking/trimmed reason/key returns current request with 200 even after terminal decisions/source changes. Different payload/key while pending returns 409. Retain UUID after uncertain outcomes. Pending/rejected requests leave booking, money and allocation unchanged. Five submissions/min/IP. Read history in own booking detail; no automatic email or refund.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created or replayed', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) pm.environment.set(\"cancellation_request_id\", String(pm.response.json().data.id));"
                 ]
               }
             }

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { capturedMailLink } from './mail';
-test('real customer reserve flow consumes shared inventory, owns its booking and preserves customer actor history', async ({
+test('real customer reserve and cancellation review share inventory and preserve owned financial and actor history', async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -104,5 +104,39 @@ test('real customer reserve flow consumes shared inventory, owns its booking and
   await expect(page.getByText('Customer created', { exact: true })).toBeVisible();
   await expect(page.getByText(/Customer #/)).toBeVisible();
   await expect(page.getByText(/Recorded advance: ₹0/)).toBeVisible();
+  await page.goto(`/account/bookings/${bookingId}`);
+  async function requestCancellation(reason: string) {
+    await page.getByLabel('Cancellation request reason', { exact: true }).fill(reason);
+    await page.getByRole('button', { name: 'Review cancellation request', exact: true }).click();
+    await page.getByRole('button', { name: 'Send cancellation request', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /Request #\d+: Pending/ })).toBeVisible();
+  }
+  async function decide(decision: 'approve' | 'reject', reason: string) {
+    await page.goto(`/staff/stay-cancellation-requests?booking_id=${bookingId}&status=pending`);
+    await page.getByLabel('Cancellation decision', { exact: true }).selectOption(decision);
+    await page.getByLabel('Customer-visible decision reason', { exact: true }).fill(reason);
+    await page.getByRole('button', { name: 'Review cancellation decision', exact: true }).click();
+    await page.getByRole('button', { name: 'Confirm cancellation decision', exact: true }).click();
+    await expect(
+      page.getByText('No cancellation requests match these filters.', { exact: true }),
+    ).toBeVisible();
+  }
+  await requestCancellation('Change of travel plans');
+  await decide('reject', 'Please confirm with your group');
+  await page.goto(`/account/bookings/${bookingId}`);
+  await expect(
+    page.getByText('Staff response: Please confirm with your group', { exact: true }),
+  ).toBeVisible();
+  await requestCancellation('Group cannot travel');
+  await decide('approve', 'Approved as requested');
+  await page.goto(`/account/bookings/${bookingId}`);
+  await expect(page.getByText(/Booking: Cancelled/)).toBeVisible();
+  await expect(page.getByText(/Outstanding: ₹0/)).toBeVisible();
+  await expect(
+    page.getByText('Staff response: Approved as requested', { exact: true }),
+  ).toBeVisible();
+  await page.goto(reserveUrl);
+  await quote();
+  await expect(page.getByText(/1 rooms available/)).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -335,3 +335,5 @@ check availability, review and confirm, then read the owned booking. No online m
 is collected. See [reservation rules](../backend/docs/RESERVATIONS.md).
 
 Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](../backend/docs/CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
+
+Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](../backend/docs/CANCELLATIONS.md).

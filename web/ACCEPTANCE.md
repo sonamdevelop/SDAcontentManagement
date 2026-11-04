@@ -104,3 +104,8 @@ Customer reservation acceptance now first verifies its email using a local captu
 message. An eighth real journey confirms verification, resets a forgotten password,
 checks old-token rejection, signs in with the new password and rejects reused links.
 The mail capture and database are unique per run; no live email delivery is used.
+
+The real customer reservation journey now requests cancellation, receives a staff
+rejection, sends a fresh request and receives approval. It checks customer-visible
+responses, cancelled owned detail, zero outstanding amount and released inventory.
+API tests separately verify paid bookings retain refund due without automatic refunds.
