@@ -30,7 +30,7 @@ return [
     ['key' => 'visits.assign', 'name' => 'admin::app.property-api.assign-visits', 'route' => 'api.v1.admin.visits.assign', 'sort' => 4],
     ['key' => 'leads.assign', 'name' => 'admin::app.property-api.assign-leads', 'route' => ['api.v1.admin.leads.assign', 'api.v1.admin.leads.assignees'], 'sort' => 5],
     ['key' => 'properties.moderate', 'name' => 'admin::app.property-moderation.permission', 'route' => 'api.v1.admin.moderation.decide', 'sort' => 6],
-    ['key' => 'properties', 'name' => 'admin::app.property-api.properties', 'route' => ['api.v1.admin.properties.index', 'api.v1.admin.moderation.index', 'api.v1.admin.moderation.show'], 'sort' => 3],
+    ['key' => 'properties', 'name' => 'admin::app.property-api.properties', 'route' => ['api.v1.admin.properties.index', 'api.v1.admin.moderation.index', 'api.v1.admin.moderation.show', 'api.v1.admin.favourites.popularity'], 'sort' => 3],
     ['key' => 'properties.create', 'name' => 'admin::app.property-api.create', 'route' => 'api.v1.admin.properties.store', 'sort' => 1],
     ['key' => 'properties.edit', 'name' => 'admin::app.property-api.edit', 'route' => ['api.v1.admin.properties.update', 'api.v1.admin.moderation.submit'], 'sort' => 2],
     ['key' => 'properties.delete', 'name' => 'admin::app.property-api.delete', 'route' => 'api.v1.admin.properties.destroy', 'sort' => 3],

@@ -163,7 +163,7 @@ def reference(spec):
             if method not in ('get', 'post', 'put', 'patch', 'delete'):
                 continue
             doc = '/documents' in path
-            ident = 'cancellation_request_id' if path.startswith('/admin/stay-cancellation-requests/') else 'customer_booking_id' if path.startswith('/customer/bookings/') else 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
+            ident = 'property_id' if path.startswith('/customer/favourites/') else 'cancellation_request_id' if path.startswith('/admin/stay-cancellation-requests/') else 'customer_booking_id' if path.startswith('/customer/bookings/') else 'room_type_id' if ('stay-rooms/' in path or '/rooms/' in path) else 'stay_booking_id' if 'stay-bookings/' in path else 'stay_id' if path.startswith(('/admin/stays/', '/stays/')) else 'document_id' if doc else 'visit_id' if 'site-visits/' in path else 'deal_id' if 'property-deals/' in path else 'lead_id' if '/leads/' in path else 'property_id'
             url = path.replace('{id}', '{{'+ident+'}}').replace('{propertyId}', '{{property_id}}').replace('{activityId}', '{{task_id}}').replace('{stayId}', '{{stay_id}}').replace('{entryId}', '{{payment_entry_id}}')
             if path.endswith('/availability'):url += '?check_in={{check_in}}&check_out={{check_out}}'
             if path.endswith('/calendar'):url += '?from={{check_in}}&to={{check_out}}'

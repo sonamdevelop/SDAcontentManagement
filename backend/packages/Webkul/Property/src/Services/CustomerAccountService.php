@@ -15,7 +15,7 @@ class CustomerAccountService
 
     private function token($customer, string $device): array
     {
-        $token = $customer->createToken($device, ['customer:account', 'customer:bookings', 'customer:bookings:create'], now()->addDays(30));
+        $token = $customer->createToken($device, ['customer:account', 'customer:bookings', 'customer:bookings:create', 'customer:favourites'], now()->addDays(30));
 
         return ['access_token' => $token->plainTextToken, 'token_type' => 'Bearer', 'expires_at' => $token->accessToken->expires_at->toIso8601String()];
     }

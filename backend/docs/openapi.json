@@ -8401,6 +8401,349 @@
           }
         }
       }
+    },
+    "/customer/favourites": {
+      "get": {
+        "operationId": "customerFavouritesIndex",
+        "summary": "Read my saved properties",
+        "description": "Requires customer:favourites. Ignores owner filters. Newest membership first, per_page default12/max50. Left-joins current approved/published/available public properties from active agents. Hidden sources return property:null plus owned property_id/saved_at only; never caches prior/private/unreviewed details. Deleted properties cascade-remove membership.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current scoped page",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SavedProperty"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "422": {
+            "description": "Invalid filters or prohibited identity fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/customer/favourites/{id}": {
+      "get": {
+        "operationId": "customerFavouriteStatus",
+        "summary": "Read my saved state for a property ID",
+        "description": "Requires customer:favourites. Returns only own property_id/saved boolean. Unknown, hidden and unsaved IDs do not disclose current property existence or details. No staff token fallback.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; idempotent current saved state",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyFavouriteStatus"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "put": {
+        "operationId": "customerFavouriteSave",
+        "summary": "Save a public property to my account",
+        "description": "Requires customer:favourites. No request body or client owner ID. New saves require current approved/published/available source and active agent. Property/customer/owner locks and unique customer/property key serialize concurrent writes. Exact repeated PUT returns 200 saved:true without changing original saved_at/order, including after source becomes hidden if membership already exists. Save/remove share 30 attempts/min/IP. No email verification required and no outbound notifications.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; idempotent current saved state",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PropertyFavouriteStatus"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "404": {
+            "description": "New save source is not public or no longer exists"
+          },
+          "422": {
+            "description": "Invalid filters or prohibited identity fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "customerFavouriteRemove",
+        "summary": "Remove a property from my saved list",
+        "description": "Requires customer:favourites. Removes only authenticated membership, including hidden sources. Repeated removal and unknown IDs return 204; never edits the property or reveals another customer membership. Save/remove share 30 attempts/min/IP. Client should retry the same explicit action after uncertain outcomes rather than invert a toggle.",
+        "security": [
+          {
+            "customerBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Own membership removed or already absent",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/admin/property-favourites": {
+      "get": {
+        "operationId": "propertyPopularityIndex",
+        "summary": "Read scoped aggregate saved-property counts",
+        "description": "Requires properties role permission and properties:read. Counts current memberships from active customer accounts. Own/group/global property visibility applies. Includes private/inactive/unreviewed inventory only within authorized staff scope. No customer names/emails/IDs, owner contacts or individual save timestamps. Descending saved count, then descending property ID; min_count default1, per_page default20/max100.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "min_count",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000000,
+              "default": 1
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current scoped page",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PropertyPopularity"
+                      }
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid/missing/wrong account token"
+          },
+          "403": {
+            "description": "Inactive account or missing capability; older customers must sign in again"
+          },
+          "422": {
+            "description": "Invalid filters or prohibited identity fields"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12588,6 +12931,91 @@
           "moderation_reason": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "PropertyFavouriteStatus": {
+        "type": "object",
+        "required": [
+          "property_id",
+          "saved"
+        ],
+        "properties": {
+          "property_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "saved": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SavedProperty": {
+        "type": "object",
+        "required": [
+          "property_id",
+          "saved_at",
+          "property"
+        ],
+        "properties": {
+          "property_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "saved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "property": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicProperty"
+              }
+            ],
+            "nullable": true,
+            "description": "Current public fields only when approved/published/available with active agent. Otherwise null; no cached or unreviewed title, price, photos or contacts."
+          }
+        }
+      },
+      "PropertyPopularity": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "city",
+          "status",
+          "moderation_status",
+          "is_published",
+          "favourites_count"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "moderation_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "is_published": {
+            "type": "boolean"
+          },
+          "favourites_count": {
+            "type": "integer",
+            "minimum": 1
           }
         }
       }

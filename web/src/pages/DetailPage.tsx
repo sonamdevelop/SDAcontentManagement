@@ -1,3 +1,4 @@
+import { SavePropertyButton } from '../customer/Favourites';
 import { useCallback, useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ApiError, publicApi } from '../api/client';
@@ -71,6 +72,7 @@ export function DetailPage() {
               <small>{rentSuffix(property)}</small>
             </p>
           </div>
+          <SavePropertyButton key={property.id} id={property.id} />
           <div className="detail-grid">
             <div>
               <PhotoGallery key={id} property={property} />

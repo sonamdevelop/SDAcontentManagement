@@ -739,3 +739,5 @@ See [stay booking API and staff workflow](STAYS.md) for inventory setup, date-ba
 See [offline payment ledger](PAYMENTS.md) for additional receipts, refunds, reasoned reversals, exact outstanding/refund totals, scoped permissions and idempotent/concurrent writes.
 
 Property publication now requires moderation approval. Public content/photo edits require a fresh review; private edits and deal status retain approval. Staff use the scoped Property moderation queue with reasons, snapshots and safe revision retries. Existing published listings retain legacy approval. See [moderation rules](MODERATION.md).
+
+Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](FAVOURITES.md).

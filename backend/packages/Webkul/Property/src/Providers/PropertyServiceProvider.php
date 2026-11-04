@@ -44,6 +44,7 @@ class PropertyServiceProvider extends ServiceProvider
 
             return [Limit::perMinute(20)->by('customer-login-ip:'.$request->ip()), Limit::perMinute(5)->by('customer-login-email:'.$request->ip().':'.hash('sha256', $email))];
         });
+        RateLimiter::for('customer-favourites', fn ($request) => Limit::perMinute(30)->by('customer-favourites:'.$request->ip()));
         RateLimiter::for('customer-cancellation', fn ($request) => Limit::perMinute(5)->by('customer-cancellation:'.$request->ip()));
         RateLimiter::for('customer-reservation', fn ($request) => Limit::perMinute(5)->by('customer-reservation:'.$request->ip()));
         RateLimiter::for('customer-recovery', function ($request) {

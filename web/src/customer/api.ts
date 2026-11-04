@@ -1,3 +1,4 @@
+import { isSavedProperty, isFavouriteStatus, type SavedProperty } from '../domain/favourites';
 import {
   isCancellation,
   validCancellationHistory,
@@ -162,6 +163,40 @@ export class CustomerApi {
       false,
       204,
     );
+  }
+  async favouriteStatus(id: number, signal?: AbortSignal) {
+    const body = await this.request(`/favourites/${id}`, { signal });
+    if (!isFavouriteStatus(body?.data, id)) throw new CustomerError(502);
+    return body.data;
+  }
+  async setFavourite(id: number, saved: boolean) {
+    if (saved) {
+      const body = await this.request(`/favourites/${id}`, { method: 'PUT' });
+      if (!isFavouriteStatus(body?.data, id) || body.data.saved !== true)
+        throw new CustomerError(502);
+    } else await this.request(`/favourites/${id}`, { method: 'DELETE' }, true, 204);
+  }
+  async favourites(
+    params: URLSearchParams,
+    signal?: AbortSignal,
+  ): Promise<{
+    data: SavedProperty[];
+    meta: { current_page: number; last_page: number; total: number };
+  }> {
+    const q = new URLSearchParams();
+    for (const key of ['page', 'per_page']) if (params.get(key)) q.set(key, params.get(key)!);
+    const body = await this.request('/favourites?' + q, { signal });
+    if (
+      !Array.isArray(body?.data) ||
+      !body.data.every(isSavedProperty) ||
+      !body.meta ||
+      !id(body.meta.current_page) ||
+      !id(body.meta.last_page) ||
+      !Number.isSafeInteger(body.meta.total) ||
+      body.meta.total < 0
+    )
+      throw new CustomerError(502);
+    return body;
   }
   async authenticate(action: 'login' | 'register', values: Record<string, string>) {
     const body = await this.request(

@@ -1,3 +1,4 @@
+import { PopularityPage } from './PopularityWorkspace';
 import { ModerationQueue, ModerationPage } from './ModerationWorkspace';
 import { CancellationQueue } from './CancellationWorkspace';
 import { StayContentPage } from './StayContentWorkspace';
@@ -132,6 +133,7 @@ export function StaffApp() {
         <Route element={<Shell />}>
           <Route index element={<Dashboard />} />
           <Route path="login" element={<Navigate to="/staff" replace />} />
+          <Route path="property-favourites" element={<PopularityPage />} />
           <Route path="property-moderation" element={<ModerationQueue />} />
           <Route path="properties/:id/moderation" element={<ModerationPage />} />
           <Route path="properties" element={<PropertyList />} />
@@ -278,6 +280,9 @@ function Shell() {
                   {title}
                 </NavLink>
               ),
+          )}
+          {can(profile, 'properties') && (
+            <NavLink to="/staff/property-favourites">Property popularity</NavLink>
           )}
           {can(profile, 'properties') && (
             <NavLink to="/staff/property-moderation">Property moderation</NavLink>

@@ -117,3 +117,5 @@ Synthetic backup/restore checks now include stay_customers.
 Customer email verification and password recovery are implemented. New reservations require verified email; existing owned reads and exact request replay remain available. See [account recovery and mail configuration](CUSTOMER_RECOVERY.md). Live SMTP delivery remains a deployment-time check.
 
 Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](CANCELLATIONS.md).
+
+Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](FAVOURITES.md).

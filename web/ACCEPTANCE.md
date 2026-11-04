@@ -114,3 +114,8 @@ The property enquiry/deal journey now explicitly approves the created listing.
 A ninth real journey rejects, resubmits and approves a property, edits its public
 title, verifies public hiding and stale-decision rejection, and approves the fresh
 revision before checking public detail. Backup/restore includes moderation audit rows.
+
+A tenth real API journey creates/approves a listing, registers a customer, saves
+it, checks staff popularity, edits public content into pending moderation, confirms
+the saved card exposes no unreviewed title, removes it and checks refreshed counts.
+Synthetic backup/restore includes customer_property_favourites rows.

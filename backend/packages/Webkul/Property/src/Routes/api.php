@@ -11,6 +11,7 @@ use Webkul\Property\Http\Controllers\LeadApiController;
 use Webkul\Property\Http\Controllers\PropertyApiController;
 use Webkul\Property\Http\Controllers\PropertyDealApiController;
 use Webkul\Property\Http\Controllers\PropertyDocumentApiController;
+use Webkul\Property\Http\Controllers\PropertyFavouriteController;
 use Webkul\Property\Http\Controllers\PropertyModerationController;
 use Webkul\Property\Http\Controllers\ReportApiController;
 use Webkul\Property\Http\Controllers\SiteVisitApiController;
@@ -39,6 +40,11 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::post('auth/logout', [$account, 'logout'])->name('logout');
         Route::post('password', [$account, 'password'])->middleware('throttle:customer-password')->name('password');
     });
+    $favourites = PropertyFavouriteController::class;
+    Route::get('favourites', [$favourites, 'index'])->middleware($access.':customer:favourites')->name('favourites.index');
+    Route::get('favourites/{id}', [$favourites, 'status'])->whereNumber('id')->middleware($access.':customer:favourites')->name('favourites.status');
+    Route::put('favourites/{id}', [$favourites, 'store'])->whereNumber('id')->middleware([$access.':customer:favourites', 'throttle:customer-favourites'])->name('favourites.store');
+    Route::delete('favourites/{id}', [$favourites, 'destroy'])->whereNumber('id')->middleware([$access.':customer:favourites', 'throttle:customer-favourites'])->name('favourites.destroy');
     Route::get('rooms/{id}/availability', [CustomerStayBookingController::class, 'availability'])->whereNumber('id')->middleware($access.':customer:bookings')->name('rooms.availability');
     Route::post('bookings', [CustomerStayBookingController::class, 'store'])->middleware([$access.':customer:bookings', $access.':customer:bookings:create', 'throttle:customer-reservation'])->name('bookings.store');
     Route::get('bookings', [CustomerStayBookingController::class, 'index'])->middleware($access.':customer:bookings')->name('bookings.index');
@@ -59,6 +65,7 @@ Route::get('properties', [PropertyApiController::class, 'index'])->name('propert
 Route::get('properties/{id}', [PropertyApiController::class, 'show'])->whereNumber('id')->name('properties.show');
 Route::post('properties/{id}/enquiries', [EnquiryApiController::class, 'store'])->whereNumber('id')->middleware('throttle:property-api-enquiries')->name('enquiries.store');
 Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('property-favourites', [PropertyFavouriteController::class, 'popularity'])->middleware(ApiAccess::class.':properties,properties:read')->name('favourites.popularity');
     Route::get('property-moderation', [PropertyModerationController::class, 'index'])->middleware(ApiAccess::class.':properties,properties:read')->name('moderation.index');
     Route::get('properties/{id}/moderation', [PropertyModerationController::class, 'show'])->whereNumber('id')->middleware(ApiAccess::class.':properties,properties:read')->name('moderation.show');
     Route::patch('properties/{id}/moderation', [PropertyModerationController::class, 'decide'])->whereNumber('id')->middleware(ApiAccess::class.':properties.moderate,properties:moderate,properties')->name('moderation.decide');

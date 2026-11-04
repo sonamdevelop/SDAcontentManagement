@@ -1,3 +1,4 @@
+import { MyFavourites } from './Favourites';
 import { CustomerCancellationPanel } from './CancellationPanel';
 import { AccountActions, VerificationPanel } from './AccountActions';
 import { CustomerFailure as Failure } from './CustomerUi';
@@ -108,6 +109,7 @@ function SignedInWorkspace() {
           My profile
         </NavLink>
         <NavLink to="/account/bookings">My bookings</NavLink>
+        <NavLink to="/account/favourites">My saved properties</NavLink>
         <NavLink to="/account/password">Change password</NavLink>
         <button
           disabled={mutation.busy}
@@ -143,6 +145,15 @@ function SignedInWorkspace() {
             <PasswordPage
               api={api}
               onChanged={() => clear('Password changed. Sign in with your new password.')}
+            />
+          }
+        />
+        <Route
+          path="favourites"
+          element={
+            <MyFavourites
+              api={api}
+              onReauth={() => clear('Sign in again to use saved properties.')}
             />
           }
         />

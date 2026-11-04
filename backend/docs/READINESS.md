@@ -245,3 +245,23 @@ public requests. Synthetic moderation audit rows and four uploaded files were
 backed up/restored with row-count and SHA-256 checks. The additive local migration
 preserved prior publication/visibility counts. Both reference repositories stayed
 clean, and no staging/deployment occurred.
+
+## Saved properties and popularity update — 4 November 2026
+
+Group 15 now has independent customer saved-property status/save/remove/list,
+privacy-safe unavailable rows and scoped staff aggregate popularity. Group 15
+moves to local-ready: **14 local-ready, 3 partial, 4 pending/unverified** groups.
+These are checklist counts, not effort/time percentages. Reports/admin/account
+lifecycle parity, native clients, migration, communications and extended guest
+onboarding remain separate. No staging or deployment occurred.
+See [favourites scope](FAVOURITES.md).
+
+Validation for saved properties: 529 API tests (2921 assertions), 234 frontend
+unit/integration tests, 76 desktop/mobile browser checks and ten real API browser
+journeys passed. Same/different-customer worker races confirmed one membership
+per customer/property. Focused favourites tests also passed after the final error
+copy update. Build/typecheck, PHP/web formatting, skills validation, 93 OpenAPI
+operations/internal references and generated Postman artifacts were checked.
+Synthetic database/upload backup and restore passed, including the favourites
+table and four SHA-256 file checks. Only the additive migration ran locally;
+both reference repositories stayed clean and no staging/deployment occurred.

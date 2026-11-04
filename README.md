@@ -55,3 +55,5 @@ Customer email verification and password recovery are implemented. New reservati
 Customer cancellation requests and staff approve/reject review are available, with complete history and no automatic refunds. See [cancellation rules](backend/docs/CANCELLATIONS.md).
 
 Property publication now requires moderation approval. Public content/photo edits require a fresh review; private edits and deal status retain approval. Staff use the scoped Property moderation queue with reasons, snapshots and safe revision retries. Existing published listings retain legacy approval. See [moderation rules](backend/docs/MODERATION.md).
+
+Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](backend/docs/FAVOURITES.md).
