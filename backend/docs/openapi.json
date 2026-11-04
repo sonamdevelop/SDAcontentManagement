@@ -6211,7 +6211,7 @@
       "get": {
         "summary": "Read nightly room-type availability calendar",
         "operationId": "stayRoomCalendar",
-        "description": "Requires stays / stays:read and scoped stay visibility. Read-only nightly room allocations with current capacity, no guest/contact/payment data. Dates use the stay timezone; from is inclusive and to exclusive, 1\u201362 nights. Historical rows use current inventory and may flag over-capacity. Early checkout retains original allocation. Inactive inventory has zero bookable availability. No-store; counts are advisory and booking save rechecks inventory.",
+        "description": "Requires stays / stays:read and scoped stay visibility. Read-only nightly room allocations with current capacity, no guest/contact/payment data. Dates use the stay timezone; from is inclusive and to exclusive, 1–62 nights. Historical rows use current inventory and may flag over-capacity. Early checkout retains original allocation. Inactive inventory has zero bookable availability. No-store; counts are advisory and booking save rechecks inventory.",
         "security": [
           {
             "bearerAuth": []
@@ -8862,6 +8862,81 @@
             "description": "Rate limit exceeded"
           }
         }
+      }
+    },
+    "/admin/stays/{id}/report": {
+      "get": {
+        "summary": "Scoped stay booked occupancy, booked value and offline cash movement",
+        "operationId": "stayReportIndex",
+        "description": "Requires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Both stay and booking visibility apply independently. Required from/to civil dates span 1–62 nights with an exclusive end in stay timezone. Current all-room-type inventory is a comparison baseline, not historical capacity. Confirmed bookings only for room nights and snapshot nightly_rate × rooms × clipped nights value; values stay separated by currency. This is not attendance or recognized revenue. Cash uses ledger created_at in the stay-local window, including cancelled bookings and opening advances. Reversals subtract on their own recording day, not the original day; receipts/refunds may be negative. No private guest/contact/notes/reference fields. No pagination, migration, collection, currency conversion or deployment. Cache-Control: no-store.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StayReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication"
+          },
+          "403": {
+            "description": "Permission or token ability denied"
+          },
+          "404": {
+            "description": "Missing or out-of-scope record"
+          },
+          "422": {
+            "description": "Invalid dates, money, inventory, state or input"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive first night."
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Exclusive end date. Maximum 62 nights."
+          }
+        ]
       }
     }
   },
@@ -13136,6 +13211,163 @@
           "favourites_count": {
             "type": "integer",
             "minimum": 1
+          }
+        }
+      },
+      "StayReport": {
+        "type": "object",
+        "required": [
+          "context",
+          "summary",
+          "days",
+          "booked_value",
+          "cash_movement"
+        ],
+        "properties": {
+          "context": {
+            "type": "object",
+            "required": [
+              "stay_id",
+              "stay_name",
+              "timezone",
+              "from",
+              "to",
+              "as_of",
+              "inventory_basis",
+              "booking_scope"
+            ],
+            "properties": {
+              "stay_id": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "stay_name": {
+                "type": "string"
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string",
+                "format": "date"
+              },
+              "to": {
+                "type": "string",
+                "format": "date"
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "inventory_basis": {
+                "type": "string",
+                "enum": [
+                  "current_all_room_types"
+                ]
+              },
+              "booking_scope": {
+                "type": "string",
+                "enum": [
+                  "authorized_records"
+                ]
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "booked_room_nights",
+              "inventory_room_nights",
+              "confirmed_bookings"
+            ],
+            "properties": {
+              "booked_room_nights": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "inventory_room_nights": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "confirmed_bookings": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "date",
+                "booked_rooms",
+                "inventory_rooms",
+                "over_capacity"
+              ],
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "booked_rooms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inventory_rooms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "over_capacity": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "booked_value": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "currency",
+                "amount"
+              ],
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "amount": {
+                  "type": "string",
+                  "pattern": "^-?[0-9]+\\.[0-9]{2}$"
+                }
+              }
+            }
+          },
+          "cash_movement": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "currency",
+                "receipts",
+                "refunds"
+              ],
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "receipts": {
+                  "type": "string",
+                  "pattern": "^-?[0-9]+\\.[0-9]{2}$"
+                },
+                "refunds": {
+                  "type": "string",
+                  "pattern": "^-?[0-9]+\\.[0-9]{2}$"
+                }
+              }
+            }
           }
         }
       }

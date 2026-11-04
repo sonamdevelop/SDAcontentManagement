@@ -6,6 +6,7 @@ return [
     ],
 
     'stay-api' => [
+        'report-range' => 'Choose a report range of 1–62 nights; the end date is exclusive.',
         'calendar-range' => 'Choose a valid calendar range of 1 to 62 nights.',
         'ledger' => 'Payment ledger',
         'ledger-payment' => 'Record offline payment',

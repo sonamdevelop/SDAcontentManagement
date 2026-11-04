@@ -284,3 +284,23 @@ Build/typecheck, PHP/web formatting, skills validation, 94 OpenAPI operations/
 internal references and generated Postman artifacts were checked. Synthetic
 backup/restore passed with row-count and four SHA-256 file checks. No migration
 or deployment ran, and both reference repositories stayed clean.
+
+## Stay occupancy/cash reporting update — 4 November 2026
+
+Group 11 now also includes stay-local date-filtered confirmed booked room-nights,
+current inventory comparisons, snapshot booked value by currency and offline
+ledger cash movement with event-time reversals. Historical capacity, recognized
+revenue and remaining report/export parity are not delivered; group 11 stays
+partial. Checklist stays **14 local-ready, 3 partial, 4 pending/unverified** groups,
+not a completion/effort percentage. No staging/deployment or migrations ran.
+See [report semantics](STAY_REPORTS.md).
+
+Validation: 552 API tests (3026 assertions), 247 frontend unit/integration tests,
+82 desktop/mobile browser checks and twelve real API browser journeys passed.
+Coverage includes team/outside-team privacy, independent stay/booking scope,
+DST timestamp boundaries, checkout exclusion, cancellation, currency separation,
+negative reversal corrections and maximum-precision money. Production build/
+typecheck, changed-file PHP/web formatting, skills validation, 95 OpenAPI operations
+and internal references, and generated Postman checks passed. Synthetic backup/
+restore matched row counts and four uploaded files by SHA-256. Both reference
+repositories stayed clean; no migration, staging or deployment ran.

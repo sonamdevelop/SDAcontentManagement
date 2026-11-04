@@ -343,3 +343,5 @@ Property publication now requires moderation approval. Public content/photo edit
 Customer saved properties and scoped staff popularity are available. Hidden/unreviewed listings show an unavailable placeholder without current private details. Older customer sessions must sign in again for customer:favourites. See [saved-property rules](../backend/docs/FAVOURITES.md).
 
 Agent performance now has a dedicated web report with calendar timezone/date/agent filters, source-aware outcome bars and scoped all-filtered-agent CSV export. See [agent report rules](../backend/docs/AGENT_REPORTS.md).
+
+Staff stay occupancy/cash reporting: `/staff/stay-reports`, with stay-local exclusive date ranges (1–62 nights), daily room meters and exact currency-separated values/corrections. See [semantics](../backend/docs/STAY_REPORTS.md).

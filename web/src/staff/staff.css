@@ -428,3 +428,14 @@
   max-width: 100%;
   min-width: 0;
 }
+
+.stay-report-night {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+}
+.stay-report-night meter {
+  width: min(100%, 18rem);
+}

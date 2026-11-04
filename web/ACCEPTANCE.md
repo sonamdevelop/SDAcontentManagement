@@ -124,3 +124,5 @@ An eleventh real API journey creates a property enquiry/lead and scheduled visit
 opens the agent report with UTC calendar filters and owner ID, reloads filters,
 and downloads a CSV that includes aggregate metrics without private source contacts.
 The normal isolated database/upload backup and restore checks still run afterward.
+
+The real stay-report journey creates a stay/room and an advance-bearing booking, verifies future reserved value independently of today’s recorded cash, then confirms cancellation removes reserved nights/value without changing ledger events.

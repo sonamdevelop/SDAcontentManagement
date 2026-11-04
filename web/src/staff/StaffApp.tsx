@@ -1,3 +1,4 @@
+import { StayReportPage } from './StayReportWorkspace';
 import { AgentReportPage } from './AgentReportWorkspace';
 import { PopularityPage } from './PopularityWorkspace';
 import { ModerationQueue, ModerationPage } from './ModerationWorkspace';
@@ -134,6 +135,7 @@ export function StaffApp() {
         <Route element={<Shell />}>
           <Route index element={<Dashboard />} />
           <Route path="login" element={<Navigate to="/staff" replace />} />
+          <Route path="stay-reports" element={<StayReportPage />} />
           <Route path="agent-reports" element={<AgentReportPage />} />
           <Route path="property-favourites" element={<PopularityPage />} />
           <Route path="property-moderation" element={<ModerationQueue />} />
@@ -312,7 +314,12 @@ function Shell() {
           )}
           {['stays', 'stay-bookings', 'stay-bookings.view', 'stay-bookings.payments'].every((p) =>
             can(profile, p),
-          ) && <NavLink to="/staff/stay-payment-follow-ups">Payment follow-up</NavLink>}
+          ) && (
+            <>
+              <NavLink to="/staff/stay-payment-follow-ups">Payment follow-up</NavLink>
+              <NavLink to="/staff/stay-reports">Stay analytics</NavLink>
+            </>
+          )}
           {['stays', 'stay-bookings', 'stay-bookings.view'].every((p) => can(profile, p)) && (
             <NavLink to="/staff/stay-operations">Stay operations</NavLink>
           )}

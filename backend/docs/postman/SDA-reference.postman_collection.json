@@ -2728,6 +2728,35 @@
               }
             }
           ]
+        },
+        {
+          "name": "GET /admin/stays/{id}/report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{frontend_origin}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/stays/{{stay_id}}/report",
+            "description": "Scoped stay booked occupancy, booked value and offline cash movement\n\nRequires stays, stay-bookings, stay-bookings.view and stay-bookings.payments ACL plus stays:read and bookings:read. Both stay and booking visibility apply independently. Required from/to civil dates span 1–62 nights with an exclusive end in stay timezone. Current all-room-type inventory is a comparison baseline, not historical capacity. Confirmed bookings only for room nights and snapshot nightly_rate × rooms × clipped nights value; values stay separated by currency. This is not attendance or recognized revenue. Cash uses ledger created_at in the stay-local window, including cancelled bookings and opening advances. Reversals subtract on their own recording day, not the original day; receipts/refunds may be negative. No private guest/contact/notes/reference fields. No pagination, migration, collection, currency conversion or deployment. Cache-Control: no-store.\n\nManual reference: fill IDs and timestamps in the environment first. Do not run this entire reference collection as a workflow. See OpenAPI/API.md for filters and alternatives."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

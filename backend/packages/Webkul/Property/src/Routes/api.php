@@ -21,6 +21,7 @@ use Webkul\Property\Http\Controllers\StayContentController;
 use Webkul\Property\Http\Controllers\StayOperationsController;
 use Webkul\Property\Http\Controllers\StayPaymentController;
 use Webkul\Property\Http\Controllers\StayPaymentFollowUpController;
+use Webkul\Property\Http\Controllers\StayReportController;
 use Webkul\Property\Http\Middleware\ApiAccess;
 use Webkul\Property\Http\Middleware\CustomerAccess;
 
@@ -157,5 +158,7 @@ Route::prefix('admin/stay-bookings/{id}')->whereNumber('id')->name('admin.bookin
 Route::get('admin/stays/{id}/payment-follow-ups', [StayPaymentFollowUpController::class, 'index'])->whereNumber('id')->middleware([ApiAccess::class.':stays,stays:read', ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name('admin.stays.payment-follow-ups');
 
 Route::get('admin/stays/{id}/operations', [StayOperationsController::class, 'index'])->whereNumber('id')->middleware([ApiAccess::class.':stays,stays:read', ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view'])->name('admin.stays.operations');
+
+Route::get('admin/stays/{id}/report', [StayReportController::class, 'index'])->whereNumber('id')->middleware([ApiAccess::class.':stays,stays:read', ApiAccess::class.':stay-bookings,bookings:read,stay-bookings.view', ApiAccess::class.':stay-bookings.payments,bookings:read'])->name('admin.stays.report');
 
 Route::fallback(fn () => response()->json(['message' => 'Not found.'], 404));

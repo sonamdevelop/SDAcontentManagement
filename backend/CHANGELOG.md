@@ -4,6 +4,8 @@ This changelog consists of the bug & security fixes and new features being inclu
 
 ## **v2.2.7 (16th of Oct 2026)**
 
+* [feature] Added scoped stay occupancy, snapshot booked value and exact currency-separated offline cash movement reports with stay-local date filters.
+
 * [feature] Added staff agent performance reports with calendar-timezone filters, outcome charts and scoped spreadsheet-safe CSV exports.
 
 * [feature] Added customer saved properties with safe retries and hidden-listing redaction, plus scoped aggregate property popularity for staff.
